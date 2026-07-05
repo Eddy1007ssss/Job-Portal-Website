@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: agile-demo
+Version: 0.1.0
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: httpx; extra == "dev"

@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/app.py
+src/agile_demo.egg-info/PKG-INFO
+src/agile_demo.egg-info/SOURCES.txt
+src/agile_demo.egg-info/dependency_links.txt
+src/agile_demo.egg-info/requires.txt
+src/agile_demo.egg-info/top_level.txt
+tests/test_app.py
