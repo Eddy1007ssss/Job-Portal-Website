@@ -1,0 +1,88 @@
+<header class="top-header">
+    <div class="header-left">
+        <button class="mobile-menu-button" id="mobileMenuButton"
+                aria-label="Open navigation menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <a href="{{ url_for('home') }}" class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+
+            <span class="brand-text">
+                Job<span>Portal</span>
+            </span>
+        </a>
+    </div>
+
+    <nav class="header-navigation">
+        <a href="{{ url_for('home') }}"
+           class="{{ 'active' if request.endpoint == 'home' else '' }}">
+            Home
+        </a>
+
+        <a href="{{ url_for('job_listings') }}"
+           class="{{ 'active' if request.endpoint == 'job_listings' else '' }}">
+            Find Jobs
+        </a>
+
+        <a href="{{ url_for('companies') }}"
+           class="{{ 'active' if request.endpoint == 'companies' else '' }}">
+            Companies
+        </a>
+
+        <a href="{{ url_for('career_tips') }}"
+           class="{{ 'active' if request.endpoint == 'career_tips' else '' }}">
+            Career Tips
+        </a>
+
+        <a href="{{ url_for('about') }}"
+           class="{{ 'active' if request.endpoint == 'about' else '' }}">
+            About Us
+        </a>
+    </nav>
+
+    <div class="header-actions">
+        <button class="notification-button"
+                type="button"
+                aria-label="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span class="notification-badge">1</span>
+        </button>
+
+        <div class="profile-menu">
+            <button class="profile-menu-button"
+                    id="profileMenuButton"
+                    type="button">
+                <img
+                    src="{{ url_for('static', filename='images/profile-placeholder.jpg') }}"
+                    alt="User profile"
+                >
+
+                <span class="profile-menu-name">John Doe</span>
+
+                <i class="fa-solid fa-chevron-down profile-arrow"></i>
+            </button>
+
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="{{ url_for('seeker_profile') }}">
+                    <i class="fa-regular fa-user"></i>
+                    My Profile
+                </a>
+
+                <a href="{{ url_for('settings') }}">
+                    <i class="fa-solid fa-gear"></i>
+                    Settings
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                <a href="{{ url_for('logout') }}" class="logout-link">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</header>

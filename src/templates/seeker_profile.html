@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>My Profile | JobPortal</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/seeker_profile.css') }}"
+>
+</head>
+
+<body>
+    {% include 'components/header.html' %}
+
+    <div class="page-layout">
+        {% include 'components/sidebar.html' %}
+
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="{{ url_for('home') }}">Home</a>
+                <i class="fa-solid fa-chevron-right"></i>
+                <span>My Profile</span>
+            </div>
+
+            <div class="page-heading">
+                <div>
+                    <h1>My Profile</h1>
+                    <p>
+                        Manage your personal information and career profile.
+                    </p>
+                </div>
+
+                <button class="primary-button" id="editProfileButton">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                    Edit Profile
+                </button>
+            </div>
+
+            <!-- Profile summary -->
+            <section class="profile-summary card">
+                <div class="profile-details">
+                    <div class="profile-picture-wrapper">
+                        <img
+                            id="profilePicture"
+                            src="{{ url_for('static', filename='images/profile-placeholder.jpg') }}"
+                            alt="John Doe"
+                            class="profile-picture"
+                        >
+
+                        <label
+                            for="profileImageInput"
+                            class="camera-button"
+                            title="Change profile picture"
+                        >
+                            <i class="fa-solid fa-camera"></i>
+                        </label>
+
+                        <input
+                            type="file"
+                            id="profileImageInput"
+                            accept="image/*"
+                            hidden
+                        >
+                    </div>
+
+                    <div class="profile-information">
+                        <div class="profile-name-row">
+                            <h2>John Doe</h2>
+                            <span class="role-badge">Job Seeker</span>
+                        </div>
+
+                        <h3>UI/UX Designer</h3>
+
+                        <div class="contact-information">
+                            <p>
+                                <i class="fa-solid fa-location-dot"></i>
+                                Kuala Lumpur, Malaysia
+                            </p>
+
+                            <p>
+                                <i class="fa-regular fa-envelope"></i>
+                                johndoe@email.com
+                            </p>
+
+                            <p>
+                                <i class="fa-solid fa-phone"></i>
+                                +60 12-345 6789
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-completion">
+                    <div class="completion-header">
+                        <span>Profile Completion</span>
+                        <strong>85%</strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-bar"
+                            style="width: 85%;"
+                        ></div>
+                    </div>
+
+                    <p>
+                        Complete your profile to increase your chances of
+                        getting hired.
+                    </p>
+
+                    <button class="text-button" type="button">
+                        View profile tips
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Profile cards -->
+            <div class="profile-grid">
+                <div class="profile-column">
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-regular fa-user"></i>
+                                <h2>About Me</h2>
+                            </div>
+
+                            <button class="icon-text-button">
+                                <i class="fa-solid fa-pen"></i>
+                                Edit
+                            </button>
+                        </div>
+
+                        <p class="about-description">
+                            Creative and detail-oriented UI/UX Designer with
+                            more than three years of experience designing
+                            user-centred digital products. Passionate about
+                            creating simple, attractive and easy-to-use
+                            interfaces.
+                        </p>
+                    </section>
+
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-solid fa-briefcase"></i>
+                                <h2>Experience</h2>
+                            </div>
+
+                            <button
+                                class="icon-text-button"
+                                data-modal="experienceModal"
+                            >
+                                <i class="fa-solid fa-plus"></i>
+                                Add Experience
+                            </button>
+                        </div>
+
+                        <div class="timeline-list">
+                            <article class="timeline-item">
+                                <div class="timeline-dot"></div>
+
+                                <div class="timeline-content">
+                                    <div class="item-heading-row">
+                                        <h3>UI/UX Designer</h3>
+
+                                        <button class="more-button">
+                                            <i class="fa-solid fa-ellipsis"></i>
+                                        </button>
+                                    </div>
+
+                                    <p class="company-name">
+                                        ABC Digital Sdn. Bhd.
+                                    </p>
+
+                                    <p class="item-meta">
+                                        January 2022 – Present
+                                    </p>
+
+                                    <ul>
+                                        <li>
+                                            Designed web and mobile application
+                                            user interfaces.
+                                        </li>
+                                        <li>
+                                            Conducted user research and usability
+                                            testing.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </article>
+
+                            <article class="timeline-item">
+                                <div class="timeline-dot"></div>
+
+                                <div class="timeline-content">
+                                    <div class="item-heading-row">
+                                        <h3>Junior UI/UX Designer</h3>
+
+                                        <button class="more-button">
+                                            <i class="fa-solid fa-ellipsis"></i>
+                                        </button>
+                                    </div>
+
+                                    <p class="company-name">
+                                        XYZ Creative Studio
+                                    </p>
+
+                                    <p class="item-meta">
+                                        June 2020 – December 2021
+                                    </p>
+
+                                    <ul>
+                                        <li>
+                                            Assisted in wireframing, prototyping
+                                            and user research.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="profile-column">
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                                <h2>Education</h2>
+                            </div>
+
+                            <button class="icon-text-button">
+                                <i class="fa-solid fa-plus"></i>
+                                Add Education
+                            </button>
+                        </div>
+
+                        <div class="simple-list">
+                            <article class="simple-list-item">
+                                <h3>Bachelor of Multimedia Design</h3>
+                                <p>TAR UMT</p>
+
+                                <div class="education-footer">
+                                    <span>2016 – 2020</span>
+                                    <span class="status-badge completed">
+                                        Completed
+                                    </span>
+                                </div>
+                            </article>
+
+                            <article class="simple-list-item">
+                                <h3>Diploma in Graphic Design</h3>
+                                <p>TAR UMT</p>
+
+                                <div class="education-footer">
+                                    <span>2013 – 2016</span>
+                                    <span class="status-badge completed">
+                                        Completed
+                                    </span>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-regular fa-star"></i>
+                                <h2>Skills</h2>
+                            </div>
+
+                            <button class="icon-text-button">
+                                <i class="fa-solid fa-plus"></i>
+                                Add Skills
+                            </button>
+                        </div>
+
+                        <div class="skill-list">
+                            <span class="skill-tag">UI Design</span>
+                            <span class="skill-tag">UX Research</span>
+                            <span class="skill-tag">Figma</span>
+                            <span class="skill-tag">Adobe XD</span>
+                            <span class="skill-tag">Photoshop</span>
+                            <span class="skill-tag">Illustrator</span>
+                            <span class="skill-tag">Wireframing</span>
+                            <span class="skill-tag">Prototyping</span>
+                        </div>
+                    </section>
+
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-solid fa-certificate"></i>
+                                <h2>Certificates</h2>
+                            </div>
+
+                            <button class="icon-text-button">
+                                <i class="fa-solid fa-plus"></i>
+                                Add Certificate
+                            </button>
+                        </div>
+
+                        <div class="certificate-item">
+                            <div class="certificate-icon">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+
+                            <div>
+                                <h3>Google UX Design Certificate</h3>
+                                <p>Google · Issued September 2023</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="profile-column">
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-regular fa-file-pdf"></i>
+                                <h2>Resume</h2>
+                            </div>
+                        </div>
+
+                        <div class="resume-file">
+                            <div class="resume-left">
+                                <div class="pdf-icon">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+
+                                <div>
+                                    <h3>John_Doe_Resume.pdf</h3>
+                                    <p>Uploaded on 12 May 2026</p>
+                                </div>
+                            </div>
+
+                            <div class="resume-actions">
+                                <button title="Download resume">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+
+                                <button title="More options">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <label
+                            class="upload-resume-button"
+                            for="resumeInput"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Upload New Resume
+                        </label>
+
+                        <input
+                            type="file"
+                            id="resumeInput"
+                            accept=".pdf,.doc,.docx"
+                            hidden
+                        >
+
+                        <p
+                            class="selected-file-name"
+                            id="selectedResumeName"
+                        ></p>
+                    </section>
+
+                    <section class="card information-card">
+                        <div class="card-heading">
+                            <div class="card-title">
+                                <i class="fa-solid fa-language"></i>
+                                <h2>Languages</h2>
+                            </div>
+
+                            <button class="icon-text-button">
+                                <i class="fa-solid fa-plus"></i>
+                                Add Language
+                            </button>
+                        </div>
+
+                        <div class="language-list">
+                            <div class="language-item">
+                                <div>
+                                    <span class="language-dot"></span>
+                                    English
+                                </div>
+
+                                <span class="language-level">Fluent</span>
+                            </div>
+
+                            <div class="language-item">
+                                <div>
+                                    <span class="language-dot"></span>
+                                    Malay
+                                </div>
+
+                                <span class="language-level">Native</span>
+                            </div>
+
+                            <div class="language-item">
+                                <div>
+                                    <span class="language-dot"></span>
+                                    Chinese
+                                </div>
+
+                                <span class="language-level">
+                                    Intermediate
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Job preferences -->
+            <section class="card preferences-card">
+                <div class="card-heading">
+                    <div class="card-title">
+                        <i class="fa-solid fa-sliders"></i>
+                        <h2>Job Preferences</h2>
+                    </div>
+
+                    <button class="icon-text-button">
+                        <i class="fa-solid fa-pen"></i>
+                        Edit Preferences
+                    </button>
+                </div>
+
+                <div class="preferences-grid">
+                    <div class="preference-item">
+                        <span>Job Categories</span>
+                        <strong>UI/UX Design, Product Design</strong>
+                    </div>
+
+                    <div class="preference-item">
+                        <span>Employment Type</span>
+                        <strong>Full-time</strong>
+                    </div>
+
+                    <div class="preference-item">
+                        <span>Work Location</span>
+                        <strong>Kuala Lumpur, Selangor</strong>
+                    </div>
+
+                    <div class="preference-item">
+                        <span>Expected Salary</span>
+                        <strong>RM 4,000 – RM 6,000</strong>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit profile modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2>Edit Profile</h2>
+                    <p>Update your personal and career information.</p>
+                </div>
+
+                <button
+                    class="modal-close-button"
+                    data-close-modal="profileModal"
+                    type="button"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="profileForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input
+                            type="text"
+                            id="fullName"
+                            value="John Doe"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title</label>
+                        <input
+                            type="text"
+                            id="jobTitle"
+                            value="UI/UX Designer"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value="johndoe@email.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input
+                            type="tel"
+                            id="phone"
+                            value="+60 12-345 6789"
+                        >
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="location">Location</label>
+                        <input
+                            type="text"
+                            id="location"
+                            value="Kuala Lumpur, Malaysia"
+                        >
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="aboutMe">About Me</label>
+                        <textarea
+                            id="aboutMe"
+                            rows="5"
+                        >Creative and detail-oriented UI/UX Designer with more than three years of experience designing user-centred digital products.</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        data-close-modal="profileModal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="primary-button">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-message" id="toastMessage">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Profile updated successfully.</span>
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='js/seeker_profile.js') }}"
+    ></script>
+</body>
+</html>
