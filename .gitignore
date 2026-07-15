@@ -12,3 +12,7 @@ venv/
 
 .vscode/
 .idea/
+
+*.db
+*.sqlite
+*.sqlite3
