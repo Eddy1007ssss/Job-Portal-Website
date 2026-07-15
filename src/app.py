@@ -2,21 +2,9 @@ import os
 import re
 import sqlite3
 
-from flask import (
-    Flask,
-    flash,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for
-)
+from flask import Flask, flash, redirect, render_template, request, session, url_for
 
-from werkzeug.security import (
-    check_password_hash,
-    generate_password_hash
-)
-
+from werkzeug.security import check_password_hash, generate_password_hash
 
 # ---------------------------------------------------------
 # Project paths
@@ -24,20 +12,11 @@ from werkzeug.security import (
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-TEMPLATE_FOLDER = os.path.join(
-    BASE_DIR,
-    "templates"
-)
+TEMPLATE_FOLDER = os.path.join(BASE_DIR, "templates")
 
-STATIC_FOLDER = os.path.join(
-    BASE_DIR,
-    "static"
-)
+STATIC_FOLDER = os.path.join(BASE_DIR, "static")
 
-DATABASE_PATH = os.path.join(
-    BASE_DIR,
-    "jobportal.db"
-)
+DATABASE_PATH = os.path.join(BASE_DIR, "jobportal.db")
 
 
 # ---------------------------------------------------------
@@ -48,7 +27,7 @@ app = Flask(
     __name__,
     template_folder=TEMPLATE_FOLDER,
     static_folder=STATIC_FOLDER,
-    static_url_path="/static"
+    static_url_path="/static",
 )
 
 app.secret_key = "job-portal-development-secret-key"
@@ -67,9 +46,7 @@ def get_db_connection():
 
     connection.row_factory = sqlite3.Row
 
-    connection.execute(
-        "PRAGMA foreign_keys = ON"
-    )
+    connection.execute("PRAGMA foreign_keys = ON")
 
     return connection
 
@@ -81,8 +58,7 @@ def init_database():
 
     connection = get_db_connection()
 
-    connection.execute(
-        """
+    connection.execute("""
         CREATE TABLE IF NOT EXISTS employers (
             employer_id INTEGER PRIMARY KEY AUTOINCREMENT,
             company_name TEXT NOT NULL,
@@ -91,11 +67,9 @@ def init_database():
             password_hash TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        """
-    )
+        """)
 
-    connection.execute(
-        """
+    connection.execute("""
         CREATE TABLE IF NOT EXISTS company_profiles (
             profile_id INTEGER PRIMARY KEY AUTOINCREMENT,
             employer_id INTEGER NOT NULL UNIQUE,
@@ -116,8 +90,7 @@ def init_database():
                 REFERENCES employers(employer_id)
                 ON DELETE CASCADE
         )
-        """
-    )
+        """)
 
     connection.commit()
     connection.close()
@@ -127,11 +100,10 @@ def init_database():
 # General routes
 # ---------------------------------------------------------
 
+
 @app.route("/health")
 def health():
-    return {
-        "status": "ok"
-    }, 200
+    return {"status": "ok"}, 200
 
 
 @app.route("/")
@@ -148,18 +120,15 @@ def dashboard():
 def seeker_profile():
     return render_template("seeker_profile.html")
 
+
 @app.route("/seeker/login")
 def seeker_login():
-    return redirect(
-        url_for("seeker_profile")
-    )
+    return redirect(url_for("seeker_profile"))
 
 
 @app.route("/seeker/register")
 def seeker_register():
-    return redirect(
-        url_for("seeker_profile")
-    )
+    return redirect(url_for("seeker_profile"))
 
 
 @app.route("/jobs")
@@ -211,10 +180,7 @@ def settings():
 def logout():
     session.clear()
 
-    flash(
-        "You have logged out successfully.",
-        "success"
-    )
+    flash("You have logged out successfully.", "success")
 
     return redirect(url_for("home"))
 
@@ -224,103 +190,58 @@ def logout():
 # User Story 1
 # ---------------------------------------------------------
 
-@app.route(
-    "/employer/register",
-    methods=["GET", "POST"]
-)
+
+@app.route("/employer/register", methods=["GET", "POST"])
 def employer_register():
 
     if request.method == "POST":
 
-        company_name = request.form.get(
-            "company_name",
-            ""
-        ).strip()
+        company_name = request.form.get("company_name", "").strip()
 
-        company_email = request.form.get(
-            "company_email",
-            ""
-        ).strip().lower()
+        company_email = request.form.get("company_email", "").strip().lower()
 
-        contact_number = request.form.get(
-            "contact_number",
-            ""
-        ).strip()
+        contact_number = request.form.get("contact_number", "").strip()
 
-        password = request.form.get(
-            "password",
-            ""
-        )
+        password = request.form.get("password", "")
 
-        confirm_password = request.form.get(
-            "confirm_password",
-            ""
-        )
+        confirm_password = request.form.get("confirm_password", "")
 
         errors = []
 
         # Company name validation
         if not company_name:
-            errors.append(
-                "Company name is required."
-            )
+            errors.append("Company name is required.")
 
         elif len(company_name) < 2:
-            errors.append(
-                "Company name must contain at least 2 characters."
-            )
+            errors.append("Company name must contain at least 2 characters.")
 
         # Email validation
-        email_pattern = (
-            r"^[A-Za-z0-9._%+-]+@"
-            r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-        )
+        email_pattern = r"^[A-Za-z0-9._%+-]+@" r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
 
         if not company_email:
-            errors.append(
-                "Company email is required."
-            )
+            errors.append("Company email is required.")
 
-        elif not re.match(
-            email_pattern,
-            company_email
-        ):
-            errors.append(
-                "Please enter a valid company email."
-            )
+        elif not re.match(email_pattern, company_email):
+            errors.append("Please enter a valid company email.")
 
         # Contact number validation
         phone_pattern = r"^[0-9+\-\s]{8,15}$"
 
         if not contact_number:
-            errors.append(
-                "Contact number is required."
-            )
+            errors.append("Contact number is required.")
 
-        elif not re.match(
-            phone_pattern,
-            contact_number
-        ):
-            errors.append(
-                "Contact number must contain between "
-                "8 and 15 numbers."
-            )
+        elif not re.match(phone_pattern, contact_number):
+            errors.append("Contact number must contain between " "8 and 15 numbers.")
 
         # Password validation
         if not password:
-            errors.append(
-                "Password is required."
-            )
+            errors.append("Password is required.")
 
         elif len(password) < 8:
-            errors.append(
-                "Password must contain at least 8 characters."
-            )
+            errors.append("Password must contain at least 8 characters.")
 
         if password != confirm_password:
-            errors.append(
-                "Passwords do not match."
-            )
+            errors.append("Passwords do not match.")
 
         connection = get_db_connection()
 
@@ -330,33 +251,26 @@ def employer_register():
             FROM employers
             WHERE company_email = ?
             """,
-            (company_email,)
+            (company_email,),
         ).fetchone()
 
         if existing_employer:
-            errors.append(
-                "This company email is already registered."
-            )
+            errors.append("This company email is already registered.")
 
         if errors:
             connection.close()
 
             for error in errors:
-                flash(
-                    error,
-                    "error"
-                )
+                flash(error, "error")
 
             return render_template(
                 "employer_register.html",
                 company_name=company_name,
                 company_email=company_email,
-                contact_number=contact_number
+                contact_number=contact_number,
             )
 
-        password_hash = generate_password_hash(
-            password
-        )
+        password_hash = generate_password_hash(password)
 
         cursor = connection.execute(
             """
@@ -368,12 +282,7 @@ def employer_register():
             )
             VALUES (?, ?, ?, ?)
             """,
-            (
-                company_name,
-                company_email,
-                contact_number,
-                password_hash
-            )
+            (company_name, company_email, contact_number, password_hash),
         )
 
         employer_id = cursor.lastrowid
@@ -390,49 +299,32 @@ def employer_register():
         flash(
             "Employer account created successfully. "
             "Please complete your company profile.",
-            "success"
+            "success",
         )
 
-        return redirect(
-            url_for("employer_company_profile")
-        )
+        return redirect(url_for("employer_company_profile"))
 
-    return render_template(
-        "employer_register.html"
-    )
+    return render_template("employer_register.html")
 
 
 # ---------------------------------------------------------
 # Employer login
 # ---------------------------------------------------------
 
-@app.route(
-    "/employer/login",
-    methods=["GET", "POST"]
-)
+
+@app.route("/employer/login", methods=["GET", "POST"])
 def employer_login():
 
     if request.method == "POST":
 
-        company_email = request.form.get(
-            "company_email",
-            ""
-        ).strip().lower()
+        company_email = request.form.get("company_email", "").strip().lower()
 
-        password = request.form.get(
-            "password",
-            ""
-        )
+        password = request.form.get("password", "")
 
         if not company_email or not password:
-            flash(
-                "Please enter your email and password.",
-                "error"
-            )
+            flash("Please enter your email and password.", "error")
 
-            return render_template(
-                "employer_login.html"
-            )
+            return render_template("employer_login.html")
 
         connection = get_db_connection()
 
@@ -442,79 +334,51 @@ def employer_login():
             FROM employers
             WHERE company_email = ?
             """,
-            (company_email,)
+            (company_email,),
         ).fetchone()
 
         connection.close()
 
         if employer is None:
-            flash(
-                "Employer account was not found.",
-                "error"
-            )
+            flash("Employer account was not found.", "error")
 
-            return render_template(
-                "employer_login.html"
-            )
+            return render_template("employer_login.html")
 
-        password_is_correct = check_password_hash(
-            employer["password_hash"],
-            password
-        )
+        password_is_correct = check_password_hash(employer["password_hash"], password)
 
         if not password_is_correct:
-            flash(
-                "Incorrect password.",
-                "error"
-            )
+            flash("Incorrect password.", "error")
 
-            return render_template(
-                "employer_login.html"
-            )
+            return render_template("employer_login.html")
 
         session.clear()
 
         session["employer_id"] = employer["employer_id"]
 
-        session["employer_company_name"] = (
-            employer["company_name"]
-        )
+        session["employer_company_name"] = employer["company_name"]
 
-        session["employer_email"] = (
-            employer["company_email"]
-        )
+        session["employer_email"] = employer["company_email"]
 
-        flash(
-            "Login successful.",
-            "success"
-        )
+        flash("Login successful.", "success")
 
-        return redirect(
-            url_for("employer_company_profile")
-        )
+        return redirect(url_for("employer_company_profile"))
 
-    return render_template(
-        "employer_login.html"
-    )
+    return render_template("employer_login.html")
 
 
 # ---------------------------------------------------------
 # Employer logout
 # ---------------------------------------------------------
 
+
 @app.route("/employer/logout")
 def employer_logout():
 
     session.clear()
 
-    flash(
-        "You have logged out successfully.",
-        "success"
-    )
+    flash("You have logged out successfully.", "success")
 
-    return redirect(
-        url_for("employer_login")
-    )
+    return redirect(url_for("employer_login"))
 
 
 # ---------------------------------------------------------
@@ -522,25 +386,16 @@ def employer_logout():
 # User Story 2
 # ---------------------------------------------------------
 
-@app.route(
-    "/employer/company-profile",
-    methods=["GET", "POST"]
-)
+
+@app.route("/employer/company-profile", methods=["GET", "POST"])
 def employer_company_profile():
 
-    employer_id = session.get(
-        "employer_id"
-    )
+    employer_id = session.get("employer_id")
 
     if employer_id is None:
-        flash(
-            "Please log in as an employer first.",
-            "error"
-        )
+        flash("Please log in as an employer first.", "error")
 
-        return redirect(
-            url_for("employer_login")
-        )
+        return redirect(url_for("employer_login"))
 
     connection = get_db_connection()
 
@@ -550,7 +405,7 @@ def employer_company_profile():
         FROM employers
         WHERE employer_id = ?
         """,
-        (employer_id,)
+        (employer_id,),
     ).fetchone()
 
     if employer is None:
@@ -558,14 +413,9 @@ def employer_company_profile():
 
         session.clear()
 
-        flash(
-            "Employer account was not found.",
-            "error"
-        )
+        flash("Employer account was not found.", "error")
 
-        return redirect(
-            url_for("employer_login")
-        )
+        return redirect(url_for("employer_login"))
 
     existing_profile = connection.execute(
         """
@@ -573,131 +423,69 @@ def employer_company_profile():
         FROM company_profiles
         WHERE employer_id = ?
         """,
-        (employer_id,)
+        (employer_id,),
     ).fetchone()
 
     if request.method == "POST":
 
-        company_name = request.form.get(
-            "company_name",
-            ""
-        ).strip()
+        company_name = request.form.get("company_name", "").strip()
 
-        industry = request.form.get(
-            "industry",
-            ""
-        ).strip()
+        industry = request.form.get("industry", "").strip()
 
-        address = request.form.get(
-            "address",
-            ""
-        ).strip()
+        address = request.form.get("address", "").strip()
 
-        company_description = request.form.get(
-            "company_description",
-            ""
-        ).strip()
+        company_description = request.form.get("company_description", "").strip()
 
-        contact_email = request.form.get(
-            "contact_email",
-            ""
-        ).strip().lower()
+        contact_email = request.form.get("contact_email", "").strip().lower()
 
-        contact_number = request.form.get(
-            "contact_number",
-            ""
-        ).strip()
+        contact_number = request.form.get("contact_number", "").strip()
 
-        website = request.form.get(
-            "website",
-            ""
-        ).strip()
+        website = request.form.get("website", "").strip()
 
-        company_size = request.form.get(
-            "company_size",
-            ""
-        ).strip()
+        company_size = request.form.get("company_size", "").strip()
 
-        logo_url = request.form.get(
-            "logo_url",
-            ""
-        ).strip()
+        logo_url = request.form.get("logo_url", "").strip()
 
-        banner_url = request.form.get(
-            "banner_url",
-            ""
-        ).strip()
+        banner_url = request.form.get("banner_url", "").strip()
 
         errors = []
 
         if not company_name:
-            errors.append(
-                "Company name is required."
-            )
+            errors.append("Company name is required.")
 
         if not industry:
-            errors.append(
-                "Industry is required."
-            )
+            errors.append("Industry is required.")
 
         if not address:
-            errors.append(
-                "Company address is required."
-            )
+            errors.append("Company address is required.")
 
         if not company_description:
-            errors.append(
-                "Company description is required."
-            )
+            errors.append("Company description is required.")
 
         elif len(company_description) < 30:
-            errors.append(
-                "Company description must contain "
-                "at least 30 characters."
-            )
+            errors.append("Company description must contain " "at least 30 characters.")
 
-        email_pattern = (
-            r"^[A-Za-z0-9._%+-]+@"
-            r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-        )
+        email_pattern = r"^[A-Za-z0-9._%+-]+@" r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
 
         if not contact_email:
-            errors.append(
-                "Contact email is required."
-            )
+            errors.append("Contact email is required.")
 
-        elif not re.match(
-            email_pattern,
-            contact_email
-        ):
-            errors.append(
-                "Please enter a valid contact email."
-            )
+        elif not re.match(email_pattern, contact_email):
+            errors.append("Please enter a valid contact email.")
 
         phone_pattern = r"^[0-9+\-\s]{8,15}$"
 
         if not contact_number:
-            errors.append(
-                "Contact number is required."
-            )
+            errors.append("Contact number is required.")
 
-        elif not re.match(
-            phone_pattern,
-            contact_number
-        ):
-            errors.append(
-                "Contact number must contain between "
-                "8 and 15 numbers."
-            )
+        elif not re.match(phone_pattern, contact_number):
+            errors.append("Contact number must contain between " "8 and 15 numbers.")
 
         if errors:
             connection.close()
 
             for error in errors:
-                flash(
-                    error,
-                    "error"
-                )
+                flash(error, "error")
 
             submitted_profile = {
                 "company_name": company_name,
@@ -709,13 +497,13 @@ def employer_company_profile():
                 "website": website,
                 "company_size": company_size,
                 "logo_url": logo_url,
-                "banner_url": banner_url
+                "banner_url": banner_url,
             }
 
             return render_template(
                 "employer_company_profile.html",
                 employer=employer,
-                profile=submitted_profile
+                profile=submitted_profile,
             )
 
         if existing_profile:
@@ -748,13 +536,11 @@ def employer_company_profile():
                     company_size,
                     logo_url,
                     banner_url,
-                    employer_id
-                )
+                    employer_id,
+                ),
             )
 
-            success_message = (
-                "Company profile updated successfully."
-            )
+            success_message = "Company profile updated successfully."
 
         else:
 
@@ -786,13 +572,11 @@ def employer_company_profile():
                     website,
                     company_size,
                     logo_url,
-                    banner_url
-                )
+                    banner_url,
+                ),
             )
 
-            success_message = (
-                "Company profile created successfully."
-            )
+            success_message = "Company profile created successfully."
 
         connection.execute(
             """
@@ -802,11 +586,7 @@ def employer_company_profile():
                 contact_number = ?
             WHERE employer_id = ?
             """,
-            (
-                company_name,
-                contact_number,
-                employer_id
-            )
+            (company_name, contact_number, employer_id),
         )
 
         connection.commit()
@@ -814,21 +594,14 @@ def employer_company_profile():
 
         session["employer_company_name"] = company_name
 
-        flash(
-            success_message,
-            "success"
-        )
+        flash(success_message, "success")
 
-        return redirect(
-            url_for("employer_company_preview")
-        )
+        return redirect(url_for("employer_company_preview"))
 
     connection.close()
 
     return render_template(
-        "employer_company_profile.html",
-        employer=employer,
-        profile=existing_profile
+        "employer_company_profile.html", employer=employer, profile=existing_profile
     )
 
 
@@ -837,24 +610,16 @@ def employer_company_profile():
 # User Story 3
 # ---------------------------------------------------------
 
-@app.route(
-    "/employer/company-profile/preview"
-)
+
+@app.route("/employer/company-profile/preview")
 def employer_company_preview():
 
-    employer_id = session.get(
-        "employer_id"
-    )
+    employer_id = session.get("employer_id")
 
     if employer_id is None:
-        flash(
-            "Please log in as an employer first.",
-            "error"
-        )
+        flash("Please log in as an employer first.", "error")
 
-        return redirect(
-            url_for("employer_login")
-        )
+        return redirect(url_for("employer_login"))
 
     connection = get_db_connection()
 
@@ -871,39 +636,26 @@ def employer_company_preview():
 
         WHERE company_profiles.employer_id = ?
         """,
-        (employer_id,)
+        (employer_id,),
     ).fetchone()
 
     connection.close()
 
     if profile is None:
-        flash(
-            "Please create your company profile "
-            "before previewing it.",
-            "error"
-        )
+        flash("Please create your company profile " "before previewing it.", "error")
 
-        return redirect(
-            url_for("employer_company_profile")
-        )
+        return redirect(url_for("employer_company_profile"))
 
-    return render_template(
-        "company_profile.html",
-        company=profile,
-        preview_mode=True
-    )
+    return render_template("company_profile.html", company=profile, preview_mode=True)
 
 
 # ---------------------------------------------------------
 # Public company profile displayed to job seekers
 # ---------------------------------------------------------
 
-@app.route(
-    "/companies/<int:employer_id>"
-)
-def public_company_profile(
-    employer_id
-):
+
+@app.route("/companies/<int:employer_id>")
+def public_company_profile(employer_id):
 
     connection = get_db_connection()
 
@@ -920,34 +672,25 @@ def public_company_profile(
 
         WHERE company_profiles.employer_id = ?
         """,
-        (employer_id,)
+        (employer_id,),
     ).fetchone()
 
     connection.close()
 
     if profile is None:
-        return render_template(
-            "error.html"
-        ), 404
+        return render_template("error.html"), 404
 
-    return render_template(
-        "company_profile.html",
-        company=profile,
-        preview_mode=False
-    )
+    return render_template("company_profile.html", company=profile, preview_mode=False)
 
 
 # ---------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------
 
+
 @app.errorhandler(404)
-def page_not_found(
-    error
-):
-    return render_template(
-        "error.html"
-    ), 404
+def page_not_found(error):
+    return render_template("error.html"), 404
 
 
 # ---------------------------------------------------------
@@ -962,15 +705,12 @@ if __name__ == "__main__":
     print("Base directory:", BASE_DIR)
     print("Static folder:", app.static_folder)
     print("Template folder:", app.template_folder)
-    print("Home template exists:", os.path.exists(
-        os.path.join(app.template_folder, "home.html")
-    ))
+    print(
+        "Home template exists:",
+        os.path.exists(os.path.join(app.template_folder, "home.html")),
+    )
     print("Database:", DATABASE_PATH)
     print("=" * 60)
     print(app.url_map)
 
-    app.run(
-        debug=True,
-        host="0.0.0.0",
-        port=8000
-    )
+    app.run(debug=True, host="0.0.0.0", port=8000)
