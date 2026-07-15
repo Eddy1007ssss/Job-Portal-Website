@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Registration | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/employer_auth.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+    <section class="auth-illustration">
+        <div class="illustration-content">
+            <div class="illustration-badge">Employer Portal</div>
+
+            <h1>Create Your Employer Account</h1>
+
+            <p>
+                Register your company and start finding suitable
+                candidates for your vacancies.
+            </p>
+
+            <div class="illustration-card">
+                <div class="illustration-icon">🏢</div>
+
+                <div>
+                    <strong>Build your company presence</strong>
+                    <span>
+                        Create a profile, post jobs and manage applications.
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-form-section">
+        <div class="auth-form-container">
+            <div class="auth-heading">
+                <span class="auth-label">FOR EMPLOYERS</span>
+                <h2>Sign Up</h2>
+
+                <p>
+                    Already have an account?
+                    <a href="{{ url_for('employer_login') }}">
+                        Login
+                    </a>
+                </p>
+            </div>
+            
+            <form
+                id="employerRegistrationForm"
+                method="POST"
+                action="{{ url_for('employer_register') }}"
+                novalidate
+            >
+                <div class="form-group">
+                    <label for="company_name">
+                        Company Name
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="company_name"
+                        name="company_name"
+                        value="{{ company_name or '' }}"
+                        placeholder="Enter your company name"
+                        maxlength="100"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="companyNameError"
+                    ></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="company_email">
+                        Company Email
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="email"
+                        id="company_email"
+                        name="company_email"
+                        value="{{ company_email or '' }}"
+                        placeholder="example@company.com"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="companyEmailError"
+                    ></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact_number">
+                        Contact Number
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="contact_number"
+                        name="contact_number"
+                        value="{{ contact_number or '' }}"
+                        placeholder="Example: 0123456789"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="contactNumberError"
+                    ></small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">
+                            Password
+                            <span class="required">*</span>
+                        </label>
+
+                        <div class="password-wrapper">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="At least 8 characters"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="password"
+                                aria-label="Show password"
+                            >
+                                Show
+                            </button>
+                        </div>
+
+                        <small
+                            class="field-error"
+                            id="passwordError"
+                        ></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">
+                            Confirm Password
+                            <span class="required">*</span>
+                        </label>
+
+                        <div class="password-wrapper">
+                            <input
+                                type="password"
+                                id="confirm_password"
+                                name="confirm_password"
+                                placeholder="Enter password again"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="confirm_password"
+                                aria-label="Show password"
+                            >
+                                Show
+                            </button>
+                        </div>
+
+                        <small
+                            class="field-error"
+                            id="confirmPasswordError"
+                        ></small>
+                    </div>
+                </div>
+
+                <label class="terms-row">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                    >
+
+                    <span>
+                        I agree to the
+                        <a href="#">Terms and Conditions</a>
+                        and
+                        <a href="#">Privacy Policy</a>.
+                    </span>
+                </label>
+
+                <small
+                    class="field-error"
+                    id="termsError"
+                ></small>
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Create Employer Account
+                </button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{{ url_for('static', filename='js/employer_register.js') }}"
+></script>
+{% endblock %}

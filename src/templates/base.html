@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="JobPortal connects job seekers with trusted employers."
+    >
+
+    <title>
+        {% block title %}JobPortal{% endblock %}
+    </title>
+
+    <!-- Google Font -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Shared CSS for all pages -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/base.css') }}"
+    >
+
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<!-- =====================================================
+     Header
+===================================================== -->
+<header class="main-header">
+    <div class="header-container">
+
+        <!-- Logo -->
+        <a
+            href="{{ url_for('home') }}"
+            class="logo"
+            aria-label="JobPortal homepage"
+        >
+            <span class="logo-icon">J</span>
+            <span class="logo-text">JobPortal</span>
+        </a>
+
+        <!-- Main navigation -->
+        <nav
+            class="main-navigation"
+            id="mainNavigation"
+            aria-label="Main navigation"
+        >
+            <a
+                href="{{ url_for('home') }}"
+                class="{% if request.endpoint == 'home' %}active{% endif %}"
+            >
+                Home
+            </a>
+
+            <a
+                href="{{ url_for('job_listings') }}"
+                class="{% if request.endpoint == 'job_listings' %}active{% endif %}"
+            >
+                Find Jobs
+            </a>
+
+            <a
+                href="{{ url_for('companies') }}"
+                class="{% if request.endpoint in [
+                    'companies',
+                    'public_company_profile'
+                ] %}active{% endif %}"
+            >
+                Companies
+            </a>
+
+            <a
+                href="{{ url_for('career_tips') }}"
+                class="{% if request.endpoint == 'career_tips' %}active{% endif %}"
+            >
+                Career Tips
+            </a>
+
+            <a
+                href="{{ url_for('about') }}"
+                class="{% if request.endpoint == 'about' %}active{% endif %}"
+            >
+                About Us
+            </a>
+        </nav>
+
+        <!-- Header actions -->
+        <div class="header-actions">
+
+            {% if session.get("employer_id") %}
+
+                <a
+                    href="{{ url_for('employer_company_profile') }}"
+                    class="header-profile-link"
+                >
+                    {{ session.get(
+                        "employer_company_name",
+                        "Employer Profile"
+                    ) }}
+                </a>
+
+                <a
+                    href="{{ url_for('employer_company_preview') }}"
+                    class="header-profile-link"
+                >
+                    Preview
+                </a>
+
+                <a
+                    href="{{ url_for('employer_logout') }}"
+                    class="header-button header-button-outline"
+                >
+                    Logout
+                </a>
+
+            {% else %}
+
+                <a
+                    href="{{ url_for('employer_login') }}"
+                    class="header-profile-link"
+                >
+                    Employer Login
+                </a>
+
+                <a
+                    href="{{ url_for('employer_register') }}"
+                    class="header-button"
+                >
+                    Register as Employer
+                </a>
+
+            {% endif %}
+
+        </div>
+
+        <!-- Mobile menu button -->
+        <button
+            type="button"
+            class="mobile-menu-button"
+            id="mobileMenuButton"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="mobileNavigation"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+    </div>
+
+    <!-- Mobile navigation -->
+    <div
+        class="mobile-navigation"
+        id="mobileNavigation"
+    >
+        <a href="{{ url_for('home') }}">
+            Home
+        </a>
+
+        <a href="{{ url_for('job_listings') }}">
+            Find Jobs
+        </a>
+
+        <a href="{{ url_for('companies') }}">
+            Companies
+        </a>
+
+        <a href="{{ url_for('career_tips') }}">
+            Career Tips
+        </a>
+
+        <a href="{{ url_for('about') }}">
+            About Us
+        </a>
+
+        {% if session.get("employer_id") %}
+
+            <div class="mobile-navigation-divider"></div>
+
+            <a href="{{ url_for('employer_company_profile') }}">
+                Manage Company Profile
+            </a>
+
+            <a href="{{ url_for('employer_company_preview') }}">
+                Preview Company Profile
+            </a>
+
+            <a
+                href="{{ url_for('employer_logout') }}"
+                class="mobile-logout-link"
+            >
+                Logout
+            </a>
+
+        {% else %}
+
+            <div class="mobile-navigation-divider"></div>
+
+            <a href="{{ url_for('employer_login') }}">
+                Employer Login
+            </a>
+
+            <a
+                href="{{ url_for('employer_register') }}"
+                class="mobile-register-link"
+            >
+                Register as Employer
+            </a>
+
+        {% endif %}
+    </div>
+</header>
+
+
+<!-- =====================================================
+     Flash messages
+===================================================== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        <div
+            class="global-flash-container"
+            aria-live="polite"
+        >
+
+            {% for category, message in messages %}
+
+                <div
+                    class="global-flash-message global-flash-{{ category }}"
+                    role="alert"
+                >
+                    <span class="flash-message-text">
+                        {{ message }}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="flash-close-button"
+                        aria-label="Close message"
+                    >
+                        &times;
+                    </button>
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+{% endwith %}
+
+
+<!-- =====================================================
+     Main page content
+===================================================== -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+
+<!-- =====================================================
+     Footer
+===================================================== -->
+<footer class="main-footer">
+    <div class="footer-container">
+
+        <div class="footer-company">
+            <a
+                href="{{ url_for('home') }}"
+                class="footer-logo"
+            >
+                <span class="logo-icon">J</span>
+                <span>JobPortal</span>
+            </a>
+
+            <p>
+                Connecting talented job seekers with trusted
+                employers across Malaysia.
+            </p>
+        </div>
+
+        <div class="footer-navigation">
+            <div class="footer-column">
+                <h3>Job Seekers</h3>
+
+                <a href="{{ url_for('job_listings') }}">
+                    Find Jobs
+                </a>
+
+                <a href="{{ url_for('companies') }}">
+                    Browse Companies
+                </a>
+
+                <a href="{{ url_for('career_tips') }}">
+                    Career Tips
+                </a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Employers</h3>
+
+                {% if session.get("employer_id") %}
+
+                    <a href="{{ url_for('employer_company_profile') }}">
+                        Manage Company Profile
+                    </a>
+
+                    <a href="{{ url_for('employer_company_preview') }}">
+                        Preview Profile
+                    </a>
+
+                    <a href="{{ url_for('employer_logout') }}">
+                        Logout
+                    </a>
+
+                {% else %}
+
+                    <a href="{{ url_for('employer_register') }}">
+                        Create Employer Account
+                    </a>
+
+                    <a href="{{ url_for('employer_login') }}">
+                        Employer Login
+                    </a>
+
+                {% endif %}
+            </div>
+
+            <div class="footer-column">
+                <h3>Company</h3>
+
+                <a href="{{ url_for('about') }}">
+                    About Us
+                </a>
+
+                <a href="#">
+                    Contact Us
+                </a>
+
+                <a href="#">
+                    Privacy Policy
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>
+            &copy; 2026 JobPortal. All rights reserved.
+        </p>
+    </div>
+</footer>
+
+
+<!-- =====================================================
+     Shared JavaScript
+===================================================== -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const mobileMenuButton =
+            document.getElementById("mobileMenuButton");
+
+        const mobileNavigation =
+            document.getElementById("mobileNavigation");
+
+        if (mobileMenuButton && mobileNavigation) {
+            mobileMenuButton.addEventListener("click", function () {
+                const isOpen =
+                    mobileNavigation.classList.toggle("open");
+
+                mobileMenuButton.classList.toggle(
+                    "active",
+                    isOpen
+                );
+
+                mobileMenuButton.setAttribute(
+                    "aria-expanded",
+                    String(isOpen)
+                );
+            });
+
+            mobileNavigation
+                .querySelectorAll("a")
+                .forEach(function (link) {
+                    link.addEventListener("click", function () {
+                        mobileNavigation.classList.remove("open");
+
+                        mobileMenuButton.classList.remove("active");
+
+                        mobileMenuButton.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    });
+                });
+        }
+
+        document
+            .querySelectorAll(".flash-close-button")
+            .forEach(function (button) {
+                button.addEventListener("click", function () {
+                    const flashMessage =
+                        button.closest(".global-flash-message");
+
+                    if (flashMessage) {
+                        flashMessage.remove();
+                    }
+                });
+            });
+
+        window.setTimeout(function () {
+            document
+                .querySelectorAll(".global-flash-message")
+                .forEach(function (flashMessage) {
+                    flashMessage.classList.add("flash-hiding");
+
+                    window.setTimeout(function () {
+                        flashMessage.remove();
+                    }, 300);
+                });
+        }, 5000);
+    });
+</script>
+
+<!-- Page-specific JavaScript -->
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

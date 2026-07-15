@@ -1,0 +1,740 @@
+/* =====================================================
+   General company profile styles
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   Employer company profile form page
+===================================================== */
+
+.employer-page {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    min-height: calc(100vh - 72px);
+    background: #f7f9fc;
+}
+
+.employer-sidebar {
+    padding: 28px 18px;
+    border-right: 1px solid #e5eaf1;
+    background: #ffffff;
+}
+
+.sidebar-heading {
+    padding: 0 12px 24px;
+    border-bottom: 1px solid #eef1f5;
+}
+
+.sidebar-heading span,
+.sidebar-heading strong {
+    display: block;
+}
+
+.sidebar-small-text {
+    margin-bottom: 4px;
+    color: #8a96a8;
+    font-size: 12px;
+}
+
+.sidebar-heading strong {
+    color: #172033;
+    font-size: 15px;
+}
+
+.sidebar-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.sidebar-navigation a {
+    padding: 11px 13px;
+    border-radius: 7px;
+    color: #586579;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.sidebar-navigation a:hover,
+.sidebar-navigation a.active {
+    color: #1769ff;
+    background: #eef5ff;
+}
+
+.profile-form-section {
+    width: 100%;
+    max-width: 1120px;
+    padding: 42px;
+    margin: 0 auto;
+}
+
+.page-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.section-label {
+    color: #1769ff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.page-heading-row h1 {
+    margin: 7px 0 8px;
+    color: #172033;
+    font-size: 30px;
+}
+
+.page-heading-row p {
+    margin: 0;
+    color: #758195;
+    font-size: 14px;
+}
+
+.preview-button,
+.edit-profile-button,
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    border: 1px solid #1769ff;
+    border-radius: 7px;
+    color: #1769ff;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
+}
+
+.preview-button:hover,
+.edit-profile-button:hover,
+.secondary-button:hover {
+    color: #ffffff;
+    background: #1769ff;
+}
+
+.profile-form-card {
+    overflow: hidden;
+    border: 1px solid #e3e8ef;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.form-section {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 38px;
+    padding: 30px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.form-section-heading h2 {
+    margin: 0 0 7px;
+    color: #172033;
+    font-size: 17px;
+}
+
+.form-section-heading p {
+    margin: 0;
+    color: #8590a2;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    min-width: 0;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #364152;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.required {
+    color: #dc2626;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid #d8e0ea;
+    border-radius: 7px;
+    outline: none;
+    color: #172033;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-group input,
+.form-group select {
+    min-height: 44px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #1769ff;
+    box-shadow: 0 0 0 3px rgba(23, 105, 255, 0.1);
+}
+
+.field-error {
+    display: block;
+    min-height: 16px;
+    margin-top: 5px;
+    color: #dc2626;
+    font-size: 12px;
+}
+
+.input-error {
+    border-color: #dc2626 !important;
+}
+
+.textarea-information {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+#descriptionCounter {
+    margin-top: 5px;
+    color: #98a2b3;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 22px 30px;
+}
+
+.save-button {
+    min-height: 43px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 7px;
+    color: #ffffff;
+    background: #1769ff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.save-button:hover {
+    background: #0f55d5;
+}
+
+
+/* =====================================================
+   Public company profile page
+===================================================== */
+
+.public-company-page {
+    min-height: calc(100vh - 72px);
+    padding: 1px 0 60px;
+    background: #f7f9fc;
+}
+
+
+/* Employer preview toolbar */
+
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: calc(100% - 36px);
+    max-width: 1180px;
+    padding: 14px 20px;
+    margin: 20px auto 0;
+    border: 1px solid #bfdbfe;
+    border-radius: 9px;
+    background: #eff6ff;
+}
+
+.preview-toolbar-text strong,
+.preview-toolbar-text span {
+    display: block;
+}
+
+.preview-toolbar-text strong {
+    margin-bottom: 3px;
+    color: #1e40af;
+    font-size: 14px;
+}
+
+.preview-toolbar-text span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+
+/* Company banner */
+
+.company-banner {
+    width: calc(100% - 36px);
+    max-width: 1180px;
+    height: 220px;
+    margin: 22px auto 0;
+    border-radius: 12px 12px 0 0;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(23, 105, 255, 0.95),
+            rgba(59, 130, 246, 0.55)
+        );
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.company-banner-image {
+    background-image:
+        linear-gradient(
+            rgba(15, 23, 42, 0.45),
+            rgba(15, 23, 42, 0.45)
+        ),
+        var(--company-banner-url);
+}
+
+
+/* Company header */
+
+.company-header-card {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    width: calc(100% - 36px);
+    max-width: 1180px;
+    min-height: 130px;
+    padding: 25px 30px;
+    margin: 0 auto;
+    border: 1px solid #e3e8ef;
+    border-top: 0;
+    background: #ffffff;
+}
+
+.company-logo {
+    display: grid;
+    flex: 0 0 88px;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    overflow: hidden;
+    border: 1px solid #e3e8ef;
+    border-radius: 50%;
+    color: #ffffff;
+    background: #1769ff;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.company-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.company-heading-information {
+    min-width: 0;
+    flex: 1;
+}
+
+.company-heading-information h1 {
+    margin: 0 0 13px;
+    color: #172033;
+    font-size: 28px;
+}
+
+.company-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+}
+
+.company-meta span,
+.company-meta a {
+    color: #748095;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.company-meta a:hover {
+    color: #1769ff;
+}
+
+.follow-button {
+    min-height: 42px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 7px;
+    color: #ffffff;
+    background: #1769ff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.follow-button:hover {
+    background: #0f55d5;
+}
+
+
+/* Company tabs */
+
+.company-tabs {
+    display: flex;
+    gap: 34px;
+    width: calc(100% - 36px);
+    max-width: 1180px;
+    padding: 0 30px;
+    margin: 0 auto;
+    border: 1px solid #e3e8ef;
+    border-top: 0;
+    background: #ffffff;
+}
+
+.company-tabs a {
+    padding: 17px 2px 14px;
+    border-bottom: 2px solid transparent;
+    color: #687386;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.company-tabs a.active,
+.company-tabs a:hover {
+    border-bottom-color: #1769ff;
+    color: #1769ff;
+}
+
+
+/* Company content */
+
+.company-content-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: 22px;
+    width: calc(100% - 36px);
+    max-width: 1180px;
+    margin: 22px auto 0;
+}
+
+.company-main-content,
+.company-side-content {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.company-content-card {
+    padding: 26px;
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.company-content-card h2 {
+    margin: 0 0 17px;
+    color: #172033;
+    font-size: 18px;
+}
+
+.company-description {
+    margin: 0;
+    color: #697588;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+
+/* Company information */
+
+.company-information-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
+
+.company-information-item {
+    padding: 16px;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.company-information-item span,
+.company-information-item strong,
+.company-information-item a {
+    display: block;
+}
+
+.company-information-item span {
+    margin-bottom: 7px;
+    color: #8a96a8;
+    font-size: 12px;
+}
+
+.company-information-item strong,
+.company-information-item a {
+    color: #364152;
+    font-size: 13px;
+    line-height: 1.5;
+    text-decoration: none;
+}
+
+.company-information-item a:hover {
+    color: #1769ff;
+}
+
+
+/* Contact information */
+
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 19px;
+}
+
+.contact-item {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.contact-item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.contact-item span,
+.contact-item a,
+.contact-item p {
+    display: block;
+}
+
+.contact-item span {
+    margin-bottom: 5px;
+    color: #8a96a8;
+    font-size: 12px;
+}
+
+.contact-item a,
+.contact-item p {
+    margin: 0;
+    color: #364152;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+}
+
+.contact-item a:hover {
+    color: #1769ff;
+}
+
+
+/* Benefits */
+
+.benefit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.benefit-item span {
+    display: grid;
+    flex: 0 0 24px;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: #1769ff;
+    background: #eef5ff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.benefit-item p {
+    margin: 0;
+    color: #536174;
+    font-size: 13px;
+}
+
+
+/* Available jobs */
+
+.content-card-heading p {
+    margin: -8px 0 20px;
+    color: #8a96a8;
+    font-size: 13px;
+}
+
+.empty-jobs {
+    padding: 32px;
+    border: 1px dashed #d7dee8;
+    border-radius: 9px;
+    text-align: center;
+}
+
+.empty-jobs-icon {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 30px;
+}
+
+.empty-jobs strong {
+    display: block;
+    color: #364152;
+    font-size: 14px;
+}
+
+.empty-jobs p {
+    margin: 7px 0 0;
+    color: #8a96a8;
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   Responsive layout
+===================================================== */
+
+@media (max-width: 950px) {
+    .employer-page {
+        grid-template-columns: 1fr;
+    }
+
+    .employer-sidebar {
+        display: none;
+    }
+
+    .form-section {
+        grid-template-columns: 1fr;
+    }
+
+    .company-content-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .profile-form-section {
+        padding: 26px 18px;
+    }
+
+    .page-heading-row {
+        flex-direction: column;
+    }
+
+    .form-grid,
+    .company-information-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-section {
+        padding: 22px;
+    }
+
+    .preview-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .company-header-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .company-heading-information h1 {
+        font-size: 24px;
+    }
+
+    .company-tabs {
+        gap: 25px;
+        overflow-x: auto;
+        padding: 0 20px;
+    }
+
+    .company-content-card {
+        padding: 21px;
+    }
+}
+
+@media (max-width: 430px) {
+    .company-banner,
+    .company-header-card,
+    .company-tabs,
+    .company-content-layout,
+    .preview-toolbar {
+        width: calc(100% - 24px);
+    }
+
+    .company-banner {
+        height: 170px;
+    }
+
+    .company-header-card {
+        padding: 22px;
+    }
+
+    .company-logo {
+        flex-basis: 75px;
+        width: 75px;
+        height: 75px;
+        font-size: 30px;
+    }
+}

@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ company["company_name"] }} | JobPortal
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/company_profile.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<div class="public-company-page">
+
+    <!-- Employer preview notification -->
+    {% if preview_mode %}
+        <div class="preview-toolbar">
+            <div class="preview-toolbar-text">
+                <strong>Employer Preview</strong>
+
+                <span>
+                    This is how your company profile appears to job seekers.
+                </span>
+            </div>
+
+            <a
+                href="{{ url_for('employer_company_profile') }}"
+                class="edit-profile-button"
+            >
+                Edit Company Profile
+            </a>
+        </div>
+    {% endif %}
+
+
+    <!-- Company banner -->
+    {% if company["banner_url"] %}
+        <section
+            class="company-banner company-banner-image"
+            style="--company-banner-url: url(&quot;{{ company['banner_url'] }}&quot;);"
+            aria-label="{{ company['company_name'] }} banner"
+        ></section>
+    {% else %}
+        <section
+            class="company-banner"
+            aria-label="{{ company['company_name'] }} banner"
+        ></section>
+    {% endif %}
+
+
+    <!-- Company heading -->
+    <section class="company-header-card">
+
+        <div class="company-logo">
+            {% if company["logo_url"] %}
+                <img
+                    src="{{ company['logo_url'] }}"
+                    alt="{{ company['company_name'] }} logo"
+                >
+            {% else %}
+                <span>
+                    {{ company["company_name"][0] | upper }}
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="company-heading-information">
+            <h1>
+                {{ company["company_name"] }}
+            </h1>
+
+            <div class="company-meta">
+
+                <span>
+                    📍 {{ company["address"] }}
+                </span>
+
+                {% if company["website"] %}
+                    <a
+                        href="{{ company['website'] }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        🌐 Website
+                    </a>
+                {% endif %}
+
+                {% if company["company_size"] %}
+                    <span>
+                        👥 {{ company["company_size"] }}
+                    </span>
+                {% endif %}
+
+                <span>
+                    🏷️ {{ company["industry"] }}
+                </span>
+
+            </div>
+        </div>
+
+        {% if not preview_mode %}
+            <button
+                type="button"
+                class="follow-button"
+            >
+                Follow Company
+            </button>
+        {% endif %}
+
+    </section>
+
+
+    <!-- Company navigation tabs -->
+    <nav
+        class="company-tabs"
+        aria-label="Company profile navigation"
+    >
+        <a
+            href="#overview"
+            class="active"
+        >
+            Overview
+        </a>
+
+        <a href="#jobs">
+            Jobs
+        </a>
+
+        <a href="#about">
+            About
+        </a>
+
+        <a href="#contact">
+            Contact
+        </a>
+    </nav>
+
+
+    <!-- Main company content -->
+    <section class="company-content-layout">
+
+        <div class="company-main-content">
+
+            <!-- About company -->
+            <article
+                id="overview"
+                class="company-content-card"
+            >
+                <h2>
+                    About {{ company["company_name"] }}
+                </h2>
+
+                <p class="company-description">
+                    {{ company["company_description"] }}
+                </p>
+            </article>
+
+
+            <!-- Company information -->
+            <article
+                id="about"
+                class="company-content-card"
+            >
+                <h2>
+                    Company Information
+                </h2>
+
+                <div class="company-information-grid">
+
+                    <div class="company-information-item">
+                        <span>
+                            Industry
+                        </span>
+
+                        <strong>
+                            {{ company["industry"] }}
+                        </strong>
+                    </div>
+
+                    <div class="company-information-item">
+                        <span>
+                            Company Size
+                        </span>
+
+                        <strong>
+                            {{ company["company_size"] or "Not provided" }}
+                        </strong>
+                    </div>
+
+                    <div class="company-information-item">
+                        <span>
+                            Location
+                        </span>
+
+                        <strong>
+                            {{ company["address"] }}
+                        </strong>
+                    </div>
+
+                    <div class="company-information-item">
+                        <span>
+                            Website
+                        </span>
+
+                        {% if company["website"] %}
+                            <a
+                                href="{{ company['website'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Visit website
+                            </a>
+                        {% else %}
+                            <strong>
+                                Not provided
+                            </strong>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </article>
+
+
+            <!-- Available jobs -->
+            <article
+                id="jobs"
+                class="company-content-card"
+            >
+                <div class="content-card-heading">
+                    <div>
+                        <h2>
+                            Available Jobs
+                        </h2>
+
+                        <p>
+                            Current vacancies at
+                            {{ company["company_name"] }}.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="empty-jobs">
+                    <span class="empty-jobs-icon">
+                        💼
+                    </span>
+
+                    <strong>
+                        No jobs have been posted yet.
+                    </strong>
+
+                    <p>
+                        New vacancies from this company will appear here.
+                    </p>
+                </div>
+            </article>
+
+        </div>
+
+
+        <!-- Right side information -->
+        <aside class="company-side-content">
+
+            <!-- Contact information -->
+            <article
+                id="contact"
+                class="company-content-card"
+            >
+                <h2>
+                    Contact Information
+                </h2>
+
+                <div class="contact-list">
+
+                    <div class="contact-item">
+                        <span>
+                            Email
+                        </span>
+
+                        <a href="mailto:{{ company['contact_email'] }}">
+                            {{ company["contact_email"] }}
+                        </a>
+                    </div>
+
+                    <div class="contact-item">
+                        <span>
+                            Phone
+                        </span>
+
+                        <a href="tel:{{ company['contact_number'] }}">
+                            {{ company["contact_number"] }}
+                        </a>
+                    </div>
+
+                    <div class="contact-item">
+                        <span>
+                            Address
+                        </span>
+
+                        <p>
+                            {{ company["address"] }}
+                        </p>
+                    </div>
+
+                </div>
+            </article>
+
+
+            <!-- Company benefits -->
+            <article class="company-content-card">
+                <h2>
+                    Why Join Us?
+                </h2>
+
+                <div class="benefit-list">
+
+                    <div class="benefit-item">
+                        <span>✓</span>
+
+                        <p>
+                            Career development opportunities
+                        </p>
+                    </div>
+
+                    <div class="benefit-item">
+                        <span>✓</span>
+
+                        <p>
+                            Professional working environment
+                        </p>
+                    </div>
+
+                    <div class="benefit-item">
+                        <span>✓</span>
+
+                        <p>
+                            Work with an experienced team
+                        </p>
+                    </div>
+
+                </div>
+            </article>
+
+        </aside>
+
+    </section>
+
+</div>
+{% endblock %}
