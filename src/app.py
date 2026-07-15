@@ -57,13 +57,6 @@ app.secret_key = "job-portal-development-secret-key"
 # Database configuration
 # ---------------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DATABASE_PATH = os.path.join(
-    BASE_DIR,
-    "jobportal.db"
-)
-
 
 def get_db_connection():
     """
@@ -138,7 +131,7 @@ def init_database():
 def health():
     return {
         "status": "ok"
-    }
+    }, 200
 
 
 @app.route("/")
@@ -979,5 +972,5 @@ if __name__ == "__main__":
     app.run(
         debug=True,
         host="0.0.0.0",
-        port=5000
+        port=8000
     )
