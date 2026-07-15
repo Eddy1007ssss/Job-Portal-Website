@@ -1,10 +1,14 @@
-from flask import Flask, render_template, redirect, url_for
+from pathlib import Path
+
+from flask import Flask, redirect, render_template, url_for
+
+BASE_DIR = Path(__file__).resolve().parent
 
 app = Flask(
     __name__,
-    template_folder="templates",
-    static_folder="static",
-    static_url_path="/static"
+    template_folder=str(BASE_DIR / "templates"),
+    static_folder=str(BASE_DIR / "static"),
+    static_url_path="/static",
 )
 
 
@@ -68,14 +72,15 @@ def settings():
     return "<h1>Settings</h1>"
 
 
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
+
 @app.route("/logout")
 def logout():
     return redirect(url_for("home"))
 
 
 if __name__ == "__main__":
-    print("Static folder:", app.static_folder)
-    print("Template folder:", app.template_folder)
-    print(app.url_map)
-
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
