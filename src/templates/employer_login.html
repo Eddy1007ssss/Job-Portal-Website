@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "auth_base.html" %}
 
 {% block title %}Employer Login | JobPortal{% endblock %}
 
@@ -43,7 +43,7 @@
 
                 <p>
                     Do not have an account?
-                    <a href="{{ url_for('employer_register') }}">
+                    <a href="{{ url_for('employer.register') }}">
                         Sign up
                     </a>
                 </p>
@@ -51,7 +51,7 @@
 
             <form
                 method="POST"
-                action="{{ url_for('employer_login') }}"
+                action="{{ url_for('employer.login') }}"
             >
                 <div class="form-group">
                     <label for="company_email">

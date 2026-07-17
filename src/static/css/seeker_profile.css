@@ -1272,3 +1272,146 @@ a {
         align-items: flex-start;
     }
 }
+
+/* Functional controls */
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.small-action-button {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+}
+
+.small-action-button:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.small-action-button.danger:hover {
+    color: var(--danger);
+    background: #fff1f1;
+}
+
+.flash-container {
+    position: fixed;
+    top: 85px;
+    right: 25px;
+    z-index: 3000;
+    width: min(380px, calc(100% - 30px));
+}
+
+.flash-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 14px 17px;
+    border-radius: 9px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    font-size: 13px;
+}
+
+.flash-success {
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+
+.flash-error {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.empty-state {
+    color: #7a8290;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.upload-form {
+    margin-top: 15px;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 11px 12px;
+    color: var(--text-primary);
+    background: var(--white);
+    border: 1px solid #dce1e9;
+    border-radius: 7px;
+    outline: none;
+    font-size: 13px;
+}
+
+.form-group select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(23, 105, 255, 0.1);
+}
+
+.skill-tag {
+    cursor: pointer;
+}
+
+.skill-tag i {
+    margin-left: 5px;
+}
+
+.certificate-item {
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.checkbox-row input {
+    width: auto;
+}
+
+.certificate-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.certificate-file-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    color: var(--primary);
+    font-size: 11px;
+}
+
+.flash-message {
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+}
+
+.flash-message.hide {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.form-group input:disabled {
+    color: #9ca3af;
+    background: #f3f4f6;
+    cursor: not-allowed;
+}

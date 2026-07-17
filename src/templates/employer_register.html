@@ -1,5 +1,4 @@
-{% extends "base.html" %}
-
+{% extends "auth_base.html" %}
 {% block title %}Employer Registration | JobPortal{% endblock %}
 
 {% block extra_css %}
@@ -43,7 +42,7 @@
 
                 <p>
                     Already have an account?
-                    <a href="{{ url_for('employer_login') }}">
+                    <a href="{{ url_for('employer.login') }}">
                         Login
                     </a>
                 </p>
@@ -52,7 +51,7 @@
             <form
                 id="employerRegistrationForm"
                 method="POST"
-                action="{{ url_for('employer_register') }}"
+                action="{{ url_for('employer.register') }}"
                 novalidate
             >
                 <div class="form-group">

@@ -1,0 +1,80 @@
+<header class="employer-header">
+    <div class="employer-header-container">
+
+        <!-- Employer portal logo -->
+        <a
+            href="{{ url_for('employer.company_preview') }}"
+            class="employer-header-logo"
+            aria-label="Go to company profile"
+        >
+            <span class="employer-logo-icon">
+                J
+            </span>
+
+            <span class="employer-logo-text">
+                JobPortal
+            </span>
+
+            <span class="employer-portal-label">
+                Employer
+            </span>
+        </a>
+
+
+        <!-- Right-side employer information -->
+        <div class="employer-header-actions">
+
+            <div class="employer-header-account">
+
+                <!-- Company avatar -->
+                <div
+                    class="employer-account-avatar"
+                    aria-hidden="true"
+                >
+                    {{
+                        session.get(
+                            "employer_company_name",
+                            "E"
+                        )[0] | upper
+                    }}
+                </div>
+
+
+                <!-- Company information -->
+                <div class="employer-account-information">
+
+                    <strong class="employer-account-name">
+                        {{
+                            session.get(
+                                "employer_company_name",
+                                "Employer"
+                            )
+                        }}
+                    </strong>
+
+                    <span class="employer-account-email">
+                        {{
+                            session.get(
+                                "employer_email",
+                                ""
+                            )
+                        }}
+                    </span>
+
+                </div>
+
+
+                <!-- Logout -->
+                <a
+                    href="{{ url_for('employer.logout') }}"
+                    class="employer-header-logout"
+                >
+                    Logout
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+</header>

@@ -1,270 +1,172 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const mobileMenuButton = document.getElementById("mobileMenuButton");
     const sidebar = document.getElementById("sidebar");
-    const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-    const profileMenuButton = document.getElementById("profileMenuButton");
+    const overlay = document.getElementById("sidebarOverlay");
+    const mobileButton = document.getElementById("mobileMenuButton");
+    const profileButton = document.getElementById("profileMenuButton");
     const profileDropdown = document.getElementById("profileDropdown");
-    const profileMenu = profileMenuButton?.closest(".profile-menu");
-
-    const editProfileButton = document.getElementById("editProfileButton");
-    const profileModal = document.getElementById("profileModal");
-    const profileForm = document.getElementById("profileForm");
-
-    const profileImageInput =
-        document.getElementById("profileImageInput");
-
-    const profilePicture =
-        document.getElementById("profilePicture");
-
-    const resumeInput =
-        document.getElementById("resumeInput");
-
+    const imageInput = document.getElementById("profileImageInput");
+    const imageForm = document.getElementById("profileImageForm");
+    const resumeInput = document.getElementById("resumeInput");
     const selectedResumeName =
         document.getElementById("selectedResumeName");
-
-    const toastMessage =
-        document.getElementById("toastMessage");
-
-    function openSidebar() {
-        sidebar?.classList.add("open");
-        sidebarOverlay?.classList.add("show");
-        document.body.style.overflow = "hidden";
-    }
+    const currentlyWorking =
+        document.getElementById("currentlyWorking");
+    const experienceEndDate =
+        document.getElementById("experienceEndDate");
 
     function closeSidebar() {
         sidebar?.classList.remove("open");
-        sidebarOverlay?.classList.remove("show");
-        document.body.style.overflow = "";
+        overlay?.classList.remove("show");
+        mobileButton?.setAttribute("aria-expanded", "false");
     }
 
-    mobileMenuButton?.addEventListener("click", () => {
-        if (sidebar?.classList.contains("open")) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
+    mobileButton?.addEventListener("click", () => {
+        sidebar?.classList.add("open");
+        overlay?.classList.add("show");
+        mobileButton.setAttribute("aria-expanded", "true");
     });
 
-    sidebarOverlay?.addEventListener("click", closeSidebar);
+    overlay?.addEventListener("click", closeSidebar);
 
-    document.querySelectorAll(".sidebar-item").forEach((sidebarItem) => {
-        sidebarItem.addEventListener("click", () => {
-            if (window.innerWidth <= 960) {
-                closeSidebar();
-            }
-        });
-    });
-
-    profileMenuButton?.addEventListener("click", (event) => {
+    profileButton?.addEventListener("click", (event) => {
         event.stopPropagation();
-
-        profileDropdown?.classList.toggle("show");
-        profileMenu?.classList.toggle("open");
+        const isOpen = profileDropdown?.classList.toggle("show");
+        profileButton.setAttribute("aria-expanded", String(Boolean(isOpen)));
     });
 
     document.addEventListener("click", (event) => {
-        if (!profileMenu?.contains(event.target)) {
-            profileDropdown?.classList.remove("show");
-            profileMenu?.classList.remove("open");
+        if (
+            profileDropdown &&
+            profileButton &&
+            !profileDropdown.contains(event.target) &&
+            !profileButton.contains(event.target)
+        ) {
+            profileDropdown.classList.remove("show");
+            profileButton.setAttribute("aria-expanded", "false");
         }
     });
 
-    function openModal(modalElement) {
-        if (!modalElement) {
-            return;
-        }
+    document
+        .querySelectorAll("[data-open-modal]")
+        .forEach((button) => {
+            button.addEventListener("click", () => {
+                const modal = document.getElementById(
+                    button.dataset.openModal
+                );
 
-        modalElement.classList.add("show");
-        document.body.style.overflow = "hidden";
-    }
-
-    function closeModal(modalElement) {
-        if (!modalElement) {
-            return;
-        }
-
-        modalElement.classList.remove("show");
-        document.body.style.overflow = "";
-    }
-
-    editProfileButton?.addEventListener("click", () => {
-        openModal(profileModal);
-    });
-
-    document.querySelectorAll("[data-modal]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const modalId = button.dataset.modal;
-            const modal = document.getElementById(modalId);
-
-            openModal(modal);
+                modal?.classList.add("show");
+                document.body.classList.add("modal-open");
+            });
         });
-    });
 
     document
         .querySelectorAll("[data-close-modal]")
         .forEach((button) => {
             button.addEventListener("click", () => {
-                const modalId = button.dataset.closeModal;
-                const modal = document.getElementById(modalId);
+                const modal = document.getElementById(
+                    button.dataset.closeModal
+                );
 
-                closeModal(modal);
+                modal?.classList.remove("show");
+                document.body.classList.remove("modal-open");
             });
         });
 
-    profileModal?.addEventListener("click", (event) => {
-        if (event.target === profileModal) {
-            closeModal(profileModal);
-        }
-    });
+    document
+        .querySelectorAll(".modal-overlay")
+        .forEach((modal) => {
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    modal.classList.remove("show");
+                    document.body.classList.remove("modal-open");
+                }
+            });
+        });
 
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            closeModal(profileModal);
-            closeSidebar();
+    imageInput?.addEventListener("change", () => {
+        const file = imageInput.files?.[0];
 
-            profileDropdown?.classList.remove("show");
-            profileMenu?.classList.remove("open");
-        }
-    });
-
-    profileImageInput?.addEventListener("change", () => {
-        const selectedFile = profileImageInput.files[0];
-
-        if (!selectedFile) {
+        if (!file) {
             return;
         }
 
-        if (!selectedFile.type.startsWith("image/")) {
-            alert("Please select a valid image file.");
-            profileImageInput.value = "";
+        const validTypes = [
+            "image/png",
+            "image/jpeg",
+            "image/webp",
+        ];
+
+        if (!validTypes.includes(file.type)) {
+            alert("Please select a PNG, JPG, JPEG or WEBP image.");
+            imageInput.value = "";
             return;
         }
 
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            profilePicture.src = event.target.result;
-            showToast("Profile picture updated.");
-        };
-
-        reader.readAsDataURL(selectedFile);
+        imageForm?.submit();
     });
 
     resumeInput?.addEventListener("change", () => {
-        const selectedFile = resumeInput.files[0];
+        const file = resumeInput.files?.[0];
 
-        if (!selectedFile) {
+        if (!file) {
             selectedResumeName.textContent = "";
             return;
         }
 
-        const maximumSize = 5 * 1024 * 1024;
+        const extension = file.name
+            .split(".")
+            .pop()
+            ?.toLowerCase();
 
-        if (selectedFile.size > maximumSize) {
-            alert("The resume file must be smaller than 5 MB.");
+        if (!["pdf", "doc", "docx"].includes(extension)) {
+            alert("Please select a PDF, DOC or DOCX file.");
             resumeInput.value = "";
             selectedResumeName.textContent = "";
             return;
         }
 
         selectedResumeName.textContent =
-            `Selected file: ${selectedFile.name}`;
+            `Selected: ${file.name}. Uploading...`;
 
-        showToast("Resume selected successfully.");
+        resumeInput.form?.submit();
     });
 
-    profileForm?.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const fullName =
-            document.getElementById("fullName").value.trim();
-
-        const jobTitle =
-            document.getElementById("jobTitle").value.trim();
-
-        const email =
-            document.getElementById("email").value.trim();
-
-        const phone =
-            document.getElementById("phone").value.trim();
-
-        const location =
-            document.getElementById("location").value.trim();
-
-        const aboutMe =
-            document.getElementById("aboutMe").value.trim();
-
-        const nameHeading =
-            document.querySelector(".profile-name-row h2");
-
-        const titleHeading =
-            document.querySelector(".profile-information h3");
-
-        const contactParagraphs =
-            document.querySelectorAll(".contact-information p");
-
-        const aboutDescription =
-            document.querySelector(".about-description");
-
-        if (nameHeading) {
-            nameHeading.textContent = fullName;
-        }
-
-        if (titleHeading) {
-            titleHeading.textContent = jobTitle;
-        }
-
-        if (contactParagraphs.length >= 3) {
-            contactParagraphs[0].innerHTML =
-                `<i class="fa-solid fa-location-dot"></i>${escapeHTML(location)}`;
-
-            contactParagraphs[1].innerHTML =
-                `<i class="fa-regular fa-envelope"></i>${escapeHTML(email)}`;
-
-            contactParagraphs[2].innerHTML =
-                `<i class="fa-solid fa-phone"></i>${escapeHTML(phone)}`;
-        }
-
-        if (aboutDescription) {
-            aboutDescription.textContent = aboutMe;
-        }
-
-        const profileMenuName =
-            document.querySelector(".profile-menu-name");
-
-        if (profileMenuName) {
-            profileMenuName.textContent = fullName;
-        }
-
-        closeModal(profileModal);
-        showToast("Profile updated successfully.");
-    });
-
-    function showToast(message) {
-        if (!toastMessage) {
+    currentlyWorking?.addEventListener("change", () => {
+        if (!experienceEndDate) {
             return;
         }
 
-        const messageElement =
-            toastMessage.querySelector("span");
+        experienceEndDate.disabled = currentlyWorking.checked;
 
-        if (messageElement) {
-            messageElement.textContent = message;
+        if (currentlyWorking.checked) {
+            experienceEndDate.value = "";
+        }
+    });
+
+    document
+        .querySelectorAll(".flash-message")
+        .forEach((message) => {
+            window.setTimeout(() => {
+                message.classList.add("hide");
+
+                window.setTimeout(() => {
+                    message.remove();
+                }, 300);
+            }, 3000);
+        });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+            return;
         }
 
-        toastMessage.classList.add("show");
+        closeSidebar();
+        profileDropdown?.classList.remove("show");
 
-        window.clearTimeout(window.profileToastTimer);
+        document
+            .querySelectorAll(".modal-overlay.show")
+            .forEach((modal) => modal.classList.remove("show"));
 
-        window.profileToastTimer = window.setTimeout(() => {
-            toastMessage.classList.remove("show");
-        }, 3000);
-    }
-
-    function escapeHTML(value) {
-        const temporaryElement = document.createElement("div");
-        temporaryElement.textContent = value;
-        return temporaryElement.innerHTML;
-    }
+        document.body.classList.remove("modal-open");
+    });
 });

@@ -1,39 +1,632 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}Home | JobPortal{% endblock %}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/home.css') }}"
+>
+{% endblock %}
 
-    <title>JobPortal Home</title>
-</head>
+{% block content %}
 
-<body>
+<!-- Hero section -->
+<section class="hero-section">
+    <div class="home-container hero-container">
 
-    <h1>JobPortal Homepage</h1>
+        <div class="hero-content">
+            <span class="hero-badge">
+                <i class="fa-solid fa-briefcase"></i>
+                Malaysia Job Portal
+            </span>
 
-    <p>The Flask homepage is working.</p>
+            <h1>
+                Find the right job and
+                <span>build your future.</span>
+            </h1>
 
-    <a href="{{ url_for('seeker_profile') }}">
-        Open Seeker Profile
-    </a>
+            <p class="hero-description">
+                Discover career opportunities from trusted companies,
+                apply for suitable vacancies and manage your job
+                applications in one place.
+            </p>
 
-    <br><br>
+            <form
+                class="job-search-card"
+                method="GET"
+                action="{{ url_for('jobs.list_jobs') }}"
+            >
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass"></i>
 
-    <a href="{{ url_for('employer_login') }}">
-        Employer Login
-    </a>
+                    <input
+                        type="search"
+                        name="keyword"
+                        placeholder="Job title, skill or company"
+                        aria-label="Search by job title, skill or company"
+                    >
+                </div>
 
-    <br><br>
+                <div class="search-divider"></div>
 
-    <a href="{{ url_for('employer_register') }}">
-        Register as Employer
-    </a>
+                <div class="search-field">
+                    <i class="fa-solid fa-location-dot"></i>
 
-</body>
+                    <input
+                        type="text"
+                        name="location"
+                        placeholder="Location"
+                        aria-label="Search by location"
+                    >
+                </div>
 
-</html>
+                <button type="submit" class="search-button">
+                    Search Jobs
+                </button>
+            </form>
+
+            <div class="popular-searches">
+                <span>Popular:</span>
+
+                <a
+                    href="{{ url_for('jobs.list_jobs', keyword='Software Developer') }}"
+                >
+                    Software Developer
+                </a>
+
+                <a
+                    href="{{ url_for('jobs.list_jobs', keyword='UI UX Designer') }}"
+                >
+                    UI/UX Designer
+                </a>
+
+                <a
+                    href="{{ url_for('jobs.list_jobs', keyword='Data Analyst') }}"
+                >
+                    Data Analyst
+                </a>
+            </div>
+
+            <div class="hero-actions">
+                <a
+                    href="{{ url_for('jobs.list_jobs') }}"
+                    class="primary-home-button"
+                >
+                    Browse Jobs
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+                {% if session.get("employer_id") %}
+
+                    <a
+                        href="{{ url_for('employer.company_profile') }}"
+                        class="secondary-home-button"
+                    >
+                        Manage Company
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for('employer.register') }}"
+                        class="secondary-home-button"
+                    >
+                        Post a Job
+                    </a>
+
+                {% endif %}
+            </div>
+        </div>
+
+
+        <div class="hero-visual">
+            <div class="hero-background-shape"></div>
+
+            <div class="main-visual-card">
+                <div class="visual-card-header">
+                    <div>
+                        <span class="small-label">
+                            Recommended for you
+                        </span>
+
+                        <h2>Explore New Opportunities</h2>
+                    </div>
+
+                    <span class="briefcase-icon">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </span>
+                </div>
+
+                <div class="sample-job-card">
+                    <div class="sample-company-logo">
+                        T
+                    </div>
+
+                    <div class="sample-job-information">
+                        <strong>Software Engineer</strong>
+                        <span>TechNova Solutions</span>
+
+                        <div class="sample-job-details">
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i>
+                                Kuala Lumpur
+                            </span>
+
+                            <span>
+                                <i class="fa-solid fa-clock"></i>
+                                Full Time
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="sample-save-button"
+                        aria-label="Save job"
+                    >
+                        <i class="fa-regular fa-bookmark"></i>
+                    </button>
+                </div>
+
+                <div class="sample-job-card">
+                    <div class="sample-company-logo second-logo">
+                        D
+                    </div>
+
+                    <div class="sample-job-information">
+                        <strong>UI/UX Designer</strong>
+                        <span>Digital Creative Studio</span>
+
+                        <div class="sample-job-details">
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i>
+                                Penang
+                            </span>
+
+                            <span>
+                                <i class="fa-solid fa-clock"></i>
+                                Hybrid
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="sample-save-button"
+                        aria-label="Save job"
+                    >
+                        <i class="fa-regular fa-bookmark"></i>
+                    </button>
+                </div>
+
+                <a
+                    href="{{ url_for('jobs.list_jobs') }}"
+                    class="view-more-jobs"
+                >
+                    View all available jobs
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="floating-card floating-card-left">
+                <span class="floating-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </span>
+
+                <div>
+                    <strong>Application submitted</strong>
+                    <span>Your application was successful.</span>
+                </div>
+            </div>
+
+            <div class="floating-card floating-card-right">
+                <span class="floating-icon purple-icon">
+                    <i class="fa-solid fa-users"></i>
+                </span>
+
+                <div>
+                    <strong>Trusted employers</strong>
+                    <span>Discover verified companies.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- Statistics section -->
+<section class="statistics-section">
+    <div class="home-container statistics-grid">
+
+        <div class="statistic-item">
+            <strong>1,200+</strong>
+            <span>Available Jobs</span>
+        </div>
+
+        <div class="statistic-item">
+            <strong>500+</strong>
+            <span>Trusted Companies</span>
+        </div>
+
+        <div class="statistic-item">
+            <strong>8,000+</strong>
+            <span>Registered Job Seekers</span>
+        </div>
+
+        <div class="statistic-item">
+            <strong>3,500+</strong>
+            <span>Successful Applications</span>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- Categories section -->
+<section class="home-section category-section">
+    <div class="home-container">
+
+        <div class="section-heading">
+            <div>
+                <span class="section-label">
+                    EXPLORE OPPORTUNITIES
+                </span>
+
+                <h2>Browse Jobs by Category</h2>
+
+                <p>
+                    Find vacancies based on your preferred career field.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('jobs.list_jobs') }}"
+                class="section-link"
+            >
+                View all categories
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+
+
+        <div class="category-grid">
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Information Technology') }}"
+                class="category-card"
+            >
+                <span class="category-icon">
+                    <i class="fa-solid fa-laptop-code"></i>
+                </span>
+
+                <div>
+                    <h3>Information Technology</h3>
+                    <p>Software, web and technical careers</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Finance') }}"
+                class="category-card"
+            >
+                <span class="category-icon green-category">
+                    <i class="fa-solid fa-chart-line"></i>
+                </span>
+
+                <div>
+                    <h3>Finance</h3>
+                    <p>Banking, accounting and investment</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Healthcare') }}"
+                class="category-card"
+            >
+                <span class="category-icon red-category">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </span>
+
+                <div>
+                    <h3>Healthcare</h3>
+                    <p>Medical and healthcare opportunities</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Education') }}"
+                class="category-card"
+            >
+                <span class="category-icon purple-category">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </span>
+
+                <div>
+                    <h3>Education</h3>
+                    <p>Teaching and academic positions</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Marketing') }}"
+                class="category-card"
+            >
+                <span class="category-icon orange-category">
+                    <i class="fa-solid fa-bullhorn"></i>
+                </span>
+
+                <div>
+                    <h3>Marketing</h3>
+                    <p>Advertising and digital marketing</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs', category='Engineering') }}"
+                class="category-card"
+            >
+                <span class="category-icon cyan-category">
+                    <i class="fa-solid fa-gears"></i>
+                </span>
+
+                <div>
+                    <h3>Engineering</h3>
+                    <p>Technical and engineering careers</p>
+                </div>
+
+                <i class="fa-solid fa-chevron-right category-arrow"></i>
+            </a>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- How it works -->
+<section class="home-section how-it-works-section">
+    <div class="home-container">
+
+        <div class="center-section-heading">
+            <span class="section-label">
+                SIMPLE AND CONVENIENT
+            </span>
+
+            <h2>Start Your Career in Three Steps</h2>
+
+            <p>
+                Create your account, discover suitable jobs and submit
+                your applications.
+            </p>
+        </div>
+
+
+        <div class="steps-grid">
+
+            <div class="step-card">
+                <span class="step-number">01</span>
+
+                <span class="step-icon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </span>
+
+                <h3>Create Your Profile</h3>
+
+                <p>
+                    Register an account and provide your personal,
+                    educational and employment information.
+                </p>
+            </div>
+
+
+            <div class="step-connector">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <div class="step-card">
+                <span class="step-number">02</span>
+
+                <span class="step-icon">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+
+                <h3>Search for Jobs</h3>
+
+                <p>
+                    Search and filter available vacancies based on your
+                    skills, interests and preferred location.
+                </p>
+            </div>
+
+
+            <div class="step-connector">
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+
+
+            <div class="step-card">
+                <span class="step-number">03</span>
+
+                <span class="step-icon">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </span>
+
+                <h3>Submit Applications</h3>
+
+                <p>
+                    Upload your resume, submit your application and
+                    track its current recruitment status.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- Employer section -->
+<section class="employer-callout-section">
+    <div class="home-container employer-callout-container">
+
+        <div class="employer-callout-content">
+            <span class="employer-callout-label">
+                FOR EMPLOYERS
+            </span>
+
+            <h2>Find suitable candidates for your company.</h2>
+
+            <p>
+                Create your company profile, publish job vacancies
+                and manage candidate applications using one
+                convenient platform.
+            </p>
+
+            <div class="employer-benefits">
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Create a professional company profile
+                </span>
+
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Post and manage job vacancies
+                </span>
+
+                <span>
+                    <i class="fa-solid fa-circle-check"></i>
+                    Review applicant resumes
+                </span>
+            </div>
+
+            <div class="employer-callout-actions">
+
+                {% if session.get("employer_id") %}
+
+                    <a
+                        href="{{ url_for('employer.company_profile') }}"
+                        class="white-button"
+                    >
+                        Manage Company Profile
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for('employer.register') }}"
+                        class="white-button"
+                    >
+                        Create Employer Account
+                    </a>
+
+                    <a
+                        href="{{ url_for('employer.login') }}"
+                        class="transparent-button"
+                    >
+                        Employer Login
+                    </a>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+
+        <div class="employer-callout-visual">
+            <div class="employer-dashboard-card">
+
+                <div class="dashboard-card-header">
+                    <div>
+                        <span>Employer Dashboard</span>
+                        <strong>Recruitment Overview</strong>
+                    </div>
+
+                    <span class="dashboard-profile-icon">
+                        <i class="fa-solid fa-building"></i>
+                    </span>
+                </div>
+
+                <div class="dashboard-stat-grid">
+                    <div>
+                        <span>Active Jobs</span>
+                        <strong>12</strong>
+                    </div>
+
+                    <div>
+                        <span>Applications</span>
+                        <strong>148</strong>
+                    </div>
+
+                    <div>
+                        <span>Interviews</span>
+                        <strong>24</strong>
+                    </div>
+                </div>
+
+                <div class="application-progress-card">
+                    <div class="application-profile">
+                        <span class="candidate-avatar">EC</span>
+
+                        <div>
+                            <strong>Software Engineer</strong>
+                            <span>New candidate application</span>
+                        </div>
+                    </div>
+
+                    <span class="application-status">
+                        New
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- Final call to action -->
+<section class="final-cta-section">
+    <div class="home-container final-cta-container">
+
+        <div>
+            <span class="section-label">
+                START YOUR JOURNEY
+            </span>
+
+            <h2>Ready to find your next opportunity?</h2>
+
+            <p>
+                Browse available jobs and take the next step
+                towards your career goals.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('jobs.list_jobs') }}"
+            class="primary-home-button"
+        >
+            Find Jobs Now
+            <i class="fa-solid fa-arrow-right"></i>
+        </a>
+
+    </div>
+</section>
+
+{% endblock %}

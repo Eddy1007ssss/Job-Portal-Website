@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="JobPortal employer management portal"
+    >
+
+    <title>
+        {% block title %}
+            Employer Portal | JobPortal
+        {% endblock %}
+    </title>
+
+
+    <!-- Google Font -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- Font Awesome icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+
+    <!-- Employer shared CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/employer_base.css') }}"
+    >
+
+
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+
+
+<body>
+
+    <!-- ==========================================
+         Employer header
+    =========================================== -->
+    {% include "components/employer_header.html" %}
+
+
+    <!-- ==========================================
+         Flash messages
+    =========================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <div
+                class="employer-flash-container"
+                id="employerFlashContainer"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+
+                {% for category, message in messages %}
+
+                    <div
+                        class="
+                            employer-flash-message
+                            employer-flash-{{ category }}
+                        "
+                        role="alert"
+                    >
+
+                        <div class="employer-flash-content">
+
+                            {% if category == "success" %}
+
+                                <i
+                                    class="fa-solid fa-circle-check"
+                                    aria-hidden="true"
+                                ></i>
+
+                            {% elif category == "error" %}
+
+                                <i
+                                    class="fa-solid fa-circle-exclamation"
+                                    aria-hidden="true"
+                                ></i>
+
+                            {% elif category == "warning" %}
+
+                                <i
+                                    class="fa-solid fa-triangle-exclamation"
+                                    aria-hidden="true"
+                                ></i>
+
+                            {% else %}
+
+                                <i
+                                    class="fa-solid fa-circle-info"
+                                    aria-hidden="true"
+                                ></i>
+
+                            {% endif %}
+
+
+                            <span class="employer-flash-text">
+                                {{ message }}
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="employer-flash-close"
+                            aria-label="Close message"
+                        >
+                            <i
+                                class="fa-solid fa-xmark"
+                                aria-hidden="true"
+                            ></i>
+                        </button>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ==========================================
+         Mobile sidebar button
+    =========================================== -->
+    <button
+        type="button"
+        class="employer-sidebar-toggle"
+        id="employerSidebarToggle"
+        aria-label="Open employer menu"
+        aria-controls="employerSidebarWrapper"
+        aria-expanded="false"
+    >
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+
+    <!-- ==========================================
+         Employer page structure
+    =========================================== -->
+    <div class="employer-page-layout">
+
+        <!-- Sidebar wrapper -->
+        <div
+            class="employer-sidebar-wrapper"
+            id="employerSidebarWrapper"
+        >
+            {% include "components/employer_sidebar.html" %}
+        </div>
+
+
+        <!-- Mobile overlay -->
+        <div
+            class="employer-sidebar-overlay"
+            id="employerSidebarOverlay"
+            aria-hidden="true"
+        ></div>
+
+
+        <!-- Main content -->
+        <main class="employer-main-content">
+
+            <div class="employer-content-container">
+                {% block content %}{% endblock %}
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- ==========================================
+         Shared employer JavaScript
+    =========================================== -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebarToggle = document.getElementById(
+                "employerSidebarToggle"
+            );
+
+            const sidebarWrapper = document.getElementById(
+                "employerSidebarWrapper"
+            );
+
+            const sidebarOverlay = document.getElementById(
+                "employerSidebarOverlay"
+            );
+
+
+            function openSidebar() {
+                if (!sidebarWrapper || !sidebarOverlay) {
+                    return;
+                }
+
+                sidebarWrapper.classList.add("open");
+                sidebarOverlay.classList.add("show");
+
+                document.body.classList.add(
+                    "employer-sidebar-open"
+                );
+
+                sidebarOverlay.setAttribute(
+                    "aria-hidden",
+                    "false"
+                );
+
+                if (sidebarToggle) {
+                    sidebarToggle.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+
+                    sidebarToggle.setAttribute(
+                        "aria-label",
+                        "Close employer menu"
+                    );
+                }
+            }
+
+
+            function closeSidebar() {
+                if (!sidebarWrapper || !sidebarOverlay) {
+                    return;
+                }
+
+                sidebarWrapper.classList.remove("open");
+                sidebarOverlay.classList.remove("show");
+
+                document.body.classList.remove(
+                    "employer-sidebar-open"
+                );
+
+                sidebarOverlay.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+                if (sidebarToggle) {
+                    sidebarToggle.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                    sidebarToggle.setAttribute(
+                        "aria-label",
+                        "Open employer menu"
+                    );
+                }
+            }
+
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener(
+                    "click",
+                    function () {
+                        const sidebarIsOpen =
+                            sidebarWrapper &&
+                            sidebarWrapper.classList.contains(
+                                "open"
+                            );
+
+                        if (sidebarIsOpen) {
+                            closeSidebar();
+                        } else {
+                            openSidebar();
+                        }
+                    }
+                );
+            }
+
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener(
+                    "click",
+                    closeSidebar
+                );
+            }
+
+
+            document.addEventListener(
+                "keydown",
+                function (event) {
+                    if (event.key === "Escape") {
+                        closeSidebar();
+                    }
+                }
+            );
+
+
+            const sidebarLinks =
+                document.querySelectorAll(
+                    ".employer-sidebar-link, " +
+                    ".employer-sidebar-logout"
+                );
+
+            sidebarLinks.forEach(function (link) {
+                link.addEventListener(
+                    "click",
+                    function () {
+                        if (
+                            window.innerWidth <= 900 &&
+                            !link.classList.contains("disabled")
+                        ) {
+                            closeSidebar();
+                        }
+                    }
+                );
+            });
+
+
+            const disabledLinks =
+                document.querySelectorAll(
+                    ".employer-sidebar-link.disabled"
+                );
+
+            disabledLinks.forEach(function (link) {
+                link.addEventListener(
+                    "click",
+                    function (event) {
+                        event.preventDefault();
+                    }
+                );
+            });
+
+
+            const flashCloseButtons =
+                document.querySelectorAll(
+                    ".employer-flash-close"
+                );
+
+            flashCloseButtons.forEach(function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        const flashMessage =
+                            button.closest(
+                                ".employer-flash-message"
+                            );
+
+                        if (flashMessage) {
+                            flashMessage.classList.add(
+                                "closing"
+                            );
+
+                            window.setTimeout(function () {
+                                flashMessage.remove();
+                            }, 250);
+                        }
+                    }
+                );
+            });
+
+
+            const successMessages =
+                document.querySelectorAll(
+                    ".employer-flash-success"
+                );
+
+            successMessages.forEach(function (message) {
+                window.setTimeout(function () {
+                    if (!message.isConnected) {
+                        return;
+                    }
+
+                    message.classList.add("closing");
+
+                    window.setTimeout(function () {
+                        message.remove();
+                    }, 250);
+                }, 5000);
+            });
+
+
+            window.addEventListener(
+                "resize",
+                function () {
+                    if (window.innerWidth > 900) {
+                        closeSidebar();
+                    }
+                }
+            );
+        });
+    </script>
+
+
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+
+</body>
+
+</html>
