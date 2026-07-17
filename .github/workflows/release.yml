@@ -2,8 +2,8 @@ name: Release Docker Image
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - "**"
 
 permissions:
   contents: read
