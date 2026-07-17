@@ -7,7 +7,6 @@ from src.employer import employer_bp
 from src.jobs import jobs_bp
 from src.seeker import seeker_bp
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -90,11 +89,6 @@ def resume():
 @app.route("/settings")
 def settings():
     return "<h1>Settings</h1>"
-
-
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template("error.html"), 404
 
 
 if __name__ == "__main__":

@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+
+{% block title %}Post a Job | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/job_posting.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<div class="job-posting-page">
+
+    <div class="page-header">
+        <div>
+            <p class="page-label">Employer Dashboard</p>
+            <h1>Edit Job</h1>
+            <p>
+                Enter the job information below to publish a new vacancy.
+            </p>
+        </div>
+
+        <a href="{{ url_for('jobs.list_jobs') }}" class="view-jobs-btn">
+            View My Jobs
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form
+    id="jobPostingForm"
+    class="job-posting-form"
+    method="POST"
+    action="{{ url_for('jobs.edit_job', job_id=job['job_id']) }}"
+>
+    >
+
+        <!-- Basic Job Information -->
+        <section class="form-section">
+
+            <div class="section-heading">
+                <span class="section-number">1</span>
+
+                <div>
+                    <h2>Basic Job Information</h2>
+                    <p>Provide the main details of the vacancy.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group full-width">
+                    <label for="job_title">
+                        Job Title <span>*</span>
+                    </label>
+
+                        <input
+                            type="text"
+                            id="job_title"
+                            name="job_title"
+                            value="{{ form_data.get('job_title', job['title']) if form_data else job['title'] }}"
+                            placeholder="Example: Software Engineer"
+                            maxlength="100"
+                            required
+                            >
+
+                    <small class="error-message" id="jobTitleError"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">
+                        Department <span>*</span>
+                    </label>
+
+                    <input
+    type="text"
+    id="department"
+    name="department"
+    value="{{ form_data.get('department', '') if form_data else '' }}"
+    ...
+>
+                </div>
+
+                <div class="form-group">
+                    <label for="job_category">
+                        Job Category <span>*</span>
+                    </label>
+
+                   <select
+    id="job_category"
+    name="job_category"
+    required
+>
+    <option value="">Select a category</option>
+
+    <option value="Information Technology"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Information Technology" %}selected{% endif %}>
+        Information Technology
+    </option>
+
+    <option value="Engineering"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Engineering" %}selected{% endif %}>
+        Engineering
+    </option>
+
+    <option value="Accounting"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Accounting" %}selected{% endif %}>
+        Accounting
+    </option>
+
+    <option value="Marketing"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Marketing" %}selected{% endif %}>
+        Marketing
+    </option>
+
+    <option value="Human Resources"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Human Resources" %}selected{% endif %}>
+        Human Resources
+    </option>
+
+    <option value="Sales"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Sales" %}selected{% endif %}>
+        Sales
+    </option>
+
+    <option value="Customer Service"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Customer Service" %}selected{% endif %}>
+        Customer Service
+    </option>
+
+    <option value="Administration"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Administration" %}selected{% endif %}>
+        Administration
+    </option>
+
+    <option value="Other"
+        {% if (form_data.get('job_category') if form_data else job['category']) == "Other" %}selected{% endif %}>
+        Other
+    </option>
+</select>
+                </div>
+
+                <div class="form-group">
+                    <label for="employment_type">
+                        Employment Type <span>*</span>
+                    </label>
+
+                    <select
+    id="employment_type"
+    name="employment_type"
+    required
+>
+    <option value="">Select employment type</option>
+
+    <option value="Full-time"
+        {% if (form_data.get('employment_type') if form_data else job['employment_type']) == "Full-time" %}selected{% endif %}>
+        Full-time
+    </option>
+
+    <option value="Part-time"
+        {% if (form_data.get('employment_type') if form_data else job['employment_type']) == "Part-time" %}selected{% endif %}>
+        Part-time
+    </option>
+
+    <option value="Contract"
+        {% if (form_data.get('employment_type') if form_data else job['employment_type']) == "Contract" %}selected{% endif %}>
+        Contract
+    </option>
+
+    <option value="Internship"
+        {% if (form_data.get('employment_type') if form_data else job['employment_type']) == "Internship" %}selected{% endif %}>
+        Internship
+    </option>
+
+    <option value="Temporary"
+        {% if (form_data.get('employment_type') if form_data else job['employment_type']) == "Temporary" %}selected{% endif %}>
+        Temporary
+    </option>
+</select>
+                </div>
+
+                <div class="form-group">
+                    <label for="workplace_type">
+                        Workplace Type <span>*</span>
+                    </label>
+
+                    <select
+    id="workplace_type"
+    name="workplace_type"
+    required
+>
+    <option value="">Select workplace type</option>
+
+    <option value="On-site"
+        {% if (form_data.get('workplace_type') if form_data else job['work_mode']) == "On-site" %}selected{% endif %}>
+        On-site
+    </option>
+
+    <option value="Remote"
+        {% if (form_data.get('workplace_type') if form_data else job['work_mode']) == "Remote" %}selected{% endif %}>
+        Remote
+    </option>
+
+    <option value="Hybrid"
+        {% if (form_data.get('workplace_type') if form_data else job['work_mode']) == "Hybrid" %}selected{% endif %}>
+        Hybrid
+    </option>
+</select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="location">
+                        Job Location <span>*</span>
+                    </label>
+
+                    <input
+    type="text"
+    id="location"
+    name="location"
+    value="{{ form_data.get('location', job['location']) if form_data else job['location'] }}"
+    placeholder="Example: Kuala Lumpur, Malaysia"
+    maxlength="150"
+    required
+>
+
+            </div>
+        </section>
+
+        <!-- Salary and Experience -->
+        <section class="form-section">
+
+            <div class="section-heading">
+                <span class="section-number">2</span>
+
+                <div>
+                    <h2>Salary and Experience</h2>
+                    <p>Specify the salary range and experience level.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="minimum_salary">
+                        Minimum Salary (RM)
+                    </label>
+
+                    <input
+    type="number"
+    id="minimum_salary"
+    name="minimum_salary"
+    value="{{ form_data.get('minimum_salary', job['salary_min']) if form_data else job['salary_min'] }}"
+    min="0"
+    step="100"
+>
+                </div>
+
+                <div class="form-group">
+                    <label for="maximum_salary">
+                        Maximum Salary (RM)
+                    </label>
+
+                    <input
+    type="number"
+    id="maximum_salary"
+    name="maximum_salary"
+    value="{{ form_data.get('maximum_salary', job['salary_max']) if form_data else job['salary_max'] }}"
+    min="0"
+    step="100"
+>
+
+                    <small
+                        class="error-message"
+                        id="salaryError"
+                    ></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="salary_type">
+                        Salary Type
+                    </label>
+
+                    <select id="salary_type" name="salary_type">
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                        <option value="Hourly">Hourly</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="experience_level">
+                        Experience Level <span>*</span>
+                    </label>
+
+                    <select
+    id="experience_level"
+    name="experience_level"
+    required
+>
+    <option value="">Select experience level</option>
+
+    <option value="Fresh Graduate"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Fresh Graduate" %}selected{% endif %}>
+        Fresh Graduate
+    </option>
+
+    <option value="Entry Level"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Entry Level" %}selected{% endif %}>
+        Entry Level
+    </option>
+
+    <option value="Junior Level"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Junior Level" %}selected{% endif %}>
+        Junior Level
+    </option>
+
+    <option value="Mid Level"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Mid Level" %}selected{% endif %}>
+        Mid Level
+    </option>
+
+    <option value="Senior Level"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Senior Level" %}selected{% endif %}>
+        Senior Level
+    </option>
+
+    <option value="Manager"
+        {% if (form_data.get('experience_level') if form_data else job['experience_level']) == "Manager" %}selected{% endif %}>
+        Manager
+    </option>
+</select>
+                </div>
+
+                <div class="form-group">
+                    <label for="minimum_experience">
+                        Minimum Experience
+                    </label>
+
+                    <select
+                        id="minimum_experience"
+                        name="minimum_experience"
+                    >
+                        <option value="No experience required">
+                            No experience required
+                        </option>
+                        <option value="Less than 1 year">
+                            Less than 1 year
+                        </option>
+                        <option value="1 year">1 year</option>
+                        <option value="2 years">2 years</option>
+                        <option value="3 years">3 years</option>
+                        <option value="4 years">4 years</option>
+                        <option value="5 years or more">
+                            5 years or more
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="vacancies">
+                        Number of Vacancies <span>*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vacancies"
+                        name="vacancies"
+                        value="1"
+                        min="1"
+                        max="100"
+                        required
+                    >
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Job Description -->
+        <section class="form-section">
+
+            <div class="section-heading">
+                <span class="section-number">3</span>
+
+                <div>
+                    <h2>Job Description</h2>
+                    <p>Explain the role and its main responsibilities.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group full-width">
+                    <label for="job_description">
+                        Job Description <span>*</span>
+                    </label>
+
+                    <textarea
+    id="job_description"
+    name="job_description"
+    rows="8"
+    maxlength="3000"
+    placeholder="Describe the job position, daily tasks and responsibilities..."
+    required
+>{{ form_data.get('job_description', job['description']) if form_data else job['description'] }}</textarea>
+
+                    <div class="textarea-footer">
+                        <small
+                            class="error-message"
+                            id="descriptionError"
+                        ></small>
+
+                        <small>
+                            <span id="descriptionCount">0</span>/3000
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="requirements">
+                        Job Requirements <span>*</span>
+                    </label>
+
+                    <textarea
+    id="requirements"
+    name="requirements"
+    rows="7"
+    maxlength="2000"
+    required
+>{{ form_data.get('requirements', job['requirements']) if form_data else job['requirements'] }}</textarea>
+
+                    <div class="textarea-footer">
+                        <small
+                            class="error-message"
+                            id="requirementsError"
+                        ></small>
+
+                        <small>
+                            <span id="requirementsCount">0</span>/2000
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="skills">
+                        Required Skills
+                    </label>
+
+                    <input
+                        type="text"
+                        id="skills"
+                        name="skills"
+                        placeholder="Example: Python, Flask, SQL, HTML, CSS"
+                        maxlength="300"
+                    >
+
+                    <small>
+                        Separate each skill using a comma.
+                    </small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="benefits">
+                        Employee Benefits
+                    </label>
+
+                    <textarea
+    id="benefits"
+    name="benefits"
+    rows="5"
+    maxlength="1500"
+>{{ form_data.get('benefits', job['benefits']) if form_data else job['benefits'] }}</textarea>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Application Details -->
+        <section class="form-section">
+
+            <div class="section-heading">
+                <span class="section-number">4</span>
+
+                <div>
+                    <h2>Application Details</h2>
+                    <p>Set the application deadline and job status.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="application_deadline">
+                        Application Deadline <span>*</span>
+                    </label>
+
+                    <input
+    type="date"
+    id="application_deadline"
+    name="application_deadline"
+    value="{{ form_data.get('application_deadline', job['application_deadline']) if form_data else job['application_deadline'] }}"
+    required
+>
+
+                    <small
+                        class="error-message"
+                        id="deadlineError"
+                    ></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="job_status">
+                        Job Status <span>*</span>
+                    </label>
+
+                    <select
+                        id="job_status"
+                        name="job_status"
+                        required
+                    >
+                        <option value="Active">Publish immediately</option>
+                        <option value="Draft">Save as draft</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            id="application_email"
+                            name="application_email"
+                            value="1"
+                            checked
+                        >
+
+                        <span>
+                            Send me an email when a job seeker submits an
+                            application.
+                        </span>
+                    </label>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button
+                type="reset"
+                class="secondary-btn"
+                id="resetButton"
+            >
+                Cancel
+            </button>
+
+            <div class="right-actions">
+                <button
+                    type="submit"
+                    name="action"
+                    value="draft"
+                    class="draft-btn"
+                >
+                    Save Draft
+                </button>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="publish"
+                    class="primary-btn"
+                >
+                    Update Job
+                </button>
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/job_posting.js') }}"></script>
+{% endblock %}

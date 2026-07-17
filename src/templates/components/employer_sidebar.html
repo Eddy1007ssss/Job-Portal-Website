@@ -33,21 +33,46 @@
             </a>
 
 
-            <!-- Job listings -->
-            <a
-                href="#"
-                class="employer-sidebar-link disabled"
-                aria-disabled="true"
-                title="This module will be available in a later sprint."
-            >
-                <span class="employer-sidebar-icon">
-                    <i class="fa-solid fa-briefcase"></i>
-                </span>
+           <!-- Job Listings -->
+<a
+    href="{{ url_for('jobs.employer_jobs') }}"
+    class="
+        employer-sidebar-link
+        {% if request.endpoint in [
+            'jobs.employer_jobs',
+            'jobs.edit_job'
+        ] %}
+            active
+        {% endif %}
+    "
+>
+    <span class="employer-sidebar-icon">
+        <i class="fa-solid fa-briefcase"></i>
+    </span>
 
-                <span class="employer-sidebar-link-text">
-                    Job Listings
-                </span>
-            </a>
+    <span class="employer-sidebar-link-text">
+        Job Listings
+    </span>
+</a>
+
+<!-- Post Job -->
+<a
+    href="{{ url_for('jobs.post_job') }}"
+    class="
+        employer-sidebar-link
+        {% if request.endpoint == 'jobs.post_job' %}
+            active
+        {% endif %}
+    "
+>
+    <span class="employer-sidebar-icon">
+        <i class="fa-solid fa-circle-plus"></i>
+    </span>
+
+    <span class="employer-sidebar-link-text">
+        Post Job
+    </span>
+</a>
 
 
             <!-- Applications -->

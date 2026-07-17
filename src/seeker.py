@@ -1,18 +1,23 @@
-import os
 import sqlite3
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
 from flask import (
-    Blueprint, current_app, flash, redirect, render_template,
-    request, send_from_directory, session, url_for,
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    session,
+    url_for,
 )
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 
 from src.database import get_db_connection
-
 
 seeker_bp = Blueprint("seeker", __name__)
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
@@ -62,7 +67,6 @@ def _validate_issue_month(issue_date: str) -> str | None:
     return None
 
 
-
 def _parse_month(value: str) -> date | None:
     """Convert an HTML month value (YYYY-MM) into a date."""
 
@@ -72,7 +76,7 @@ def _parse_month(value: str) -> date | None:
     try:
         year_text, month_text = value.split("-", 1)
         return date(int(year_text), int(month_text), 1)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -100,6 +104,7 @@ def _validate_date_range(
         return "The end date cannot be earlier than the start date."
 
     return None
+
 
 def ensure_demo_seeker() -> int:
     db = get_db_connection()
@@ -155,8 +160,12 @@ def ensure_demo_seeker() -> int:
         VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
-            seeker_id, "UI/UX Designer", "ABC Digital Sdn. Bhd.",
-            "January 2022", "Present", "Designed web and mobile interfaces."
+            seeker_id,
+            "UI/UX Designer",
+            "ABC Digital Sdn. Bhd.",
+            "January 2022",
+            "Present",
+            "Designed web and mobile interfaces.",
         ),
     )
 
@@ -168,8 +177,12 @@ def ensure_demo_seeker() -> int:
         VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
-            seeker_id, "Bachelor of Multimedia Design", "TAR UMT",
-            "2016", "2020", "Completed"
+            seeker_id,
+            "Bachelor of Multimedia Design",
+            "TAR UMT",
+            "2016",
+            "2020",
+            "Completed",
         ),
     )
 
@@ -459,7 +472,6 @@ def _delete(table: str, id_column: str, item_id: int) -> None:
     db.close()
 
 
-
 @seeker_bp.post("/seeker-profile/experience")
 def add_experience():
     position = request.form.get("position_title", "").strip()
@@ -503,7 +515,6 @@ def add_experience():
 
     flash("Experience added successfully.", "success")
     return redirect(url_for("seeker.profile"))
-
 
     date_error = _validate_date_range(start_date, end_date)
 
@@ -552,11 +563,17 @@ def add_education():
         _insert(
             "seeker_education",
             [
-                "seeker_id", "qualification", "institution",
-                "start_year", "end_year", "status",
+                "seeker_id",
+                "qualification",
+                "institution",
+                "start_year",
+                "end_year",
+                "status",
             ],
             [
-                current_seeker_id(), qualification, institution,
+                current_seeker_id(),
+                qualification,
+                institution,
                 request.form.get("start_year", "").strip(),
                 request.form.get("end_year", "").strip(),
                 request.form.get("status", "Completed").strip(),
@@ -597,7 +614,6 @@ def delete_skill(item_id: int):
     return redirect(url_for("seeker.profile"))
 
 
-
 @seeker_bp.post("/seeker-profile/certificate")
 def add_certificate():
     certificate_name = request.form.get(
@@ -635,14 +651,11 @@ def add_certificate():
         safe_name = secure_filename(certificate_file.filename)
         extension = safe_name.rsplit(".", 1)[1].lower()
         stored_filename = (
-            f"certificate_{current_seeker_id()}_"
-            f"{uuid4().hex}.{extension}"
+            f"certificate_{current_seeker_id()}_" f"{uuid4().hex}.{extension}"
         )
         original_filename = safe_name
 
-        certificate_file.save(
-            _folder("certificates") / stored_filename
-        )
+        certificate_file.save(_folder("certificates") / stored_filename)
 
     _insert(
         "seeker_certificates",
@@ -668,9 +681,7 @@ def add_certificate():
     return redirect(url_for("seeker.profile"))
 
 
-@seeker_bp.get(
-    "/seeker-profile/certificate/<int:item_id>/download"
-)
+@seeker_bp.get("/seeker-profile/certificate/<int:item_id>/download")
 def download_certificate(item_id: int):
     db = get_db_connection()
 
@@ -691,33 +702,25 @@ def download_certificate(item_id: int):
 
     db.close()
 
-    if (
-        certificate is None
-        or not certificate["certificate_filename"]
-    ):
+    if certificate is None or not certificate["certificate_filename"]:
         flash(
             "No certificate file is available.",
             "error",
         )
 
-        return redirect(
-            url_for("seeker.profile")
-        )
+        return redirect(url_for("seeker.profile"))
 
     return send_from_directory(
         _folder("certificates"),
         certificate["certificate_filename"],
         as_attachment=True,
         download_name=(
-            certificate["original_filename"]
-            or certificate["certificate_filename"]
+            certificate["original_filename"] or certificate["certificate_filename"]
         ),
     )
 
 
-@seeker_bp.post(
-    "/seeker-profile/certificate/<int:item_id>/delete"
-)
+@seeker_bp.post("/seeker-profile/certificate/<int:item_id>/delete")
 def delete_certificate(item_id: int):
     db = get_db_connection()
     row = db.execute(
@@ -740,10 +743,7 @@ def delete_certificate(item_id: int):
     db.close()
 
     if row and row["certificate_filename"]:
-        path = (
-            _folder("certificates")
-            / row["certificate_filename"]
-        )
+        path = _folder("certificates") / row["certificate_filename"]
         if path.exists():
             path.unlink()
 
@@ -752,7 +752,6 @@ def delete_certificate(item_id: int):
 
 
 @seeker_bp.post("/seeker-profile/language")
-
 def add_language():
     name = request.form.get("language_name", "").strip()
     level = request.form.get("proficiency", "").strip()

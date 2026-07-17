@@ -19,9 +19,7 @@ def get_db_connection() -> sqlite3.Connection:
 
     connection.row_factory = sqlite3.Row
 
-    connection.execute(
-        "PRAGMA foreign_keys = ON"
-    )
+    connection.execute("PRAGMA foreign_keys = ON")
 
     return connection
 
@@ -53,14 +51,9 @@ def get_existing_columns(
     ):
         return set()
 
-    columns = connection.execute(
-        f"PRAGMA table_info({table_name})"
-    ).fetchall()
+    columns = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
 
-    return {
-        column["name"]
-        for column in columns
-    }
+    return {column["name"] for column in columns}
 
 
 def add_column_if_missing(
@@ -77,20 +70,17 @@ def add_column_if_missing(
     if column_name in existing_columns:
         return
 
-    connection.execute(
-        f"""
+    connection.execute(f"""
         ALTER TABLE {table_name}
         ADD COLUMN {column_name} {column_definition}
-        """
-    )
+        """)
 
 
 def init_database(app) -> None:
     with app.app_context():
         db = get_db_connection()
 
-        db.executescript(
-            """
+        db.executescript("""
             CREATE TABLE IF NOT EXISTS seekers (
                 seeker_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT NOT NULL,
@@ -313,8 +303,7 @@ def init_database(app) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_applications_status
                 ON applications(status);
-            """
-        )
+            """)
 
         seeker_profile_columns = {
             "job_title": "TEXT",
@@ -329,9 +318,7 @@ def init_database(app) -> None:
             "updated_at": "TIMESTAMP",
         }
 
-        for column_name, column_definition in (
-            seeker_profile_columns.items()
-        ):
+        for column_name, column_definition in seeker_profile_columns.items():
             add_column_if_missing(
                 db,
                 "seeker_profiles",
@@ -344,9 +331,7 @@ def init_database(app) -> None:
             "original_filename": "TEXT",
         }
 
-        for column_name, column_definition in (
-            certificate_columns.items()
-        ):
+        for column_name, column_definition in certificate_columns.items():
             add_column_if_missing(
                 db,
                 "seeker_certificates",
@@ -362,9 +347,7 @@ def init_database(app) -> None:
             "created_at": "TIMESTAMP",
         }
 
-        for column_name, column_definition in (
-            employer_columns.items()
-        ):
+        for column_name, column_definition in employer_columns.items():
             add_column_if_missing(
                 db,
                 "employers",
@@ -387,9 +370,7 @@ def init_database(app) -> None:
             "updated_at": "TIMESTAMP",
         }
 
-        for column_name, column_definition in (
-            company_profile_columns.items()
-        ):
+        for column_name, column_definition in company_profile_columns.items():
             add_column_if_missing(
                 db,
                 "company_profiles",
@@ -411,9 +392,7 @@ def init_database(app) -> None:
             "updated_at": "TIMESTAMP",
         }
 
-        for column_name, column_definition in (
-            job_columns.items()
-        ):
+        for column_name, column_definition in job_columns.items():
             add_column_if_missing(
                 db,
                 "jobs",
@@ -429,9 +408,7 @@ def init_database(app) -> None:
             "updated_at": "TIMESTAMP",
         }
 
-        for column_name, column_definition in (
-            application_columns.items()
-        ):
+        for column_name, column_definition in application_columns.items():
             add_column_if_missing(
                 db,
                 "applications",
