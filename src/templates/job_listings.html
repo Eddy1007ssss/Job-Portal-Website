@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Find Jobs | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/job_listings.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="jobs-page">
+
+    <div class="breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Find Jobs</span>
+    </div>
+
+    <section class="jobs-page-heading">
+        <div>
+            <p class="eyebrow">Career Opportunities</p>
+            <h1>Find Your Dream Job</h1>
+            <p>Search and filter vacancies from trusted employers.</p>
+        </div>
+
+        <div class="result-summary">
+            <strong>{{ total }}</strong>
+            <span>jobs found</span>
+        </div>
+    </section>
+
+    <div class="jobs-layout">
+
+        <aside class="filter-panel card">
+            <div class="filter-heading">
+                <h2>Filters</h2>
+                <a href="{{ url_for('jobs.list_jobs') }}">Clear All</a>
+            </div>
+
+            <form
+                id="jobFilterForm"
+                method="GET"
+                action="{{ url_for('jobs.list_jobs') }}"
+            >
+                <div class="filter-group">
+                    <label for="keyword">Keyword</label>
+
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            id="keyword"
+                            name="keyword"
+                            type="search"
+                            value="{{ filters.keyword }}"
+                            placeholder="Job title, company..."
+                        >
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="location">Location</label>
+
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-location-dot"></i>
+
+                        <input
+                            id="location"
+                            name="location"
+                            list="locationOptions"
+                            value="{{ filters.location }}"
+                            placeholder="City, state or remote"
+                        >
+                    </div>
+
+                    <datalist id="locationOptions">
+                        {% for row in locations %}
+                            <option value="{{ row.location }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="filter-group">
+                    <label for="category">Category</label>
+
+                    <select id="category" name="category">
+                        <option value="">All Categories</option>
+
+                        {% for row in categories %}
+                            <option
+                                value="{{ row.category }}"
+                                {% if filters.category == row.category %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ row.category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <fieldset class="filter-group">
+                    <legend>Job Type</legend>
+
+                    {% for option in [
+                        "Full-time",
+                        "Part-time",
+                        "Contract",
+                        "Internship"
+                    ] %}
+                        <label class="radio-row">
+                            <input
+                                type="radio"
+                                name="employment_type"
+                                value="{{ option }}"
+                                {% if filters.employment_type == option %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <span>{{ option }}</span>
+                        </label>
+                    {% endfor %}
+                </fieldset>
+
+                <fieldset class="filter-group">
+                    <legend>Experience Level</legend>
+
+                    {% for option in [
+                        "Entry Level",
+                        "Mid Level",
+                        "Senior Level"
+                    ] %}
+                        <label class="radio-row">
+                            <input
+                                type="radio"
+                                name="experience_level"
+                                value="{{ option }}"
+                                {% if filters.experience_level == option %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            <span>{{ option }}</span>
+                        </label>
+                    {% endfor %}
+                </fieldset>
+
+                <div class="filter-group">
+                    <label>Annual Salary</label>
+
+                    <div class="salary-grid">
+                        <input
+                            name="min_salary"
+                            type="number"
+                            min="0"
+                            step="1000"
+                            value="{{
+                                filters.min_salary
+                                if filters.min_salary is not none
+                                else ''
+                            }}"
+                            placeholder="Minimum"
+                        >
+
+                        <input
+                            name="max_salary"
+                            type="number"
+                            min="0"
+                            step="1000"
+                            value="{{
+                                filters.max_salary
+                                if filters.max_salary is not none
+                                else ''
+                            }}"
+                            placeholder="Maximum"
+                        >
+                    </div>
+                </div>
+
+                <input
+                    type="hidden"
+                    name="sort"
+                    value="{{ filters.sort }}"
+                >
+
+                <button
+                    class="apply-filter-button"
+                    type="submit"
+                >
+                    <i class="fa-solid fa-sliders"></i>
+                    Apply Filters
+                </button>
+            </form>
+        </aside>
+
+        <section class="jobs-results">
+
+            <div class="results-toolbar card">
+                <div>
+                    <h2>Available Jobs</h2>
+                    <p>
+                        Showing page {{ current_page }}
+                        of {{ total_pages }}
+                    </p>
+                </div>
+
+                <form
+                    id="sortForm"
+                    method="GET"
+                    action="{{ url_for('jobs.list_jobs') }}"
+                >
+                    {% for name, value in [
+                        ('keyword', filters.keyword),
+                        ('location', filters.location),
+                        ('category', filters.category),
+                        ('employment_type', filters.employment_type),
+                        ('experience_level', filters.experience_level),
+                        ('min_salary', filters.min_salary or ''),
+                        ('max_salary', filters.max_salary or '')
+                    ] %}
+                        <input
+                            type="hidden"
+                            name="{{ name }}"
+                            value="{{ value }}"
+                        >
+                    {% endfor %}
+
+                    <label for="sort">Sort by</label>
+
+                    <select id="sort" name="sort">
+                        <option
+                            value="newest"
+                            {% if filters.sort == "newest" %}
+                                selected
+                            {% endif %}
+                        >
+                            Most Recent
+                        </option>
+
+                        <option
+                            value="oldest"
+                            {% if filters.sort == "oldest" %}
+                                selected
+                            {% endif %}
+                        >
+                            Oldest
+                        </option>
+
+                        <option
+                            value="salary_high"
+                            {% if filters.sort == "salary_high" %}
+                                selected
+                            {% endif %}
+                        >
+                            Salary: High to Low
+                        </option>
+
+                        <option
+                            value="salary_low"
+                            {% if filters.sort == "salary_low" %}
+                                selected
+                            {% endif %}
+                        >
+                            Salary: Low to High
+                        </option>
+
+                        <option
+                            value="title"
+                            {% if filters.sort == "title" %}
+                                selected
+                            {% endif %}
+                        >
+                            Job Title
+                        </option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="job-list">
+
+                {% for job in jobs %}
+                    <article class="job-card card">
+
+                        <div class="job-logo">
+                            <span>{{ job.company_name[:1] | upper }}</span>
+                        </div>
+
+                        <div class="job-card-content">
+
+                            <div class="job-title-row">
+                                <div>
+                                    <a
+                                        class="job-title"
+                                        href="{{
+                                            url_for(
+                                                'jobs.job_details',
+                                                job_id=job.job_id
+                                            )
+                                        }}"
+                                    >
+                                        {{ job.title }}
+                                    </a>
+
+                                    <p class="company-name">
+                                        {{ job.company_name }}
+                                    </p>
+                                </div>
+
+                                {% if job.is_featured %}
+                                    <span class="featured-badge">
+                                        Featured
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="job-meta">
+                                <span>
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    {{ job.location or "Not specified" }}
+                                </span>
+
+                                <span>
+                                    <i class="fa-solid fa-briefcase"></i>
+                                    {{ job.employment_type }}
+                                </span>
+
+                                <span>
+                                    <i class="fa-solid fa-signal"></i>
+                                    {{ job.experience_level or "Not specified" }}
+                                </span>
+
+                                <span>
+                                    <i class="fa-solid fa-building"></i>
+                                    {{ job.work_mode or "On-site" }}
+                                </span>
+                            </div>
+
+                            <p class="job-description">
+                                {{ job.description }}
+                            </p>
+
+                            <div class="job-card-footer">
+
+                                <div class="salary">
+                                    {% if job.salary_min or job.salary_max %}
+                                        <strong>
+                                            RM {{
+                                                "{:,.0f}".format(
+                                                    job.salary_min or 0
+                                                )
+                                            }}
+                                            –
+                                            RM {{
+                                                "{:,.0f}".format(
+                                                    job.salary_max or 0
+                                                )
+                                            }}
+                                        </strong>
+                                        <span>per year</span>
+                                    {% else %}
+                                        <strong>Salary not specified</strong>
+                                    {% endif %}
+                                </div>
+
+                                <div class="job-actions">
+
+                                    <form
+                                        method="POST"
+                                        action="{{
+                                            url_for(
+                                                'jobs.toggle_save_job',
+                                                job_id=job.job_id
+                                            )
+                                        }}"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="next"
+                                            value="{{ request.full_path }}"
+                                        >
+
+                                        <button
+                                            class="save-job-button
+                                            {% if job.is_saved %}saved{% endif %}"
+                                            type="submit"
+                                            title="Save job"
+                                        >
+                                            <i
+                                                class="
+                                                {% if job.is_saved %}
+                                                    fa-solid
+                                                {% else %}
+                                                    fa-regular
+                                                {% endif %}
+                                                fa-bookmark"
+                                            ></i>
+                                        </button>
+                                    </form>
+
+                                    <a
+                                        class="view-job-button"
+                                        href="{{
+                                            url_for(
+                                                'jobs.job_details',
+                                                job_id=job.job_id
+                                            )
+                                        }}"
+                                    >
+                                        View Job
+                                    </a>
+
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                {% else %}
+
+                    <div class="empty-jobs card">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <h2>No matching jobs</h2>
+                        <p>Try changing your keyword or filters.</p>
+
+                        <a href="{{ url_for('jobs.list_jobs') }}">
+                            Clear filters
+                        </a>
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% if total_pages > 1 %}
+                <nav
+                    class="pagination"
+                    aria-label="Job listing pages"
+                >
+                    {% for page_number in range(1, total_pages + 1) %}
+                        <a
+                            class="{{
+                                'active'
+                                if page_number == current_page
+                                else ''
+                            }}"
+                            href="{{
+                                url_for(
+                                    'jobs.list_jobs',
+                                    keyword=filters.keyword,
+                                    location=filters.location,
+                                    category=filters.category,
+                                    employment_type=filters.employment_type,
+                                    experience_level=filters.experience_level,
+                                    min_salary=filters.min_salary,
+                                    max_salary=filters.max_salary,
+                                    sort=filters.sort,
+                                    page=page_number
+                                )
+                            }}"
+                        >
+                            {{ page_number }}
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% endif %}
+
+        </section>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{{ url_for('static', filename='js/job_listings.js') }}"
+></script>
+{% endblock %}

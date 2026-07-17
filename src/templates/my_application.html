@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}My Applications | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/my_applications.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<main class="applications-page">
+    <section class="applications-container">
+
+        <div class="applications-heading">
+            <div>
+                <p class="page-label">Job Seeker</p>
+                <h1>My Applications</h1>
+                <p>
+                    View the jobs you have applied for and track their current
+                    status.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('jobs.list_jobs') }}"
+                class="find-jobs-button"
+            >
+                Find More Jobs
+            </a>
+        </div>
+
+        {% if applications %}
+            <div class="applications-list">
+
+                {% for application in applications %}
+                    <article class="application-card">
+
+                        <div class="application-main">
+                            <div class="application-icon">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+
+                            <div class="application-information">
+                                <a
+                                    href="{{ url_for(
+                                        'jobs.job_details',
+                                        job_id=application['job_id']
+                                    ) }}"
+                                    class="application-title"
+                                >
+                                    {{ application["job_title"] }}
+                                </a>
+
+                                <p class="company-name">
+                                    {{ application["company_name"] }}
+                                </p>
+
+                                <div class="application-meta">
+                                    <span>
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        {{ application["location"] }}
+                                    </span>
+
+                                    <span>
+                                        <i class="fa-solid fa-clock"></i>
+                                        {{ application["employment_type"] }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="application-status-section">
+                            <span
+                                class="application-status status-{{
+                                    application['application_status']
+                                    | lower
+                                    | replace(' ', '-')
+                                }}"
+                            >
+                                {{ application["application_status"] }}
+                            </span>
+
+                            {% if application["created_at"] %}
+                                <p>
+                                    Applied on
+                                    {{ application["created_at"] }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                    </article>
+                {% endfor %}
+
+            </div>
+        {% else %}
+            <div class="empty-applications">
+                <div class="empty-icon">
+                    <i class="fa-regular fa-file-lines"></i>
+                </div>
+
+                <h2>No applications yet</h2>
+
+                <p>
+                    Start exploring available jobs and submit your first
+                    application.
+                </p>
+
+                <a
+                    href="{{ url_for('jobs.list_jobs') }}"
+                    class="find-jobs-button"
+                >
+                    Browse Jobs
+                </a>
+            </div>
+        {% endif %}
+
+    </section>
+</main>
+{% endblock %}

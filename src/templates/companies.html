@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Companies | JobPortal{% endblock %}
+{% block title %}
+    Companies | JobPortal
+{% endblock %}
+
 
 {% block content %}
 
@@ -8,56 +11,100 @@
     <div class="page-container">
 
         <div class="companies-heading">
-            <p class="eyebrow">Discover employers</p>
-            <h1>Top Companies</h1>
+
+            <p class="eyebrow">
+                Discover employers
+            </p>
+
+            <h1>
+                Top Companies
+            </h1>
 
             <p>
                 Discover great places to work and grow your career.
             </p>
+
         </div>
 
+
         <div class="company-search-wrapper">
+
             <input
                 type="search"
                 id="companySearch"
                 placeholder="Search companies by name or industry"
             >
+
         </div>
+
 
         {% if companies %}
 
-            <div class="companies-grid" id="companiesGrid">
+            <div
+                class="companies-grid"
+                id="companiesGrid"
+            >
 
                 {% for company in companies %}
 
                     <a
-                        href="{{ url_for('view_company_profile', company_id=company['id']) }}"
+                        href="{{
+                            url_for(
+                                'employer.public_company_profile',
+                                employer_id=company['employer_id']
+                            )
+                        }}"
                         class="company-list-card"
-                        data-company-name="{{ company['company_name'] | lower }}"
-                        data-company-industry="{{ company['industry'] | lower }}"
+                        data-company-name="{{
+                            company['company_name'] | lower
+                        }}"
+                        data-company-industry="{{
+                            company['industry'] | lower
+                        }}"
                     >
 
                         <div class="company-card-logo">
-                            {{ company["company_name"][0] | upper }}
+                            {{
+                                company["company_name"][0] | upper
+                            }}
                         </div>
 
                         <div class="company-card-content">
-                            <h2>{{ company["company_name"] }}</h2>
-                            <p>{{ company["industry"] }}</p>
+
+                            <h2>
+                                {{ company["company_name"] }}
+                            </h2>
+
+                            <p>
+                                {{ company["industry"] }}
+                            </p>
 
                             <span>
-                                {{ company["city"] }},
-                                {{ company["state"] }}
+                                {% if company["city"] %}
+                                    {{ company["city"] }}
+                                {% endif %}
+
+                                {% if company["city"] and company["state"] %}
+                                    ,
+                                {% endif %}
+
+                                {% if company["state"] %}
+                                    {{ company["state"] }}
+                                {% endif %}
                             </span>
+
                         </div>
 
-                        <span class="view-company-arrow">→</span>
+                        <span class="view-company-arrow">
+                            →
+                        </span>
 
                     </a>
 
                 {% endfor %}
 
             </div>
+
 
             <p
                 class="no-search-result"
@@ -70,20 +117,40 @@
         {% else %}
 
             <div class="empty-state">
-                <div class="empty-state-icon">🏢</div>
-                <h2>No company profiles yet</h2>
+
+                <div class="empty-state-icon">
+                    🏢
+                </div>
+
+                <h2>
+                    No company profiles yet
+                </h2>
 
                 <p>
-                    Company profiles will appear here after employers
-                    create them.
+                    Company profiles will appear here after
+                    employers create them.
                 </p>
 
-                <a
-                    href="{{ url_for('employer_company_profile') }}"
-                    class="primary-button"
-                >
-                    Create company profile
-                </a>
+                {% if session.get("employer_id") %}
+
+                    <a
+                        href="{{ url_for('employer.company_profile') }}"
+                        class="primary-button"
+                    >
+                        Create company profile
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for('employer.register') }}"
+                        class="primary-button"
+                    >
+                        Register as employer
+                    </a>
+
+                {% endif %}
+
             </div>
 
         {% endif %}

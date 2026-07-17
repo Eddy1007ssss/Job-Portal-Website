@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/job_listings.css') }}"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/job_details.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<div class="job-details-page">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+
+    <div class="breadcrumb">
+        <a href="{{ url_for('home') }}">
+            Home
+        </a>
+
+        <i class="fa-solid fa-chevron-right"></i>
+
+        <a href="{{ url_for('jobs.list_jobs') }}">
+            Find Jobs
+        </a>
+
+        <i class="fa-solid fa-chevron-right"></i>
+
+        <span>{{ job.title }}</span>
+    </div>
+
+
+    <section class="job-details-header card">
+
+        <div class="job-header-left">
+
+            <div class="job-company-logo">
+                {% if job.company_logo %}
+                    <img
+                        src="{{ url_for(
+                            'static',
+                            filename=job.company_logo
+                        ) }}"
+                        alt="{{ job.company_name }} logo"
+                    >
+                {% else %}
+                    <span>
+                        {{ job.company_name[:1] | upper }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="job-header-information">
+
+                <p class="job-company-name">
+                    {{ job.company_name }}
+                </p>
+
+                <h1>{{ job.title }}</h1>
+
+                <div class="job-meta">
+
+                    <span>
+                        <i class="fa-solid fa-location-dot"></i>
+                        {{ job.location or "Location not specified" }}
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-briefcase"></i>
+                        {{ job.employment_type or "Not specified" }}
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-signal"></i>
+                        {{ job.experience_level or "Not specified" }}
+                    </span>
+
+                    <span>
+                        <i class="fa-solid fa-building"></i>
+                        {{ job.work_mode or "On-site" }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="job-header-actions">
+
+            {% if has_applied %}
+
+                <span class="already-applied-button">
+                    <i class="fa-solid fa-circle-check"></i>
+                    Applied
+                </span>
+
+            {% else %}
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'applications.apply_job',
+                        job_id=job.job_id
+                    ) }}"
+                >
+                    <button
+                        type="submit"
+                        class="apply-job-button"
+                    >
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Apply This Job
+                    </button>
+                </form>
+
+            {% endif %}
+
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'jobs.toggle_save_job',
+                    job_id=job.job_id
+                ) }}"
+            >
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ request.path }}"
+                >
+
+                <button
+                    type="submit"
+                    class="details-save-button
+                    {% if job.is_saved %}saved{% endif %}"
+                >
+                    <i
+                        class="
+                        {% if job.is_saved %}
+                            fa-solid
+                        {% else %}
+                            fa-regular
+                        {% endif %}
+                        fa-bookmark"
+                    ></i>
+
+                    {% if job.is_saved %}
+                        Saved
+                    {% else %}
+                        Save Job
+                    {% endif %}
+                </button>
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <div class="job-details-layout">
+
+        <main class="job-details-content">
+
+            <section class="job-content-card card">
+                <h2>Job Description</h2>
+
+                <div class="job-text-content">
+                    {{ job.description | replace('\n', '<br>') | safe }}
+                </div>
+            </section>
+
+
+            {% if job.responsibilities %}
+
+                <section class="job-content-card card">
+                    <h2>Responsibilities</h2>
+
+                    <div class="job-text-content">
+                        {{ job.responsibilities
+                            | replace('\n', '<br>')
+                            | safe
+                        }}
+                    </div>
+                </section>
+
+            {% endif %}
+
+
+            {% if job.requirements %}
+
+                <section class="job-content-card card">
+                    <h2>Requirements</h2>
+
+                    <div class="job-text-content">
+                        {{ job.requirements
+                            | replace('\n', '<br>')
+                            | safe
+                        }}
+                    </div>
+                </section>
+
+            {% endif %}
+
+
+            {% if job.benefits %}
+
+                <section class="job-content-card card">
+                    <h2>Benefits</h2>
+
+                    <div class="job-text-content">
+                        {{ job.benefits
+                            | replace('\n', '<br>')
+                            | safe
+                        }}
+                    </div>
+                </section>
+
+            {% endif %}
+
+
+            <a
+                href="{{ url_for('jobs.list_jobs') }}"
+                class="back-to-jobs-link"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Job Listings
+            </a>
+
+        </main>
+
+
+        <aside class="job-details-sidebar">
+
+            <section class="job-overview-card card">
+
+                <h2>Job Overview</h2>
+
+                <div class="overview-list">
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </span>
+
+                        <div>
+                            <span>Job Type</span>
+                            <strong>
+                                {{ job.employment_type or "Not specified" }}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-signal"></i>
+                        </span>
+
+                        <div>
+                            <span>Experience Level</span>
+                            <strong>
+                                {{ job.experience_level or "Not specified" }}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </span>
+
+                        <div>
+                            <span>Category</span>
+                            <strong>
+                                {{ job.category or "Not specified" }}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-building"></i>
+                        </span>
+
+                        <div>
+                            <span>Work Mode</span>
+                            <strong>
+                                {{ job.work_mode or "On-site" }}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </span>
+
+                        <div>
+                            <span>Location</span>
+                            <strong>
+                                {{ job.location or "Not specified" }}
+                            </strong>
+                        </div>
+                    </div>
+
+
+                    <div class="overview-item">
+                        <span class="overview-icon">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                        </span>
+
+                        <div>
+                            <span>Salary</span>
+
+                            {% if job.salary_min or job.salary_max %}
+                                <strong>
+                                    RM {{
+                                        "{:,.0f}".format(
+                                            job.salary_min or 0
+                                        )
+                                    }}
+                                    –
+                                    RM {{
+                                        "{:,.0f}".format(
+                                            job.salary_max or 0
+                                        )
+                                    }}
+                                </strong>
+                            {% else %}
+                                <strong>Not specified</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+
+
+                    {% if job.application_deadline %}
+
+                        <div class="overview-item">
+                            <span class="overview-icon">
+                                <i class="fa-regular fa-calendar"></i>
+                            </span>
+
+                            <div>
+                                <span>Application Deadline</span>
+                                <strong>
+                                    {{ job.application_deadline }}
+                                </strong>
+                            </div>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </section>
+
+
+            <section class="company-contact-card card">
+
+                <h2>Company Information</h2>
+
+                <div class="company-contact-information">
+
+                    <p>
+                        <i class="fa-regular fa-building"></i>
+                        {{ job.company_name }}
+                    </p>
+
+                    {% if job.company_email %}
+                        <p>
+                            <i class="fa-regular fa-envelope"></i>
+                            {{ job.company_email }}
+                        </p>
+                    {% endif %}
+
+                </div>
+
+            </section>
+
+
+            <section class="share-job-card card">
+
+                <h2>Share This Job</h2>
+
+                <div class="share-job-buttons">
+
+                    <button
+                        type="button"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        aria-label="Share on X"
+                    >
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        aria-label="Share on LinkedIn"
+                    >
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        id="copyJobLinkButton"
+                        aria-label="Copy job link"
+                    >
+                        <i class="fa-solid fa-link"></i>
+                    </button>
+
+                </div>
+
+            </section>
+
+        </aside>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script
+    src="{{ url_for('static', filename='js/job_listings.js') }}"
+></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const copyButton =
+            document.getElementById("copyJobLinkButton");
+
+        if (copyButton) {
+            copyButton.addEventListener("click", async function () {
+                try {
+                    await navigator.clipboard.writeText(
+                        window.location.href
+                    );
+
+                    copyButton.innerHTML =
+                        '<i class="fa-solid fa-check"></i>';
+                } catch (error) {
+                    console.error(
+                        "Unable to copy job URL:",
+                        error
+                    );
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

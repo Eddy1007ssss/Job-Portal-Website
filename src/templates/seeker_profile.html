@@ -1,379 +1,498 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends "base.html" %}
+{% block title %}My Profile | JobPortal{% endblock %}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>My Profile | JobPortal</title>
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    >
-
-    <link
+{% block extra_css %}
+<link
     rel="stylesheet"
     href="{{ url_for('static', filename='css/seeker_profile.css') }}"
 >
-</head>
+{% endblock %}
 
-<body>
-    {% include 'components/header.html' %}
+{% block content %}
+{% set completion_values = [
+    profile.full_name,
+    profile.email,
+    profile.contact_number,
+    profile.job_title,
+    profile.location,
+    profile.about_me,
+    profile.job_categories,
+    profile.employment_type,
+    profile.preferred_location,
+    profile.expected_salary,
+    profile.profile_image,
+    profile.resume_filename
+] %}
+{% set progress = namespace(count=0) %}
+{% for value in completion_values %}
+    {% if value %}
+        {% set progress.count = progress.count + 1 %}
+    {% endif %}
+{% endfor %}
+{% set completion_percentage =
+    ((progress.count * 100) / (completion_values | length)) | round | int
+%}
 
-    <div class="page-layout">
-        {% include 'components/sidebar.html' %}
-
-        <main class="main-content">
-            <div class="breadcrumb">
-                <a href="{{ url_for('home') }}">Home</a>
-                <i class="fa-solid fa-chevron-right"></i>
-                <span>My Profile</span>
-            </div>
-
-            <div class="page-heading">
-                <div>
-                    <h1>My Profile</h1>
-                    <p>
-                        Manage your personal information and career profile.
-                    </p>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ message }}</span>
                 </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 
-                <button class="primary-button" id="editProfileButton">
-                    <i class="fa-regular fa-pen-to-square"></i>
-                    Edit Profile
-                </button>
+        <div class="breadcrumb">
+            <a href="{{ url_for('home') }}">Home</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span>My Profile</span>
+        </div>
+
+        <div class="page-heading">
+            <div>
+                <h1>My Profile</h1>
+                <p>Manage your personal information and career profile.</p>
             </div>
 
-            <!-- Profile summary -->
-            <section class="profile-summary card">
-                <div class="profile-details">
-                    <div class="profile-picture-wrapper">
-                        <img
-                            id="profilePicture"
-                            src="{{ url_for('static', filename='images/profile-placeholder.jpg') }}"
-                            alt="John Doe"
-                            class="profile-picture"
-                        >
+            <button
+                class="primary-button"
+                type="button"
+                data-open-modal="profileModal"
+            >
+                <i class="fa-regular fa-pen-to-square"></i>
+                Edit Profile
+            </button>
+        </div>
 
-                        <label
-                            for="profileImageInput"
-                            class="camera-button"
-                            title="Change profile picture"
-                        >
-                            <i class="fa-solid fa-camera"></i>
-                        </label>
+        <section class="profile-summary card">
+            <div class="profile-details">
+                <div class="profile-picture-wrapper">
+                    <img
+                        id="profilePicture"
+                        class="profile-picture"
+                        src="{{
+                            url_for(
+                                'static',
+                                filename=profile.profile_image
+                                if profile.profile_image
+                                else 'images/profile-placeholder.jpg'
+                            )
+                        }}"
+                        alt="{{ profile.full_name }} profile picture"
+                    >
 
+                    <label
+                        for="profileImageInput"
+                        class="camera-button"
+                        title="Change profile picture"
+                    >
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+
+                    <form
+                        id="profileImageForm"
+                        method="POST"
+                        action="{{ url_for('seeker.upload_image') }}"
+                        enctype="multipart/form-data"
+                    >
                         <input
                             type="file"
                             id="profileImageInput"
-                            accept="image/*"
+                            name="profile_image"
+                            accept=".png,.jpg,.jpeg,.webp"
                             hidden
                         >
-                    </div>
-
-                    <div class="profile-information">
-                        <div class="profile-name-row">
-                            <h2>John Doe</h2>
-                            <span class="role-badge">Job Seeker</span>
-                        </div>
-
-                        <h3>UI/UX Designer</h3>
-
-                        <div class="contact-information">
-                            <p>
-                                <i class="fa-solid fa-location-dot"></i>
-                                Kuala Lumpur, Malaysia
-                            </p>
-
-                            <p>
-                                <i class="fa-regular fa-envelope"></i>
-                                johndoe@email.com
-                            </p>
-
-                            <p>
-                                <i class="fa-solid fa-phone"></i>
-                                +60 12-345 6789
-                            </p>
-                        </div>
-                    </div>
+                    </form>
                 </div>
 
-                <div class="profile-completion">
-                    <div class="completion-header">
-                        <span>Profile Completion</span>
-                        <strong>85%</strong>
+                <div class="profile-information">
+                    <div class="profile-name-row">
+                        <h2>{{ profile.full_name }}</h2>
+                        <span class="role-badge">Job Seeker</span>
                     </div>
 
-                    <div class="progress-track">
-                        <div
-                            class="progress-bar"
-                            style="width: 85%;"
-                        ></div>
-                    </div>
+                    <h3>{{ profile.job_title or "Job title not added" }}</h3>
 
-                    <p>
-                        Complete your profile to increase your chances of
-                        getting hired.
-                    </p>
-
-                    <button class="text-button" type="button">
-                        View profile tips
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Profile cards -->
-            <div class="profile-grid">
-                <div class="profile-column">
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-regular fa-user"></i>
-                                <h2>About Me</h2>
-                            </div>
-
-                            <button class="icon-text-button">
-                                <i class="fa-solid fa-pen"></i>
-                                Edit
-                            </button>
-                        </div>
-
-                        <p class="about-description">
-                            Creative and detail-oriented UI/UX Designer with
-                            more than three years of experience designing
-                            user-centred digital products. Passionate about
-                            creating simple, attractive and easy-to-use
-                            interfaces.
+                    <div class="contact-information">
+                        <p>
+                            <i class="fa-solid fa-location-dot"></i>
+                            {{ profile.location or "Location not added" }}
                         </p>
-                    </section>
+                        <p>
+                            <i class="fa-regular fa-envelope"></i>
+                            {{ profile.email }}
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-phone"></i>
+                            {{ profile.contact_number or "Phone number not added" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-solid fa-briefcase"></i>
-                                <h2>Experience</h2>
-                            </div>
-
-                            <button
-                                class="icon-text-button"
-                                data-modal="experienceModal"
-                            >
-                                <i class="fa-solid fa-plus"></i>
-                                Add Experience
-                            </button>
-                        </div>
-
-                        <div class="timeline-list">
-                            <article class="timeline-item">
-                                <div class="timeline-dot"></div>
-
-                                <div class="timeline-content">
-                                    <div class="item-heading-row">
-                                        <h3>UI/UX Designer</h3>
-
-                                        <button class="more-button">
-                                            <i class="fa-solid fa-ellipsis"></i>
-                                        </button>
-                                    </div>
-
-                                    <p class="company-name">
-                                        ABC Digital Sdn. Bhd.
-                                    </p>
-
-                                    <p class="item-meta">
-                                        January 2022 – Present
-                                    </p>
-
-                                    <ul>
-                                        <li>
-                                            Designed web and mobile application
-                                            user interfaces.
-                                        </li>
-                                        <li>
-                                            Conducted user research and usability
-                                            testing.
-                                        </li>
-                                    </ul>
-                                </div>
-                            </article>
-
-                            <article class="timeline-item">
-                                <div class="timeline-dot"></div>
-
-                                <div class="timeline-content">
-                                    <div class="item-heading-row">
-                                        <h3>Junior UI/UX Designer</h3>
-
-                                        <button class="more-button">
-                                            <i class="fa-solid fa-ellipsis"></i>
-                                        </button>
-                                    </div>
-
-                                    <p class="company-name">
-                                        XYZ Creative Studio
-                                    </p>
-
-                                    <p class="item-meta">
-                                        June 2020 – December 2021
-                                    </p>
-
-                                    <ul>
-                                        <li>
-                                            Assisted in wireframing, prototyping
-                                            and user research.
-                                        </li>
-                                    </ul>
-                                </div>
-                            </article>
-                        </div>
-                    </section>
+            <div class="profile-completion">
+                <div class="completion-header">
+                    <span>Profile Completion</span>
+                    <strong>{{ completion_percentage }}%</strong>
                 </div>
 
-                <div class="profile-column">
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-solid fa-graduation-cap"></i>
-                                <h2>Education</h2>
-                            </div>
+                <div class="progress-track">
+                    <div
+                        class="progress-bar"
+                        style="width: {{ completion_percentage }}%">
+                    </div>
+                </div>
 
-                            <button class="icon-text-button">
-                                <i class="fa-solid fa-plus"></i>
-                                Add Education
-                            </button>
+                <p>
+                    Complete your profile to increase your chances of getting hired.
+                </p>
+            </div>
+        </section>
+
+        <div class="profile-grid">
+            <div class="profile-column">
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-regular fa-user"></i>
+                            <h2>About Me</h2>
                         </div>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="profileModal"
+                        >
+                            <i class="fa-solid fa-pen"></i>
+                            Edit
+                        </button>
+                    </div>
 
-                        <div class="simple-list">
+                    <p class="about-description">
+                        {{ profile.about_me or "Tell employers about yourself." }}
+                    </p>
+                </section>
+
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-solid fa-briefcase"></i>
+                            <h2>Experience</h2>
+                        </div>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="experienceModal"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Experience
+                        </button>
+                    </div>
+
+                    <div class="timeline-list">
+                        {% for item in profile.experiences %}
+                            <article class="timeline-item">
+                                <div class="timeline-dot"></div>
+
+                                <div class="timeline-content">
+                                    <div class="item-heading-row">
+                                        <h3>{{ item.position_title }}</h3>
+
+                                        <form
+                                            method="POST"
+                                            action="{{
+                                                url_for(
+                                                    'seeker.delete_experience',
+                                                    item_id=item.experience_id
+                                                )
+                                            }}"
+                                        >
+                                            <button
+                                                class="small-action-button danger"
+                                                type="submit"
+                                                title="Delete experience"
+                                            >
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <p class="company-name">
+                                        {{ item.company_name }}
+                                    </p>
+
+                                    <p class="item-meta">
+                                        {{ item.start_date or "Not specified" }}
+                                        –
+                                        {{ item.end_date or "Present" }}
+                                    </p>
+
+                                    {% if item.description %}
+                                        <p class="about-description">
+                                            {{ item.description }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% else %}
+                            <p class="empty-state">
+                                No work experience has been added.
+                            </p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="profile-column">
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            <h2>Education</h2>
+                        </div>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="educationModal"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Education
+                        </button>
+                    </div>
+
+                    <div class="simple-list">
+                        {% for item in profile.education_items %}
                             <article class="simple-list-item">
-                                <h3>Bachelor of Multimedia Design</h3>
-                                <p>TAR UMT</p>
+                                <div class="item-heading-row">
+                                    <h3>{{ item.qualification }}</h3>
+
+                                    <form
+                                        method="POST"
+                                        action="{{
+                                            url_for(
+                                                'seeker.delete_education',
+                                                item_id=item.education_id
+                                            )
+                                        }}"
+                                    >
+                                        <button
+                                            class="small-action-button danger"
+                                            type="submit"
+                                            title="Delete education"
+                                        >
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <p>{{ item.institution }}</p>
 
                                 <div class="education-footer">
-                                    <span>2016 – 2020</span>
+                                    <span>
+                                        {{ item.start_year or "?" }}
+                                        –
+                                        {{ item.end_year or "?" }}
+                                    </span>
                                     <span class="status-badge completed">
-                                        Completed
+                                        {{ item.status }}
                                     </span>
                                 </div>
                             </article>
+                        {% else %}
+                            <p class="empty-state">
+                                No education information has been added.
+                            </p>
+                        {% endfor %}
+                    </div>
+                </section>
 
-                            <article class="simple-list-item">
-                                <h3>Diploma in Graphic Design</h3>
-                                <p>TAR UMT</p>
-
-                                <div class="education-footer">
-                                    <span>2013 – 2016</span>
-                                    <span class="status-badge completed">
-                                        Completed
-                                    </span>
-                                </div>
-                            </article>
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-regular fa-star"></i>
+                            <h2>Skills</h2>
                         </div>
-                    </section>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="skillModal"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Skill
+                        </button>
+                    </div>
 
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-regular fa-star"></i>
-                                <h2>Skills</h2>
-                            </div>
+                    <div class="skill-list">
+                        {% for item in profile.skills %}
+                            <form
+                                method="POST"
+                                action="{{
+                                    url_for(
+                                        'seeker.delete_skill',
+                                        item_id=item.skill_id
+                                    )
+                                }}"
+                            >
+                                <button
+                                    class="skill-tag"
+                                    type="submit"
+                                    title="Click to remove"
+                                >
+                                    {{ item.skill_name }}
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="empty-state">
+                                No skills have been added.
+                            </span>
+                        {% endfor %}
+                    </div>
+                </section>
 
-                            <button class="icon-text-button">
-                                <i class="fa-solid fa-plus"></i>
-                                Add Skills
-                            </button>
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-solid fa-certificate"></i>
+                            <h2>Certificates</h2>
                         </div>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="certificateModal"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Certificate
+                        </button>
+                    </div>
 
-                        <div class="skill-list">
-                            <span class="skill-tag">UI Design</span>
-                            <span class="skill-tag">UX Research</span>
-                            <span class="skill-tag">Figma</span>
-                            <span class="skill-tag">Adobe XD</span>
-                            <span class="skill-tag">Photoshop</span>
-                            <span class="skill-tag">Illustrator</span>
-                            <span class="skill-tag">Wireframing</span>
-                            <span class="skill-tag">Prototyping</span>
-                        </div>
-                    </section>
-
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-solid fa-certificate"></i>
-                                <h2>Certificates</h2>
-                            </div>
-
-                            <button class="icon-text-button">
-                                <i class="fa-solid fa-plus"></i>
-                                Add Certificate
-                            </button>
-                        </div>
-
+                    {% for item in profile.certificates %}
                         <div class="certificate-item">
                             <div class="certificate-icon">
                                 <i class="fa-solid fa-award"></i>
                             </div>
 
+                            <div class="certificate-content">
+                                <h3>{{ item.certificate_name }}</h3>
+                                <p>
+                                    {{ item.issuer or "Issuer not added" }}
+                                    {% if item.issue_date %}
+                                        · {{ item.issue_date }}
+                                    {% endif %}
+                                </p>
+
+                                {% if item.original_filename %}
+                                    <p class="certificate-file-name">
+                                        <i class="fa-regular fa-file"></i>
+                                        {{ item.original_filename }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <div class="item-actions">
+                                {% if item.certificate_filename %}
+                                    <a
+                                        class="small-action-button"
+                                        href="{{
+                                            url_for(
+                                                'seeker.download_certificate',
+                                                item_id=item.certificate_id
+                                            )
+                                        }}"
+                                        title="Download certificate"
+                                    >
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
+                                {% endif %}
+
+                                <form
+                                    method="POST"
+                                    action="{{
+                                        url_for(
+                                            'seeker.delete_certificate',
+                                            item_id=item.certificate_id
+                                        )
+                                    }}"
+                                >
+                                    <button
+                                        class="small-action-button danger"
+                                        type="submit"
+                                        title="Delete certificate"
+                                    >
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">
+                            No certificates have been added.
+                        </p>
+                    {% endfor %}
+                </section>
+            </div>
+
+            <div class="profile-column">
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-regular fa-file-pdf"></i>
+                            <h2>Resume</h2>
+                        </div>
+                    </div>
+
+                    <div class="resume-file">
+                        <div class="resume-left">
+                            <div class="pdf-icon">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </div>
                             <div>
-                                <h3>Google UX Design Certificate</h3>
-                                <p>Google · Issued September 2023</p>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="profile-column">
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-regular fa-file-pdf"></i>
-                                <h2>Resume</h2>
+                                <h3>
+                                    {{ profile.resume_filename or "No resume uploaded" }}
+                                </h3>
+                                <p>
+                                    {% if profile.resume_filename %}
+                                        Resume available
+                                    {% else %}
+                                        PDF, DOC or DOCX
+                                    {% endif %}
+                                </p>
                             </div>
                         </div>
 
-                        <div class="resume-file">
-                            <div class="resume-left">
-                                <div class="pdf-icon">
-                                    <i class="fa-solid fa-file-pdf"></i>
-                                </div>
-
-                                <div>
-                                    <h3>John_Doe_Resume.pdf</h3>
-                                    <p>Uploaded on 12 May 2026</p>
-                                </div>
-                            </div>
-
+                        {% if profile.resume_filename %}
                             <div class="resume-actions">
-                                <button title="Download resume">
+                                <a
+                                    href="{{ url_for('seeker.download_resume') }}"
+                                    title="Download resume"
+                                >
                                     <i class="fa-solid fa-download"></i>
-                                </button>
+                                </a>
 
-                                <button title="More options">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('seeker.delete_resume') }}"
+                                >
+                                    <button
+                                        type="submit"
+                                        title="Delete resume"
+                                    >
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
-                        </div>
+                        {% endif %}
+                    </div>
 
+                    <form
+                        class="upload-form"
+                        method="POST"
+                        action="{{ url_for('seeker.upload_resume') }}"
+                        enctype="multipart/form-data"
+                    >
                         <label
                             class="upload-resume-button"
                             for="resumeInput"
@@ -385,6 +504,7 @@
                         <input
                             type="file"
                             id="resumeInput"
+                            name="resume"
                             accept=".pdf,.doc,.docx"
                             hidden
                         >
@@ -393,195 +513,478 @@
                             class="selected-file-name"
                             id="selectedResumeName"
                         ></p>
-                    </section>
+                    </form>
+                </section>
 
-                    <section class="card information-card">
-                        <div class="card-heading">
-                            <div class="card-title">
-                                <i class="fa-solid fa-language"></i>
-                                <h2>Languages</h2>
-                            </div>
-
-                            <button class="icon-text-button">
-                                <i class="fa-solid fa-plus"></i>
-                                Add Language
-                            </button>
+                <section class="card information-card">
+                    <div class="card-heading">
+                        <div class="card-title">
+                            <i class="fa-solid fa-language"></i>
+                            <h2>Languages</h2>
                         </div>
+                        <button
+                            class="icon-text-button"
+                            type="button"
+                            data-open-modal="languageModal"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            Add Language
+                        </button>
+                    </div>
 
-                        <div class="language-list">
+                    <div class="language-list">
+                        {% for item in profile.languages %}
                             <div class="language-item">
                                 <div>
                                     <span class="language-dot"></span>
-                                    English
+                                    {{ item.language_name }}
                                 </div>
 
-                                <span class="language-level">Fluent</span>
-                            </div>
+                                <div class="item-actions">
+                                    <span class="language-level">
+                                        {{ item.proficiency }}
+                                    </span>
 
-                            <div class="language-item">
-                                <div>
-                                    <span class="language-dot"></span>
-                                    Malay
+                                    <form
+                                        method="POST"
+                                        action="{{
+                                            url_for(
+                                                'seeker.delete_language',
+                                                item_id=item.language_id
+                                            )
+                                        }}"
+                                    >
+                                        <button
+                                            class="small-action-button danger"
+                                            type="submit"
+                                            title="Delete language"
+                                        >
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
-
-                                <span class="language-level">Native</span>
                             </div>
-
-                            <div class="language-item">
-                                <div>
-                                    <span class="language-dot"></span>
-                                    Chinese
-                                </div>
-
-                                <span class="language-level">
-                                    Intermediate
-                                </span>
-                            </div>
-                        </div>
-                    </section>
-                </div>
+                        {% else %}
+                            <p class="empty-state">
+                                No languages have been added.
+                            </p>
+                        {% endfor %}
+                    </div>
+                </section>
             </div>
+        </div>
 
-            <!-- Job preferences -->
-            <section class="card preferences-card">
-                <div class="card-heading">
-                    <div class="card-title">
-                        <i class="fa-solid fa-sliders"></i>
-                        <h2>Job Preferences</h2>
-                    </div>
-
-                    <button class="icon-text-button">
-                        <i class="fa-solid fa-pen"></i>
-                        Edit Preferences
-                    </button>
-                </div>
-
-                <div class="preferences-grid">
-                    <div class="preference-item">
-                        <span>Job Categories</span>
-                        <strong>UI/UX Design, Product Design</strong>
-                    </div>
-
-                    <div class="preference-item">
-                        <span>Employment Type</span>
-                        <strong>Full-time</strong>
-                    </div>
-
-                    <div class="preference-item">
-                        <span>Work Location</span>
-                        <strong>Kuala Lumpur, Selangor</strong>
-                    </div>
-
-                    <div class="preference-item">
-                        <span>Expected Salary</span>
-                        <strong>RM 4,000 – RM 6,000</strong>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Edit profile modal -->
-    <div class="modal-overlay" id="profileModal">
-        <div class="modal">
-            <div class="modal-header">
-                <div>
-                    <h2>Edit Profile</h2>
-                    <p>Update your personal and career information.</p>
+        <section class="card preferences-card">
+            <div class="card-heading">
+                <div class="card-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    <h2>Job Preferences</h2>
                 </div>
 
                 <button
-                    class="modal-close-button"
-                    data-close-modal="profileModal"
+                    class="icon-text-button"
                     type="button"
+                    data-open-modal="profileModal"
+                >
+                    <i class="fa-solid fa-pen"></i>
+                    Edit Preferences
+                </button>
+            </div>
+
+            <div class="preferences-grid">
+                <div class="preference-item">
+                    <span>Job Categories</span>
+                    <strong>
+                        {{ profile.job_categories or "Not specified" }}
+                    </strong>
+                </div>
+                <div class="preference-item">
+                    <span>Employment Type</span>
+                    <strong>
+                        {{ profile.employment_type or "Not specified" }}
+                    </strong>
+                </div>
+                <div class="preference-item">
+                    <span>Work Location</span>
+                    <strong>
+                        {{ profile.preferred_location or "Not specified" }}
+                    </strong>
+                </div>
+                <div class="preference-item">
+                    <span>Expected Salary</span>
+                    <strong>
+                        {{ profile.expected_salary or "Not specified" }}
+                    </strong>
+                </div>
+            </div>
+        </section>
+
+{% macro modal_start(id, title, description) %}
+    <div class="modal-overlay" id="{{ id }}">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <div>
+                    <h2>{{ title }}</h2>
+                    <p>{{ description }}</p>
+                </div>
+                <button
+                    class="modal-close-button"
+                    type="button"
+                    data-close-modal="{{ id }}"
                 >
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
+{% endmacro %}
 
-            <form id="profileForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="fullName">Full Name</label>
-                        <input
-                            type="text"
-                            id="fullName"
-                            value="John Doe"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="jobTitle">Job Title</label>
-                        <input
-                            type="text"
-                            id="jobTitle"
-                            value="UI/UX Designer"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value="johndoe@email.com"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            value="+60 12-345 6789"
-                        >
-                    </div>
-
-                    <div class="form-group form-group-full">
-                        <label for="location">Location</label>
-                        <input
-                            type="text"
-                            id="location"
-                            value="Kuala Lumpur, Malaysia"
-                        >
-                    </div>
-
-                    <div class="form-group form-group-full">
-                        <label for="aboutMe">About Me</label>
-                        <textarea
-                            id="aboutMe"
-                            rows="5"
-                        >Creative and detail-oriented UI/UX Designer with more than three years of experience designing user-centred digital products.</textarea>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        data-close-modal="profileModal"
-                    >
-                        Cancel
-                    </button>
-
-                    <button type="submit" class="primary-button">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+{% macro modal_end() %}
         </div>
     </div>
+{% endmacro %}
 
-    <div class="toast-message" id="toastMessage">
-        <i class="fa-solid fa-circle-check"></i>
-        <span>Profile updated successfully.</span>
-    </div>
+{{ modal_start(
+    "profileModal",
+    "Edit Profile",
+    "Update your personal information and preferences."
+) }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.update_profile') }}"
+    >
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input
+                    id="fullName"
+                    name="full_name"
+                    value="{{ profile.full_name }}"
+                    required
+                >
+            </div>
 
-    <script
-        src="{{ url_for('static', filename='js/seeker_profile.js') }}"
-    ></script>
-</body>
-</html>
+            <div class="form-group">
+                <label for="jobTitle">Job Title</label>
+                <input
+                    id="jobTitle"
+                    name="job_title"
+                    value="{{ profile.job_title or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value="{{ profile.email }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="contactNumber">Phone</label>
+                <input
+                    id="contactNumber"
+                    name="contact_number"
+                    value="{{ profile.contact_number or '' }}"
+                >
+            </div>
+
+            <div class="form-group form-group-full">
+                <label for="location">Current Location</label>
+                <input
+                    id="location"
+                    name="location"
+                    value="{{ profile.location or '' }}"
+                >
+            </div>
+
+            <div class="form-group form-group-full">
+                <label for="aboutMe">About Me</label>
+                <textarea
+                    id="aboutMe"
+                    name="about_me"
+                    rows="5"
+                >{{ profile.about_me or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="jobCategories">Job Categories</label>
+                <input
+                    id="jobCategories"
+                    name="job_categories"
+                    value="{{ profile.job_categories or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="employmentType">Employment Type</label>
+                <select id="employmentType" name="employment_type">
+                    {% for option in [
+                        "",
+                        "Full-time",
+                        "Part-time",
+                        "Contract",
+                        "Internship",
+                        "Freelance"
+                    ] %}
+                        <option
+                            value="{{ option }}"
+                            {% if profile.employment_type == option %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ option or "Select type" }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="preferredLocation">Preferred Location</label>
+                <input
+                    id="preferredLocation"
+                    name="preferred_location"
+                    value="{{ profile.preferred_location or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="expectedSalary">Expected Salary</label>
+                <input
+                    id="expectedSalary"
+                    name="expected_salary"
+                    value="{{ profile.expected_salary or '' }}"
+                >
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button
+                class="secondary-button"
+                type="button"
+                data-close-modal="profileModal"
+            >
+                Cancel
+            </button>
+            <button class="primary-button" type="submit">
+                Save Changes
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+
+{{ modal_start(
+    "experienceModal",
+    "Add Experience",
+    "Add your latest work experience."
+) }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.add_experience') }}"
+    >
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Position</label>
+                <input name="position_title" required>
+            </div>
+            <div class="form-group">
+                <label>Company</label>
+                <input name="company_name" required>
+            </div>
+            <div class="form-group">
+                <label for="experienceStartDate">
+                    Start Date
+                </label>
+                <input
+                    id="experienceStartDate"
+                    name="start_date"
+                    type="month"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="experienceEndDate">
+                    End Date
+                </label>
+                <input
+                    id="experienceEndDate"
+                    name="end_date"
+                    type="month"
+                >
+
+                <label class="checkbox-row">
+                    <input
+                        type="checkbox"
+                        id="currentlyWorking"
+                        name="currently_working"
+                    >
+                    I currently work here
+                </label>
+            </div>
+            <div class="form-group form-group-full">
+                <label>Description</label>
+                <textarea name="description" rows="4"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-button" type="submit">
+                Add Experience
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+
+{{ modal_start(
+    "educationModal",
+    "Add Education",
+    "Add an education record."
+) }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.add_education') }}"
+    >
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Qualification</label>
+                <input name="qualification" required>
+            </div>
+            <div class="form-group">
+                <label>Institution</label>
+                <input name="institution" required>
+            </div>
+            <div class="form-group">
+                <label>Start Year</label>
+                <input name="start_year">
+            </div>
+            <div class="form-group">
+                <label>End Year</label>
+                <input name="end_year">
+            </div>
+            <div class="form-group form-group-full">
+                <label>Status</label>
+                <select name="status">
+                    <option>Completed</option>
+                    <option>In Progress</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-button" type="submit">
+                Add Education
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+
+{{ modal_start("skillModal", "Add Skill", "Add one skill.") }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.add_skill') }}"
+    >
+        <div class="form-group">
+            <label>Skill Name</label>
+            <input name="skill_name" required>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-button" type="submit">
+                Add Skill
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+
+{{ modal_start(
+    "certificateModal",
+    "Add Certificate",
+    "Add a professional certificate."
+) }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.add_certificate') }}"
+        enctype="multipart/form-data"
+    >
+        <div class="form-grid">
+            <div class="form-group form-group-full">
+                <label>Certificate Name</label>
+                <input name="certificate_name" required>
+            </div>
+            <div class="form-group">
+                <label>Issuer</label>
+                <input name="issuer">
+            </div>
+            <div class="form-group">
+                <label for="certificateIssueDate">
+                    Issue Date
+                </label>
+                <input
+                    id="certificateIssueDate"
+                    name="issue_date"
+                    type="month"
+                >
+            </div>
+
+            <div class="form-group form-group-full">
+                <label for="certificateFile">
+                    Certificate File
+                </label>
+                <input
+                    id="certificateFile"
+                    name="certificate_file"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                >
+                <small class="field-help">
+                    PDF, PNG, JPG, DOC or DOCX.
+                </small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-button" type="submit">
+                Add Certificate
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+
+{{ modal_start(
+    "languageModal",
+    "Add Language",
+    "Add a language and proficiency level."
+) }}
+    <form
+        method="POST"
+        action="{{ url_for('seeker.add_language') }}"
+    >
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Language</label>
+                <input name="language_name" required>
+            </div>
+            <div class="form-group">
+                <label>Proficiency</label>
+                <select name="proficiency" required>
+                    <option value="">Select level</option>
+                    <option>Basic</option>
+                    <option>Intermediate</option>
+                    <option>Fluent</option>
+                    <option>Native</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-button" type="submit">
+                Add Language
+            </button>
+        </div>
+    </form>
+{{ modal_end() }}
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{{ url_for('static', filename='js/seeker_profile.js') }}"
+></script>
+{% endblock %}

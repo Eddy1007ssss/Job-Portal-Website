@@ -1,0 +1,125 @@
+<aside class="employer-sidebar">
+    <div class="employer-sidebar-container">
+
+        <nav
+            class="employer-sidebar-navigation"
+            aria-label="Employer navigation"
+        >
+            <span class="employer-sidebar-section-title">
+                Employer Menu
+            </span>
+
+
+            <!-- Company profile -->
+            <a
+                href="{{ url_for('employer.company_preview') }}"
+                class="
+                    employer-sidebar-link
+                    {% if request.endpoint in [
+                        'employer.company_preview',
+                        'employer.company_profile'
+                    ] %}
+                        active
+                    {% endif %}
+                "
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-regular fa-building"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Company Profile
+                </span>
+            </a>
+
+
+            <!-- Job listings -->
+            <a
+                href="#"
+                class="employer-sidebar-link disabled"
+                aria-disabled="true"
+                title="This module will be available in a later sprint."
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-solid fa-briefcase"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Job Listings
+                </span>
+            </a>
+
+
+            <!-- Applications -->
+            <a
+                href="#"
+                class="employer-sidebar-link disabled"
+                aria-disabled="true"
+                title="This module will be available in a later sprint."
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-regular fa-file-lines"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Applications
+                </span>
+            </a>
+
+
+            <!-- Interviews -->
+            <a
+                href="#"
+                class="employer-sidebar-link disabled"
+                aria-disabled="true"
+                title="This module will be available in a later sprint."
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-regular fa-calendar"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Interviews
+                </span>
+            </a>
+
+
+            <!-- Notifications -->
+            <a
+                href="#"
+                class="employer-sidebar-link disabled"
+                aria-disabled="true"
+                title="This module will be available in a later sprint."
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-regular fa-bell"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Notifications
+                </span>
+            </a>
+
+        </nav>
+
+
+        <!-- Sidebar footer -->
+        <div class="employer-sidebar-footer">
+
+            <a
+                href="{{ url_for('employer.logout') }}"
+                class="employer-sidebar-logout"
+            >
+                <span class="employer-sidebar-icon">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </span>
+
+                <span class="employer-sidebar-link-text">
+                    Logout
+                </span>
+            </a>
+
+        </div>
+
+    </div>
+</aside>

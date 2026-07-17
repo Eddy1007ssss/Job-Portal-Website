@@ -1,6 +1,14 @@
-{% extends "base.html" %}
+{% extends "employer_base.html" %}
 
-{% block title %}Manage Company Profile | JobPortal{% endblock %}
+
+{% block title %}
+    {% if profile_exists %}
+        Edit Company Profile | JobPortal
+    {% else %}
+        Create Company Profile | JobPortal
+    {% endif %}
+{% endblock %}
+
 
 {% block extra_css %}
 <link
@@ -9,452 +17,753 @@
 >
 {% endblock %}
 
+
 {% block content %}
-<main class="employer-page">
-    <aside class="employer-sidebar">
-        <div class="sidebar-heading">
-            <span class="sidebar-small-text">Employer</span>
-            <strong>
-                {{ session.get(
-                    'employer_company_name',
-                    'Company Dashboard'
-                ) }}
-            </strong>
+
+<section class="profile-form-section">
+
+    <div class="page-heading-row">
+
+        <div>
+            <span class="section-label">
+                COMPANY INFORMATION
+            </span>
+
+            <h1>
+                {% if profile_exists %}
+                    Edit Company Profile
+                {% else %}
+                    Create Company Profile
+                {% endif %}
+            </h1>
+
+            <p>
+                Add information that helps job seekers understand
+                your company.
+            </p>
         </div>
 
-        <nav class="sidebar-navigation">
-            <a href="#">Dashboard</a>
-            <a href="#">Post a Job</a>
-            <a href="#">My Jobs</a>
-            <a href="#">Applications</a>
+
+        {% if profile_exists %}
 
             <a
-                href="{{ url_for('employer_company_profile') }}"
-                class="active"
+                href="{{ url_for('employer.company_preview') }}"
+                class="preview-button"
             >
-                Company Profile
+                <i class="fa-regular fa-eye"></i>
+                Preview Profile
             </a>
 
-            <a href="#">Settings</a>
+        {% endif %}
 
-            <a href="{{ url_for('employer_logout') }}">
-                Logout
-            </a>
-        </nav>
-    </aside>
+    </div>
 
-    <section class="profile-form-section">
-        <div class="page-heading-row">
-            <div>
-                <span class="section-label">COMPANY INFORMATION</span>
-                <h1>
-                    {% if profile %}
-                        Edit Company Profile
-                    {% else %}
-                        Create Company Profile
-                    {% endif %}
-                </h1>
+
+    <form
+        id="companyProfileForm"
+        method="POST"
+        action="{{ url_for('employer.company_profile') }}"
+        class="
+            profile-form-card
+            {% if profile_exists %}
+                profile-edit-mode
+            {% else %}
+                profile-create-mode
+            {% endif %}
+        "
+        novalidate
+    >
+
+        <!-- =========================================
+             Basic information
+        ========================================== -->
+        <div class="form-section">
+
+            <div class="form-section-heading">
+                <h2>Basic Information</h2>
 
                 <p>
-                    Add information that helps job seekers understand
-                    your company.
+                    Enter your company's general information.
                 </p>
             </div>
 
-            {% if profile %}
-                <a
-                    href="{{ url_for('employer_company_preview') }}"
-                    class="preview-button"
-                >
-                    Preview Profile
-                </a>
-            {% endif %}
+
+            <div class="form-grid">
+
+                <!-- Company name -->
+                <div class="form-group full-width">
+
+                    <label for="company_name">
+                        Company Name
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="company_name"
+                        name="company_name"
+                        value="{{
+                            profile['company_name']
+                            if profile
+                            else employer['company_name']
+                        }}"
+                        placeholder="Enter company name"
+                        minlength="2"
+                        maxlength="150"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="companyNameError"
+                    ></small>
+
+                </div>
+
+
+                <!-- Industry -->
+                <div class="form-group">
+
+                    <label for="industry">
+                        Industry
+                        <span class="required">*</span>
+                    </label>
+
+                    {% set selected_industry =
+                        profile['industry']
+                        if profile
+                        else ''
+                    %}
+
+                    <select
+                        id="industry"
+                        name="industry"
+                        required
+                    >
+                        <option value="">
+                            Select an industry
+                        </option>
+
+                        <option
+                            value="Information Technology"
+                            {% if selected_industry ==
+                                "Information Technology" %}
+                                selected
+                            {% endif %}
+                        >
+                            Information Technology
+                        </option>
+
+                        <option
+                            value="Finance"
+                            {% if selected_industry == "Finance" %}
+                                selected
+                            {% endif %}
+                        >
+                            Finance
+                        </option>
+
+                        <option
+                            value="Healthcare"
+                            {% if selected_industry == "Healthcare" %}
+                                selected
+                            {% endif %}
+                        >
+                            Healthcare
+                        </option>
+
+                        <option
+                            value="Education"
+                            {% if selected_industry == "Education" %}
+                                selected
+                            {% endif %}
+                        >
+                            Education
+                        </option>
+
+                        <option
+                            value="Retail"
+                            {% if selected_industry == "Retail" %}
+                                selected
+                            {% endif %}
+                        >
+                            Retail
+                        </option>
+
+                        <option
+                            value="Manufacturing"
+                            {% if selected_industry ==
+                                "Manufacturing" %}
+                                selected
+                            {% endif %}
+                        >
+                            Manufacturing
+                        </option>
+
+                        <option
+                            value="Hospitality"
+                            {% if selected_industry ==
+                                "Hospitality" %}
+                                selected
+                            {% endif %}
+                        >
+                            Hospitality
+                        </option>
+
+                        <option
+                            value="Construction"
+                            {% if selected_industry ==
+                                "Construction" %}
+                                selected
+                            {% endif %}
+                        >
+                            Construction
+                        </option>
+
+                        <option
+                            value="Telecommunications"
+                            {% if selected_industry ==
+                                "Telecommunications" %}
+                                selected
+                            {% endif %}
+                        >
+                            Telecommunications
+                        </option>
+
+                        <option
+                            value="Transportation and Logistics"
+                            {% if selected_industry ==
+                                "Transportation and Logistics" %}
+                                selected
+                            {% endif %}
+                        >
+                            Transportation and Logistics
+                        </option>
+
+                        <option
+                            value="Professional Services"
+                            {% if selected_industry ==
+                                "Professional Services" %}
+                                selected
+                            {% endif %}
+                        >
+                            Professional Services
+                        </option>
+
+                        <option
+                            value="Government"
+                            {% if selected_industry ==
+                                "Government" %}
+                                selected
+                            {% endif %}
+                        >
+                            Government
+                        </option>
+
+                        <option
+                            value="Other"
+                            {% if selected_industry == "Other" %}
+                                selected
+                            {% endif %}
+                        >
+                            Other
+                        </option>
+                    </select>
+
+                    <small
+                        class="field-error"
+                        id="industryError"
+                    ></small>
+
+                </div>
+
+
+                <!-- Company size -->
+                <div class="form-group">
+
+                    <label for="company_size">
+                        Company Size
+                    </label>
+
+                    {% set selected_size =
+                        profile['company_size']
+                        if profile
+                        else ''
+                    %}
+
+                    <select
+                        id="company_size"
+                        name="company_size"
+                    >
+                        <option value="">
+                            Select company size
+                        </option>
+
+                        <option
+                            value="1-10 employees"
+                            {% if selected_size ==
+                                "1-10 employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            1–10 employees
+                        </option>
+
+                        <option
+                            value="11-50 employees"
+                            {% if selected_size ==
+                                "11-50 employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            11–50 employees
+                        </option>
+
+                        <option
+                            value="51-200 employees"
+                            {% if selected_size ==
+                                "51-200 employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            51–200 employees
+                        </option>
+
+                        <option
+                            value="201-500 employees"
+                            {% if selected_size ==
+                                "201-500 employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            201–500 employees
+                        </option>
+
+                        <option
+                            value="501-1000 employees"
+                            {% if selected_size ==
+                                "501-1000 employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            501–1000 employees
+                        </option>
+
+                        <option
+                            value="1001+ employees"
+                            {% if selected_size ==
+                                "1001+ employees" %}
+                                selected
+                            {% endif %}
+                        >
+                            1001+ employees
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <!-- Company address -->
+                <div class="form-group full-width">
+
+                    <label for="address">
+                        Company Address
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value="{{
+                            profile['address']
+                            if profile
+                            else ''
+                        }}"
+                        placeholder="Enter complete company address"
+                        minlength="5"
+                        maxlength="300"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="addressError"
+                    ></small>
+
+                </div>
+
+
+                <!-- Company description -->
+                <div class="form-group full-width">
+
+                    <label for="company_description">
+                        Company Description
+                        <span class="required">*</span>
+                    </label>
+
+                    <textarea
+                        id="company_description"
+                        name="company_description"
+                        rows="7"
+                        minlength="30"
+                        maxlength="1500"
+                        placeholder="Describe your company, culture, products and services..."
+                        required
+                    >{{ profile['company_description']
+                        if profile else '' }}</textarea>
+
+                    <div class="textarea-information">
+
+                        <small
+                            class="field-error"
+                            id="descriptionError"
+                        ></small>
+
+                        <span id="descriptionCounter">
+                            0 / 1500
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
         </div>
 
-        <form
-            id="companyProfileForm"
-            method="POST"
-            action="{{ url_for('employer_company_profile') }}"
-            class="profile-form-card"
-            novalidate
-        >
-            <div class="form-section">
-                <div class="form-section-heading">
-                    <h2>Basic Information</h2>
-                    <p>
-                        Enter your company's general information.
-                    </p>
+
+        <!-- =========================================
+             Contact details
+        ========================================== -->
+        <div class="form-section">
+
+            <div class="form-section-heading">
+                <h2>Contact Details</h2>
+
+                <p>
+                    Enter the contact information visible to
+                    job seekers.
+                </p>
+            </div>
+
+
+            <div class="form-grid">
+
+                <!-- Contact email -->
+                <div class="form-group">
+
+                    <label for="contact_email">
+                        Contact Email
+                        <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="email"
+                        id="contact_email"
+                        name="contact_email"
+                        value="{{
+                            profile['contact_email']
+                            if profile
+                            else employer['company_email']
+                        }}"
+                        placeholder="hr@company.com"
+                        maxlength="150"
+                        required
+                    >
+
+                    <small
+                        class="field-error"
+                        id="contactEmailError"
+                    ></small>
+
                 </div>
 
-                <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label for="company_name">
-                            Company Name
-                            <span class="required">*</span>
-                        </label>
 
-                        <input
-                            type="text"
-                            id="company_name"
-                            name="company_name"
-                            value="{{ profile['company_name']
-                                if profile
-                                else employer['company_name'] }}"
-                            placeholder="Enter company name"
-                            required
-                        >
+                <!-- Contact number -->
+                <div class="form-group">
 
-                        <small
-                            class="field-error"
-                            id="companyNameError"
-                        ></small>
-                    </div>
+                    <label for="contact_number">
+                        Contact Number
+                        <span class="required">*</span>
+                    </label>
 
-                    <div class="form-group">
-                        <label for="industry">
-                            Industry
-                            <span class="required">*</span>
-                        </label>
+                    <input
+                        type="tel"
+                        id="contact_number"
+                        name="contact_number"
+                        value="{{
+                            profile['contact_number']
+                            if profile
+                            else employer['contact_number']
+                        }}"
+                        placeholder="0123456789"
+                        minlength="8"
+                        maxlength="15"
+                        required
+                    >
 
-                        <select
-                            id="industry"
-                            name="industry"
-                            required
-                        >
-                            <option value="">Select an industry</option>
+                    <small
+                        class="field-error"
+                        id="contactNumberError"
+                    ></small>
 
-                            {% set selected_industry =
-                                profile['industry'] if profile else '' %}
+                </div>
 
-                            <option
-                                value="Information Technology"
-                                {% if selected_industry ==
-                                    'Information Technology' %}
-                                    selected
-                                {% endif %}
+
+                <!-- Company website -->
+                <div class="form-group full-width">
+
+                    <label for="website">
+                        Company Website
+                    </label>
+
+                    <input
+                        type="url"
+                        id="website"
+                        name="website"
+                        value="{{
+                            profile['website']
+                            if profile
+                            else ''
+                        }}"
+                        placeholder="https://www.company.com"
+                        maxlength="300"
+                    >
+
+                    <small
+                        class="field-error"
+                        id="websiteError"
+                    ></small>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- =========================================
+             Company images
+        ========================================== -->
+        <div class="form-section">
+
+            <div class="form-section-heading">
+                <h2>Company Images</h2>
+
+                <p>
+                    Paste an image URL for the company logo
+                    and banner.
+                </p>
+            </div>
+
+
+            <div class="form-grid">
+
+                <!-- Logo URL -->
+                <div class="form-group">
+
+                    <label for="logo_url">
+                        Logo URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="logo_url"
+                        name="logo_url"
+                        value="{{
+                            profile['logo_url']
+                            if profile
+                            else ''
+                        }}"
+                        placeholder="https://example.com/logo.png"
+                        maxlength="500"
+                    >
+
+                    <small
+                        class="field-help"
+                    >
+                        Recommended: square image with a transparent
+                        or white background.
+                    </small>
+
+                    <small
+                        class="field-error"
+                        id="logoUrlError"
+                    ></small>
+
+
+                    <div
+                        class="image-preview-container"
+                        id="logoPreviewContainer"
+                    >
+                        <span class="image-preview-label">
+                            Logo Preview
+                        </span>
+
+                        <div class="logo-preview-box">
+
+                            <img
+                                id="logoPreview"
+                                src="{{
+                                    profile['logo_url']
+                                    if profile and profile['logo_url']
+                                    else ''
+                                }}"
+                                alt="Company logo preview"
+                                class="
+                                    form-logo-preview
+                                    {% if not profile
+                                        or not profile['logo_url'] %}
+                                        hidden
+                                    {% endif %}
+                                "
                             >
-                                Information Technology
-                            </option>
 
-                            <option
-                                value="Finance"
-                                {% if selected_industry == 'Finance' %}
-                                    selected
-                                {% endif %}
+                            <div
+                                id="logoPreviewPlaceholder"
+                                class="
+                                    form-logo-placeholder
+                                    {% if profile
+                                        and profile['logo_url'] %}
+                                        hidden
+                                    {% endif %}
+                                "
                             >
-                                Finance
-                            </option>
+                                <i class="fa-regular fa-building"></i>
+                            </div>
 
-                            <option
-                                value="Healthcare"
-                                {% if selected_industry == 'Healthcare' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Healthcare
-                            </option>
-
-                            <option
-                                value="Education"
-                                {% if selected_industry == 'Education' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Education
-                            </option>
-
-                            <option
-                                value="Retail"
-                                {% if selected_industry == 'Retail' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Retail
-                            </option>
-
-                            <option
-                                value="Manufacturing"
-                                {% if selected_industry == 'Manufacturing' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Manufacturing
-                            </option>
-
-                            <option
-                                value="Hospitality"
-                                {% if selected_industry == 'Hospitality' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Hospitality
-                            </option>
-
-                            <option
-                                value="Other"
-                                {% if selected_industry == 'Other' %}
-                                    selected
-                                {% endif %}
-                            >
-                                Other
-                            </option>
-                        </select>
-
-                        <small
-                            class="field-error"
-                            id="industryError"
-                        ></small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="company_size">
-                            Company Size
-                        </label>
-
-                        {% set selected_size =
-                            profile['company_size'] if profile else '' %}
-
-                        <select
-                            id="company_size"
-                            name="company_size"
-                        >
-                            <option value="">Select company size</option>
-
-                            <option
-                                value="1-10 employees"
-                                {% if selected_size == '1-10 employees' %}
-                                    selected
-                                {% endif %}
-                            >
-                                1–10 employees
-                            </option>
-
-                            <option
-                                value="11-50 employees"
-                                {% if selected_size == '11-50 employees' %}
-                                    selected
-                                {% endif %}
-                            >
-                                11–50 employees
-                            </option>
-
-                            <option
-                                value="51-200 employees"
-                                {% if selected_size == '51-200 employees' %}
-                                    selected
-                                {% endif %}
-                            >
-                                51–200 employees
-                            </option>
-
-                            <option
-                                value="201-500 employees"
-                                {% if selected_size == '201-500 employees' %}
-                                    selected
-                                {% endif %}
-                            >
-                                201–500 employees
-                            </option>
-
-                            <option
-                                value="501+ employees"
-                                {% if selected_size == '501+ employees' %}
-                                    selected
-                                {% endif %}
-                            >
-                                501+ employees
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="address">
-                            Company Address
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="text"
-                            id="address"
-                            name="address"
-                            value="{{ profile['address'] if profile else '' }}"
-                            placeholder="Enter complete company address"
-                            required
-                        >
-
-                        <small
-                            class="field-error"
-                            id="addressError"
-                        ></small>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="company_description">
-                            Company Description
-                            <span class="required">*</span>
-                        </label>
-
-                        <textarea
-                            id="company_description"
-                            name="company_description"
-                            rows="7"
-                            maxlength="1500"
-                            placeholder="Describe your company, culture, products and services..."
-                            required
-                        >{{ profile['company_description']
-                            if profile else '' }}</textarea>
-
-                        <div class="textarea-information">
-                            <small
-                                class="field-error"
-                                id="descriptionError"
-                            ></small>
-
-                            <span id="descriptionCounter">
-                                0 / 1500
-                            </span>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="form-section">
-                <div class="form-section-heading">
-                    <h2>Contact Details</h2>
-                    <p>
-                        Enter the contact information visible to job seekers.
-                    </p>
                 </div>
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="contact_email">
-                            Contact Email
-                            <span class="required">*</span>
-                        </label>
 
-                        <input
-                            type="email"
-                            id="contact_email"
-                            name="contact_email"
-                            value="{{ profile['contact_email']
-                                if profile
-                                else employer['company_email'] }}"
-                            placeholder="hr@company.com"
-                            required
-                        >
+                <!-- Banner URL -->
+                <div class="form-group">
 
-                        <small
-                            class="field-error"
-                            id="contactEmailError"
-                        ></small>
-                    </div>
+                    <label for="banner_url">
+                        Banner URL
+                    </label>
 
-                    <div class="form-group">
-                        <label for="contact_number">
-                            Contact Number
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="tel"
-                            id="contact_number"
-                            name="contact_number"
-                            value="{{ profile['contact_number']
-                                if profile
-                                else employer['contact_number'] }}"
-                            placeholder="0123456789"
-                            required
-                        >
-
-                        <small
-                            class="field-error"
-                            id="contactNumberError"
-                        ></small>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="website">
-                            Company Website
-                        </label>
-
-                        <input
-                            type="url"
-                            id="website"
-                            name="website"
-                            value="{{ profile['website'] if profile else '' }}"
-                            placeholder="https://www.company.com"
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="form-section-heading">
-                    <h2>Company Images</h2>
-                    <p>
-                        For now, paste an image URL for the logo and banner.
-                    </p>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="logo_url">
-                            Logo URL
-                        </label>
-
-                        <input
-                            type="url"
-                            id="logo_url"
-                            name="logo_url"
-                            value="{{ profile['logo_url']
-                                if profile else '' }}"
-                            placeholder="https://example.com/logo.png"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="banner_url">
-                            Banner URL
-                        </label>
-
-                        <input
-                            type="url"
-                            id="banner_url"
-                            name="banner_url"
-                            value="{{ profile['banner_url']
-                                if profile else '' }}"
-                            placeholder="https://example.com/banner.jpg"
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                {% if profile %}
-                    <a
-                        href="{{ url_for('employer_company_preview') }}"
-                        class="secondary-button"
+                    <input
+                        type="url"
+                        id="banner_url"
+                        name="banner_url"
+                        value="{{
+                            profile['banner_url']
+                            if profile
+                            else ''
+                        }}"
+                        placeholder="https://example.com/banner.jpg"
+                        maxlength="500"
                     >
-                        Cancel
-                    </a>
-                {% endif %}
 
-                <button
-                    type="submit"
-                    class="save-button"
-                >
-                    {% if profile %}
-                        Save Changes
-                    {% else %}
-                        Create Company Profile
-                    {% endif %}
-                </button>
+                    <small class="field-help">
+                        Recommended: wide image with a 3:1 ratio.
+                    </small>
+
+                    <small
+                        class="field-error"
+                        id="bannerUrlError"
+                    ></small>
+
+
+                    <div
+                        class="image-preview-container"
+                        id="bannerPreviewContainer"
+                    >
+                        <span class="image-preview-label">
+                            Banner Preview
+                        </span>
+
+                        <div class="banner-preview-box">
+
+                            <img
+                                id="bannerPreview"
+                                src="{{
+                                    profile['banner_url']
+                                    if profile and profile['banner_url']
+                                    else ''
+                                }}"
+                                alt="Company banner preview"
+                                class="
+                                    form-banner-preview
+                                    {% if not profile
+                                        or not profile['banner_url'] %}
+                                        hidden
+                                    {% endif %}
+                                "
+                            >
+
+                            <div
+                                id="bannerPreviewPlaceholder"
+                                class="
+                                    form-banner-placeholder
+                                    {% if profile
+                                        and profile['banner_url'] %}
+                                        hidden
+                                    {% endif %}
+                                "
+                            >
+                                <i class="fa-regular fa-image"></i>
+                                <span>Banner preview</span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
-        </form>
-    </section>
-</main>
+        </div>
+
+
+        <!-- =========================================
+             Form actions
+        ========================================== -->
+        <div class="form-actions">
+
+            {% if profile_exists %}
+
+                <a
+                    href="{{ url_for('employer.company_preview') }}"
+                    class="secondary-button"
+                >
+                    Cancel
+                </a>
+
+            {% else %}
+
+                <a
+                    href="{{ url_for('employer.logout') }}"
+                    class="secondary-button"
+                >
+                    Complete Later
+                </a>
+
+            {% endif %}
+
+
+            <button
+                type="submit"
+                class="save-button"
+            >
+                <i class="fa-regular fa-floppy-disk"></i>
+
+                {% if profile_exists %}
+                    Save Changes
+                {% else %}
+                    Create Company Profile
+                {% endif %}
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
 {% endblock %}
+
 
 {% block extra_js %}
 <script

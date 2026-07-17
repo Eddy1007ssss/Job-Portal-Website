@@ -1,88 +1,201 @@
-<header class="top-header">
-    <div class="header-left">
-        <button class="mobile-menu-button" id="mobileMenuButton"
-                aria-label="Open navigation menu">
-            <i class="fa-solid fa-bars"></i>
-        </button>
+<header class="main-header">
+    <div class="main-header-container">
 
-        <a href="{{ url_for('home') }}" class="brand">
-            <div class="brand-icon">
+        <a
+            href="{{ url_for('home') }}"
+            class="header-brand"
+        >
+            <span class="header-brand-icon">
                 <i class="fa-solid fa-briefcase"></i>
-            </div>
+            </span>
 
-            <span class="brand-text">
+            <span class="header-brand-text">
                 Job<span>Portal</span>
             </span>
         </a>
-    </div>
 
-    <nav class="header-navigation">
-        <a href="{{ url_for('home') }}"
-           class="{{ 'active' if request.endpoint == 'home' else '' }}">
-            Home
-        </a>
 
-        <a href="{{ url_for('job_listings') }}"
-           class="{{ 'active' if request.endpoint == 'job_listings' else '' }}">
-            Find Jobs
-        </a>
+        <nav
+            class="main-navigation"
+            aria-label="Main navigation"
+        >
+            <a
+                href="{{ url_for('home') }}"
+                class="{{
+                    'active'
+                    if request.endpoint == 'home'
+                    else ''
+                }}"
+            >
+                Home
+            </a>
 
-        <a href="{{ url_for('companies') }}"
-           class="{{ 'active' if request.endpoint == 'companies' else '' }}">
-            Companies
-        </a>
+            <a
+                href="{{ url_for('jobs.list_jobs') }}"
+                class="{{
+                    'active'
+                    if request.endpoint in [
+                        'jobs.list_jobs',
+                        'jobs.job_details'
+                    ]
+                    else ''
+                }}"
+            >
+                Find Jobs
+            </a>
 
-        <a href="{{ url_for('career_tips') }}"
-           class="{{ 'active' if request.endpoint == 'career_tips' else '' }}">
-            Career Tips
-        </a>
+            <a
+                href="{{ url_for('companies') }}"
+                class="{{
+                    'active'
+                    if request.endpoint == 'companies'
+                    else ''
+                }}"
+            >
+                Companies
+            </a>
 
-        <a href="{{ url_for('about') }}"
-           class="{{ 'active' if request.endpoint == 'about' else '' }}">
-            About Us
-        </a>
-    </nav>
+            <a
+                href="{{ url_for('career_tips') }}"
+                class="{{
+                    'active'
+                    if request.endpoint == 'career_tips'
+                    else ''
+                }}"
+            >
+                Career Tips
+            </a>
 
-    <div class="header-actions">
-        <button class="notification-button"
-                type="button"
-                aria-label="Notifications">
-            <i class="fa-regular fa-bell"></i>
-            <span class="notification-badge">1</span>
-        </button>
+            <a
+                href="{{ url_for('about') }}"
+                class="{{
+                    'active'
+                    if request.endpoint == 'about'
+                    else ''
+                }}"
+            >
+                About Us
+            </a>
+        </nav>
 
-        <div class="profile-menu">
-            <button class="profile-menu-button"
-                    id="profileMenuButton"
-                    type="button">
-                <img
-                    src="{{ url_for('static', filename='images/profile-placeholder.jpg') }}"
-                    alt="User profile"
+
+        <div class="header-actions">
+
+            {% if session.get("seeker_id") %}
+
+                <a
+                    href="{{ url_for('employer.login') }}"
+                    class="employer-site-button"
                 >
-
-                <span class="profile-menu-name">John Doe</span>
-
-                <i class="fa-solid fa-chevron-down profile-arrow"></i>
-            </button>
-
-            <div class="profile-dropdown" id="profileDropdown">
-                <a href="{{ url_for('seeker_profile') }}">
-                    <i class="fa-regular fa-user"></i>
-                    My Profile
+                    <i class="fa-regular fa-building"></i>
+                    Employer Site
                 </a>
 
-                <a href="{{ url_for('settings') }}">
-                    <i class="fa-solid fa-gear"></i>
-                    Settings
+
+                <button
+                    type="button"
+                    class="header-notification-button"
+                    aria-label="Notifications"
+                >
+                    <i class="fa-regular fa-bell"></i>
+
+                    <span class="notification-count">
+                        1
+                    </span>
+                </button>
+
+
+                <div class="header-profile-menu">
+
+                    <button
+                        type="button"
+                        class="header-profile-button"
+                        id="headerProfileButton"
+                        aria-expanded="false"
+                        aria-controls="headerProfileDropdown"
+                    >
+                        {% if profile is defined
+                            and profile
+                            and profile.profile_image %}
+
+                            <img
+                                src="{{
+                                    url_for(
+                                        'static',
+                                        filename=profile.profile_image
+                                    )
+                                }}"
+                                alt="Profile picture"
+                                class="header-profile-image"
+                            >
+
+                        {% else %}
+
+                            <span class="header-default-avatar">
+                                {{
+                                    session.get(
+                                        "seeker_name",
+                                        "J"
+                                    )[0] | upper
+                                }}
+                            </span>
+
+                        {% endif %}
+
+                        <span class="header-profile-name">
+                            {{
+                                session.get(
+                                    "seeker_name",
+                                    "Job Seeker"
+                                )
+                            }}
+                        </span>
+
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+
+
+                    <div
+                        class="header-profile-dropdown"
+                        id="headerProfileDropdown"
+                    >
+                        <a href="{{ url_for('seeker.profile') }}">
+                            <i class="fa-regular fa-user"></i>
+                            My Profile
+                        </a>
+
+                        <a href="{{ url_for('settings') }}">
+                            <i class="fa-solid fa-gear"></i>
+                            Settings
+                        </a>
+
+                        <div class="header-dropdown-divider"></div>
+
+                        <a
+                            href="{{ url_for('seeker.logout') }}"
+                            class="header-logout-link"
+                        >
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            Logout
+                        </a>
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                
+                <a
+                    href="{{ url_for('employer.login') }}"
+                    class="employer-site-button"
+                >
+                    <i class="fa-regular fa-building"></i>
+                    Employer Site
                 </a>
 
-                <div class="dropdown-divider"></div>
+            {% endif %}
 
-                <a href="{{ url_for('logout') }}" class="logout-link">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    Logout
-                </a>
-            </div>
         </div>
+
     </div>
 </header>
