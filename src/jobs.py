@@ -728,7 +728,7 @@ def get_current_seeker_id() -> int | None:
 
     try:
         return int(seeker_id)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -938,22 +938,20 @@ def job_details(job_id: int):
 
 
 @jobs_bp.post("/jobs/<int:job_id>/save")
-def toggle_save_job(
-    job_id: int,
-):
+def toggle_save_job(job_id: int):
     """
-    Save or unsave a job for the logged-in seeker.
+    Save or remove a job from the seeker's saved-job list.
     """
 
     seeker_id = get_current_seeker_id()
 
     if seeker_id is None:
         flash(
-            "Please log in as a job seeker to save jobs.",
+            "Please open your seeker profile before saving jobs.",
             "error",
         )
 
-        return redirect(url_for("seeker.login"))
+        return redirect(url_for("seeker.profile"))
 
     initialise_job_tables()
 
@@ -1006,6 +1004,7 @@ def toggle_save_job(
         )
 
         message = "Job removed from your saved jobs."
+
     else:
         connection.execute(
             """

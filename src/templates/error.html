@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Page Not Found | JobPortal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .error-container {
+            width: 90%;
+            max-width: 560px;
+            padding: 48px 32px;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .error-code {
+            margin: 0;
+            font-size: 72px;
+            color: #2563eb;
+        }
+
+        .error-title {
+            margin: 16px 0 8px;
+            font-size: 28px;
+        }
+
+        .error-message {
+            margin: 0 0 28px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .home-button {
+            display: inline-block;
+            padding: 12px 24px;
+            text-decoration: none;
+            color: white;
+            background: #2563eb;
+            border-radius: 8px;
+        }
+
+        .home-button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="error-container">
+        <h1 class="error-code">404</h1>
+
+        <h2 class="error-title">
+            Page Not Found
+        </h2>
+
+        <p class="error-message">
+            The page that you requested does not exist.
+        </p>
+
+        <a
+            href="{{ url_for('home') }}"
+            class="home-button"
+        >
+            Return Home
+        </a>
+    </main>
+</body>
+</html>
