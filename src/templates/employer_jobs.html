@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}
+My Job Listings | JobPortal
+{% endblock %}
+
+{% block content %}
+<div class="employer-page">
+    <div class="page-header">
+        <div>
+            <p class="page-label">Employer Dashboard</p>
+            <h1>My Job Listings</h1>
+            <p>Manage the jobs posted by your company.</p>
+        </div>
+
+        <a
+            href="{{ url_for('jobs.post_job') }}"
+            class="primary-button"
+        >
+            + Post New Job
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% if jobs %}
+        <div class="job-table-container">
+            <table class="job-table">
+                <thead>
+                    <tr>
+                        <th>Job Title</th>
+                        <th>Location</th>
+                        <th>Employment Type</th>
+                        <th>Status</th>
+                        <th>Deadline</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for job in jobs %}
+                        <tr>
+                            <td>{{ job["title"] }}</td>
+                            <td>{{ job["location"] }}</td>
+                            <td>{{ job["employment_type"] }}</td>
+                            <td>{{ job["status"] }}</td>
+
+                            <td>
+                                {{ job["application_deadline"] or "Not set" }}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for(
+                                        'jobs.edit_job',
+                                        job_id=job['job_id']
+                                    ) }}"
+                                    class="edit-button"
+                                >
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>No job postings yet</h2>
+
+            <p>
+                Create your first job posting to start receiving
+                applications.
+            </p>
+
+            <a href="{{ url_for('jobs.post_job') }}">
+                Post a Job
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

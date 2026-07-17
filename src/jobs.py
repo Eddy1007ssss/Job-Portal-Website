@@ -862,6 +862,559 @@ def list_jobs():
     )
 
 
+@jobs_bp.route(
+    "/employer/jobs/post",
+    methods=["GET", "POST"],
+)
+def post_job():
+    """
+    Allow an employer to create or save a job posting.
+    """
+
+    initialise_job_tables()
+
+    if request.method == "GET":
+        return render_template("job_posting.html")
+
+    title = request.form.get(
+        "job_title",
+        "",
+    ).strip()
+
+    category = request.form.get(
+        "job_category",
+        "",
+    ).strip()
+
+    employment_type = request.form.get(
+        "employment_type",
+        "",
+    ).strip()
+
+    work_mode = request.form.get(
+        "workplace_type",
+        "",
+    ).strip()
+
+    location = request.form.get(
+        "location",
+        "",
+    ).strip()
+
+    salary_min_value = request.form.get(
+        "minimum_salary",
+        "",
+    ).strip()
+
+    salary_max_value = request.form.get(
+        "maximum_salary",
+        "",
+    ).strip()
+
+    experience_level = request.form.get(
+        "experience_level",
+        "",
+    ).strip()
+
+    description = request.form.get(
+        "job_description",
+        "",
+    ).strip()
+
+    requirements = request.form.get(
+        "requirements",
+        "",
+    ).strip()
+
+    responsibilities = request.form.get(
+        "responsibilities",
+        "",
+    ).strip()
+
+    benefits = request.form.get(
+        "benefits",
+        "",
+    ).strip()
+
+    application_deadline = request.form.get(
+        "application_deadline",
+        "",
+    ).strip()
+
+    action = request.form.get(
+        "action",
+        "publish",
+    )
+
+    required_fields = {
+        "Job title": title,
+        "Job category": category,
+        "Employment type": employment_type,
+        "Workplace type": work_mode,
+        "Location": location,
+        "Experience level": experience_level,
+    }
+
+    for field_name, field_value in required_fields.items():
+        if not field_value:
+            flash(
+                f"{field_name} is required.",
+                "error",
+            )
+
+            return render_template(
+                "job_posting.html",
+                form_data=request.form,
+            )
+
+    if action == "publish":
+        if not description:
+            flash(
+                "Job description is required.",
+                "error",
+            )
+
+            return render_template(
+                "job_posting.html",
+                form_data=request.form,
+            )
+
+        if not requirements:
+            flash(
+                "Job requirements are required.",
+                "error",
+            )
+
+            return render_template(
+                "job_posting.html",
+                form_data=request.form,
+            )
+
+        if not application_deadline:
+            flash(
+                "Application deadline is required.",
+                "error",
+            )
+
+            return render_template(
+                "job_posting.html",
+                form_data=request.form,
+            )
+
+    try:
+        salary_min = float(salary_min_value) if salary_min_value else None
+
+        salary_max = float(salary_max_value) if salary_max_value else None
+    except ValueError:
+        flash(
+            "Salary must contain numbers only.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    if salary_min is not None and salary_max is not None and salary_max < salary_min:
+        flash(
+            "Maximum salary cannot be lower than minimum salary.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    employer_id = session.get("employer_id")
+
+    # Temporary value for testing before employer login is completed.
+    if employer_id is None:
+        employer_id = 1
+
+    status = "Draft" if action == "draft" else "Open"
+
+    connection = get_db_connection()
+
+    try:
+        connection.execute(
+            """
+            INSERT INTO jobs (
+                employer_id,
+                title,
+                description,
+                location,
+                employment_type,
+                salary_min,
+                salary_max,
+                status,
+                category,
+                experience_level,
+                work_mode,
+                requirements,
+                responsibilities,
+                benefits,
+                application_deadline
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                employer_id,
+                title,
+                description,
+                location,
+                employment_type,
+                salary_min,
+                salary_max,
+                status,
+                category,
+                experience_level,
+                work_mode,
+                requirements,
+                responsibilities,
+                benefits,
+                application_deadline or None,
+            ),
+        )
+
+        connection.commit()
+
+    except sqlite3.IntegrityError:
+        connection.rollback()
+
+        flash(
+            "Unable to create the job. Please make sure "
+            "the employer account exists.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    finally:
+        connection.close()
+
+    if status == "Draft":
+        flash(
+            "The job has been saved as a draft.",
+            "success",
+        )
+    else:
+        flash(
+            "The job has been published successfully.",
+            "success",
+        )
+
+    return redirect(url_for("jobs.list_jobs"))
+
+
+@jobs_bp.route("/employer/jobs")
+def employer_jobs():
+    """
+
+    Show jobs posted by the currently logged-in employer.
+
+    """
+
+    employer_id = session.get("employer_id")
+
+    if employer_id is None:
+
+        flash(
+            "Please log in as an employer.",
+            "error",
+        )
+
+        return redirect(url_for("employer.login"))
+
+    initialise_job_tables()
+
+    connection = get_db_connection()
+
+    jobs = connection.execute(
+        """
+
+        SELECT
+
+            job_id,
+
+            title,
+
+            location,
+
+            employment_type,
+
+            salary_min,
+
+            salary_max,
+
+            status,
+
+            created_at,
+
+            application_deadline
+
+        FROM jobs
+
+        WHERE employer_id = ?
+
+        ORDER BY created_at DESC
+
+        """,
+        (employer_id,),
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "employer_jobs.html",
+        jobs=jobs,
+    )
+
+
+@jobs_bp.route(
+    "/employer/jobs/<int:job_id>/edit",
+    methods=["GET", "POST"],
+)
+def edit_job(job_id: int):
+    """
+
+    Allow an employer to edit one of their existing jobs.
+
+    """
+
+    employer_id = session.get("employer_id")
+
+    if employer_id is None:
+
+        flash(
+            "Please log in as an employer.",
+            "error",
+        )
+
+        return redirect(url_for("employer.login"))
+
+    initialise_job_tables()
+
+    connection = get_db_connection()
+
+    job = connection.execute(
+        """
+
+        SELECT *
+
+        FROM jobs
+
+        WHERE job_id = ?
+
+          AND employer_id = ?
+
+        """,
+        (
+            job_id,
+            employer_id,
+        ),
+    ).fetchone()
+
+    if job is None:
+
+        connection.close()
+
+        flash(
+            "The selected job posting was not found.",
+            "error",
+        )
+
+        return redirect(url_for("jobs.employer_jobs"))
+
+    if request.method == "GET":
+        connection.close()
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=None,
+        )
+
+    title = request.form.get(
+        "job_title",
+        "",
+    ).strip()
+
+    category = request.form.get(
+        "job_category",
+        "",
+    ).strip()
+
+    employment_type = request.form.get(
+        "employment_type",
+        "",
+    ).strip()
+
+    work_mode = request.form.get(
+        "workplace_type",
+        "",
+    ).strip()
+
+    location = request.form.get(
+        "location",
+        "",
+    ).strip()
+
+    salary_min_value = request.form.get(
+        "minimum_salary",
+        "",
+    ).strip()
+
+    salary_max_value = request.form.get(
+        "maximum_salary",
+        "",
+    ).strip()
+
+    experience_level = request.form.get(
+        "experience_level",
+        "",
+    ).strip()
+
+    description = request.form.get(
+        "job_description",
+        "",
+    ).strip()
+
+    requirements = request.form.get(
+        "requirements",
+        "",
+    ).strip()
+
+    responsibilities = request.form.get(
+        "responsibilities",
+        "",
+    ).strip()
+
+    benefits = request.form.get(
+        "benefits",
+        "",
+    ).strip()
+
+    application_deadline = request.form.get(
+        "application_deadline",
+        "",
+    ).strip()
+
+    required_fields = {
+        "Job title": title,
+        "Job category": category,
+        "Employment type": employment_type,
+        "Workplace type": work_mode,
+        "Location": location,
+        "Experience level": experience_level,
+        "Job description": description,
+        "Requirements": requirements,
+        "Application deadline": application_deadline,
+    }
+
+    for field_name, field_value in required_fields.items():
+        if not field_value:
+            connection.close()
+
+            flash(
+                f"{field_name} is required.",
+                "error",
+            )
+
+            return render_template(
+                "edit_job.html",
+                job=job,
+                form_data=request.form,
+            )
+
+    try:
+        salary_min = float(salary_min_value) if salary_min_value else None
+
+        salary_max = float(salary_max_value) if salary_max_value else None
+
+    except ValueError:
+        connection.close()
+
+        flash(
+            "Salary must contain numbers only.",
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    if salary_min is not None and salary_max is not None and salary_max < salary_min:
+        connection.close()
+
+        flash(
+            "Maximum salary cannot be lower than minimum salary.",
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    connection.execute(
+        """
+        UPDATE jobs
+        SET
+            title = ?,
+            category = ?,
+            employment_type = ?,
+            work_mode = ?,
+            location = ?,
+            salary_min = ?,
+            salary_max = ?,
+            experience_level = ?,
+            description = ?,
+            requirements = ?,
+            responsibilities = ?,
+            benefits = ?,
+            application_deadline = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE job_id = ?
+          AND employer_id = ?
+        """,
+        (
+            title,
+            category,
+            employment_type,
+            work_mode,
+            location,
+            salary_min,
+            salary_max,
+            experience_level,
+            description,
+            requirements,
+            responsibilities,
+            benefits,
+            application_deadline,
+            job_id,
+            employer_id,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+    flash(
+        "Job posting updated successfully.",
+        "success",
+    )
+
+    return redirect(url_for("jobs.employer_jobs"))
+
+
 @jobs_bp.route("/jobs/<int:job_id>")
 def job_details(job_id: int):
     connection = get_db_connection()
@@ -938,9 +1491,11 @@ def job_details(job_id: int):
 
 
 @jobs_bp.post("/jobs/<int:job_id>/save")
-def toggle_save_job(job_id: int):
+def toggle_save_job(
+    job_id: int,
+):
     """
-    Save or remove a job from the seeker's saved-job list.
+    Save or unsave a job for the logged-in seeker.
     """
 
     seeker_id = get_current_seeker_id()
