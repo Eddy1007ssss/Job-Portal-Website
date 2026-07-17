@@ -18,7 +18,6 @@ from flask import (
 
 from src.database import get_db_connection
 
-
 jobs_bp = Blueprint(
     "jobs",
     __name__,
@@ -63,14 +62,9 @@ def get_existing_columns(
     Return all column names for a SQLite table.
     """
 
-    rows = connection.execute(
-        f"PRAGMA table_info({table_name})"
-    ).fetchall()
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
 
-    return {
-        row["name"]
-        for row in rows
-    }
+    return {row["name"] for row in rows}
 
 
 def add_column_if_missing(
@@ -91,12 +85,10 @@ def add_column_if_missing(
     if column_name in existing_columns:
         return
 
-    connection.execute(
-        f"""
+    connection.execute(f"""
         ALTER TABLE {table_name}
         ADD COLUMN {column_name} {column_definition}
-        """
-    )
+        """)
 
 
 def initialise_job_tables() -> None:
@@ -108,8 +100,7 @@ def initialise_job_tables() -> None:
 
     connection = get_db_connection()
 
-    connection.execute(
-        """
+    connection.execute("""
         CREATE TABLE IF NOT EXISTS jobs (
             job_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -135,8 +126,7 @@ def initialise_job_tables() -> None:
                 REFERENCES employers(employer_id)
                 ON DELETE CASCADE
         )
-        """
-    )
+        """)
 
     additional_columns = {
         "category": "TEXT",
@@ -159,8 +149,7 @@ def initialise_job_tables() -> None:
             column_definition,
         )
 
-    connection.execute(
-        """
+    connection.execute("""
         CREATE TABLE IF NOT EXISTS saved_jobs (
             saved_job_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -180,8 +169,7 @@ def initialise_job_tables() -> None:
                 REFERENCES jobs(job_id)
                 ON DELETE CASCADE
         )
-        """
-    )
+        """)
 
     connection.commit()
     connection.close()
@@ -237,12 +225,10 @@ def seed_demo_jobs() -> None:
 
     connection = get_db_connection()
 
-    total_jobs = connection.execute(
-        """
+    total_jobs = connection.execute("""
         SELECT COUNT(*) AS total
         FROM jobs
-        """
-    ).fetchone()["total"]
+        """).fetchone()["total"]
 
     if total_jobs > 0:
         connection.close()
@@ -373,16 +359,14 @@ def seed_demo_jobs() -> None:
             "experience_level": "Mid Level",
             "work_mode": "Hybrid",
             "requirements": (
-                "Experience with content marketing, SEO and campaign "
-                "analytics."
+                "Experience with content marketing, SEO and campaign " "analytics."
             ),
             "responsibilities": (
                 "Manage marketing campaigns, monitor performance and "
                 "prepare monthly reports."
             ),
             "benefits": (
-                "Flexible working hours, health insurance and "
-                "performance bonus."
+                "Flexible working hours, health insurance and " "performance bonus."
             ),
             "application_deadline": "2026-09-25",
             "is_featured": 0,
@@ -410,8 +394,7 @@ def seed_demo_jobs() -> None:
                 "and monitor product performance."
             ),
             "benefits": (
-                "Medical benefits, stock options and flexible work "
-                "arrangements."
+                "Medical benefits, stock options and flexible work " "arrangements."
             ),
             "application_deadline": "2026-10-10",
             "is_featured": 1,
@@ -439,8 +422,7 @@ def seed_demo_jobs() -> None:
                 "and escalate complex issues."
             ),
             "benefits": (
-                "Remote work allowance, paid training and medical "
-                "insurance."
+                "Remote work allowance, paid training and medical " "insurance."
             ),
             "application_deadline": "2026-09-20",
             "is_featured": 0,
@@ -460,16 +442,14 @@ def seed_demo_jobs() -> None:
             "experience_level": "Mid Level",
             "work_mode": "Hybrid",
             "requirements": (
-                "Experience with SQL, Excel and data visualisation "
-                "tools."
+                "Experience with SQL, Excel and data visualisation " "tools."
             ),
             "responsibilities": (
                 "Prepare dashboards, analyse performance indicators "
                 "and present findings."
             ),
             "benefits": (
-                "Flexible schedule, project completion bonus and "
-                "travel allowance."
+                "Flexible schedule, project completion bonus and " "travel allowance."
             ),
             "application_deadline": "2026-09-28",
             "is_featured": 0,
@@ -496,10 +476,7 @@ def seed_demo_jobs() -> None:
                 "Design APIs, optimise database queries and maintain "
                 "backend services."
             ),
-            "benefits": (
-                "Stock options, health insurance and employee "
-                "discounts."
-            ),
+            "benefits": ("Stock options, health insurance and employee " "discounts."),
             "application_deadline": "2026-10-20",
             "is_featured": 1,
         },
@@ -526,8 +503,7 @@ def seed_demo_jobs() -> None:
                 "and collaborate with the marketing team."
             ),
             "benefits": (
-                "Flexible working hours, software allowance and paid "
-                "training."
+                "Flexible working hours, software allowance and paid " "training."
             ),
             "application_deadline": "2026-09-22",
             "is_featured": 0,
@@ -611,9 +587,7 @@ def read_job_filters() -> JobFilters:
     Read and validate all job-listing query parameters.
     """
 
-    requested_page = parse_optional_integer(
-        request.args.get("page")
-    )
+    requested_page = parse_optional_integer(request.args.get("page"))
 
     page = requested_page or 1
 
@@ -650,12 +624,8 @@ def read_job_filters() -> JobFilters:
             "work_mode",
             "",
         ).strip(),
-        minimum_salary=parse_optional_integer(
-            request.args.get("minimum_salary")
-        ),
-        maximum_salary=parse_optional_integer(
-            request.args.get("maximum_salary")
-        ),
+        minimum_salary=parse_optional_integer(request.args.get("minimum_salary")),
+        maximum_salary=parse_optional_integer(request.args.get("maximum_salary")),
         sort=sort,
         page=max(page, 1),
     )
@@ -677,16 +647,14 @@ def build_job_filter_query(
     if filters.keyword:
         keyword = f"%{filters.keyword}%"
 
-        conditions.append(
-            """
+        conditions.append("""
             (
                 jobs.title LIKE ?
                 OR employers.company_name LIKE ?
                 OR jobs.description LIKE ?
                 OR jobs.category LIKE ?
             )
-            """
-        )
+            """)
 
         parameters.extend(
             [
@@ -698,83 +666,53 @@ def build_job_filter_query(
         )
 
     if filters.location:
-        conditions.append(
-            "jobs.location LIKE ?"
-        )
+        conditions.append("jobs.location LIKE ?")
 
-        parameters.append(
-            f"%{filters.location}%"
-        )
+        parameters.append(f"%{filters.location}%")
 
     if filters.category:
-        conditions.append(
-            "jobs.category = ?"
-        )
+        conditions.append("jobs.category = ?")
 
-        parameters.append(
-            filters.category
-        )
+        parameters.append(filters.category)
 
     if filters.employment_type:
-        conditions.append(
-            "jobs.employment_type = ?"
-        )
+        conditions.append("jobs.employment_type = ?")
 
-        parameters.append(
-            filters.employment_type
-        )
+        parameters.append(filters.employment_type)
 
     if filters.experience_level:
-        conditions.append(
-            "jobs.experience_level = ?"
-        )
+        conditions.append("jobs.experience_level = ?")
 
-        parameters.append(
-            filters.experience_level
-        )
+        parameters.append(filters.experience_level)
 
     if filters.work_mode:
-        conditions.append(
-            "jobs.work_mode = ?"
-        )
+        conditions.append("jobs.work_mode = ?")
 
-        parameters.append(
-            filters.work_mode
-        )
+        parameters.append(filters.work_mode)
 
     if filters.minimum_salary is not None:
-        conditions.append(
-            """
+        conditions.append("""
             COALESCE(
                 jobs.salary_max,
                 jobs.salary_min,
                 0
             ) >= ?
-            """
-        )
+            """)
 
-        parameters.append(
-            filters.minimum_salary
-        )
+        parameters.append(filters.minimum_salary)
 
     if filters.maximum_salary is not None:
-        conditions.append(
-            """
+        conditions.append("""
             COALESCE(
                 jobs.salary_min,
                 jobs.salary_max,
                 0
             ) <= ?
-            """
-        )
+            """)
 
-        parameters.append(
-            filters.maximum_salary
-        )
+        parameters.append(filters.maximum_salary)
 
-    where_clause = " AND ".join(
-        conditions
-    )
+    where_clause = " AND ".join(conditions)
 
     return where_clause, parameters
 
@@ -806,13 +744,9 @@ def list_jobs():
 
     filters = read_job_filters()
 
-    where_clause, query_parameters = (
-        build_job_filter_query(filters)
-    )
+    where_clause, query_parameters = build_job_filter_query(filters)
 
-    order_by = SORT_OPTIONS[
-        filters.sort
-    ]
+    order_by = SORT_OPTIONS[filters.sort]
 
     connection = get_db_connection()
 
@@ -831,9 +765,7 @@ def list_jobs():
     ).fetchone()["total"]
 
     total_pages = max(
-        math.ceil(
-            total_jobs / JOBS_PER_PAGE
-        ),
+        math.ceil(total_jobs / JOBS_PER_PAGE),
         1,
     )
 
@@ -842,9 +774,7 @@ def list_jobs():
         total_pages,
     )
 
-    offset = (
-        current_page - 1
-    ) * JOBS_PER_PAGE
+    offset = (current_page - 1) * JOBS_PER_PAGE
 
     seeker_id = get_current_seeker_id()
 
@@ -903,25 +833,21 @@ def list_jobs():
         ],
     ).fetchall()
 
-    categories = connection.execute(
-        """
+    categories = connection.execute("""
         SELECT DISTINCT category
         FROM jobs
         WHERE category IS NOT NULL
           AND TRIM(category) != ''
         ORDER BY category
-        """
-    ).fetchall()
+        """).fetchall()
 
-    locations = connection.execute(
-        """
+    locations = connection.execute("""
         SELECT DISTINCT location
         FROM jobs
         WHERE location IS NOT NULL
           AND TRIM(location) != ''
         ORDER BY location
-        """
-    ).fetchall()
+        """).fetchall()
 
     connection.close()
 
@@ -964,9 +890,7 @@ def job_details(job_id: int):
             "error",
         )
 
-        return redirect(
-            url_for("jobs.list_jobs")
-        )
+        return redirect(url_for("jobs.list_jobs"))
 
     has_applied = False
     is_saved = False
@@ -1014,9 +938,7 @@ def job_details(job_id: int):
     )
 
 
-@jobs_bp.post(
-    "/jobs/<int:job_id>/save"
-)
+@jobs_bp.post("/jobs/<int:job_id>/save")
 def toggle_save_job(
     job_id: int,
 ):
@@ -1032,9 +954,7 @@ def toggle_save_job(
             "error",
         )
 
-        return redirect(
-            url_for("seeker.login")
-        )
+        return redirect(url_for("seeker.login"))
 
     initialise_job_tables()
 
@@ -1058,9 +978,7 @@ def toggle_save_job(
             "error",
         )
 
-        return redirect(
-            url_for("jobs.list_jobs")
-        )
+        return redirect(url_for("jobs.list_jobs"))
 
     saved_job = connection.execute(
         """
@@ -1088,9 +1006,7 @@ def toggle_save_job(
             ),
         )
 
-        message = (
-            "Job removed from your saved jobs."
-        )
+        message = "Job removed from your saved jobs."
     else:
         connection.execute(
             """
@@ -1106,9 +1022,7 @@ def toggle_save_job(
             ),
         )
 
-        message = (
-            "Job saved successfully."
-        )
+        message = "Job saved successfully."
 
     connection.commit()
     connection.close()
@@ -1123,11 +1037,7 @@ def toggle_save_job(
         "",
     )
 
-    if (
-        return_url
-        and return_url.startswith("/")
-        and not return_url.startswith("//")
-    ):
+    if return_url and return_url.startswith("/") and not return_url.startswith("//"):
         return redirect(return_url)
 
     return redirect(
@@ -1136,7 +1046,3 @@ def toggle_save_job(
             job_id=job_id,
         )
     )
-
-
-
-    

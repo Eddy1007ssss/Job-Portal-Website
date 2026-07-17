@@ -7,7 +7,6 @@ from src.employer import employer_bp
 from src.jobs import jobs_bp
 from src.seeker import seeker_bp
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 

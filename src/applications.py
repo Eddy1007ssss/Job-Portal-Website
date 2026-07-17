@@ -9,7 +9,6 @@ from flask import (
 
 from src.database import get_db_connection
 
-
 applications_bp = Blueprint(
     "applications",
     __name__,
@@ -26,9 +25,7 @@ def list_applications():
             "A job seeker profile is required to view applications.",
             "warning",
         )
-        return redirect(
-            url_for("seeker.profile")
-        )
+        return redirect(url_for("seeker.profile"))
 
     connection = get_db_connection()
 
@@ -38,9 +35,9 @@ def list_applications():
             applications.application_id,
             applications.status AS application_status,
             applications.resume_filename,
-            applications.created_at,
+            applications.applied_at,
             jobs.job_id,
-            jobs.job_title,
+            jobs.title,
             jobs.location,
             jobs.employment_type,
             employers.company_name
@@ -102,9 +99,7 @@ def apply_job(job_id: int):
             "The selected job does not exist.",
             "error",
         )
-        return redirect(
-            url_for("jobs.list_jobs")
-        )
+        return redirect(url_for("jobs.list_jobs"))
 
     if job["status"] != "Open":
         connection.close()
@@ -156,11 +151,7 @@ def apply_job(job_id: int):
         (seeker_id,),
     ).fetchone()
 
-    resume_filename = (
-        seeker_profile["resume_filename"]
-        if seeker_profile
-        else None
-    )
+    resume_filename = seeker_profile["resume_filename"] if seeker_profile else None
 
     connection.execute(
         """

@@ -18,16 +18,11 @@ from werkzeug.security import (
 
 from src.database import get_db_connection
 
-
 employer_bp = Blueprint("employer", __name__)
 
-EMAIL_PATTERN = re.compile(
-    r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-)
+EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
-PHONE_PATTERN = re.compile(
-    r"^[0-9+\-\s]{8,15}$"
-)
+PHONE_PATTERN = re.compile(r"^[0-9+\-\s]{8,15}$")
 
 
 def employer_login_required(view_function: Callable) -> Callable:
@@ -116,18 +111,12 @@ def register():
     """
 
     if session.get("employer_id") is not None:
-        profile = get_company_profile(
-            session["employer_id"]
-        )
+        profile = get_company_profile(session["employer_id"])
 
         if profile is not None:
-            return redirect(
-                url_for("employer.company_preview")
-            )
+            return redirect(url_for("employer.company_preview"))
 
-        return redirect(
-            url_for("employer.company_profile")
-        )
+        return redirect(url_for("employer.company_profile"))
 
     if request.method == "POST":
         company_name = request.form.get(
@@ -135,10 +124,14 @@ def register():
             "",
         ).strip()
 
-        company_email = request.form.get(
-            "company_email",
-            "",
-        ).strip().lower()
+        company_email = (
+            request.form.get(
+                "company_email",
+                "",
+            )
+            .strip()
+            .lower()
+        )
 
         contact_number = request.form.get(
             "contact_number",
@@ -158,15 +151,10 @@ def register():
         errors = []
 
         if len(company_name) < 2:
-            errors.append(
-                "Company name must contain at least "
-                "2 characters."
-            )
+            errors.append("Company name must contain at least " "2 characters.")
 
         if not EMAIL_PATTERN.fullmatch(company_email):
-            errors.append(
-                "Please enter a valid company email."
-            )
+            errors.append("Please enter a valid company email.")
 
         if not PHONE_PATTERN.fullmatch(contact_number):
             errors.append(
@@ -176,15 +164,10 @@ def register():
             )
 
         if len(password) < 8:
-            errors.append(
-                "Password must contain at least "
-                "8 characters."
-            )
+            errors.append("Password must contain at least " "8 characters.")
 
         if password != confirm_password:
-            errors.append(
-                "Passwords do not match."
-            )
+            errors.append("Passwords do not match.")
 
         connection = get_db_connection()
 
@@ -198,9 +181,7 @@ def register():
         ).fetchone()
 
         if existing_employer is not None:
-            errors.append(
-                "This company email is already registered."
-            )
+            errors.append("This company email is already registered.")
 
         if errors:
             connection.close()
@@ -249,13 +230,9 @@ def register():
             "success",
         )
 
-        return redirect(
-            url_for("employer.company_profile")
-        )
+        return redirect(url_for("employer.company_profile"))
 
-    return render_template(
-        "employer_register.html"
-    )
+    return render_template("employer_register.html")
 
 
 @employer_bp.route(
@@ -274,24 +251,22 @@ def login():
     """
 
     if session.get("employer_id") is not None:
-        profile = get_company_profile(
-            session["employer_id"]
-        )
+        profile = get_company_profile(session["employer_id"])
 
         if profile is not None:
-            return redirect(
-                url_for("employer.company_preview")
-            )
+            return redirect(url_for("employer.company_preview"))
 
-        return redirect(
-            url_for("employer.company_profile")
-        )
+        return redirect(url_for("employer.company_profile"))
 
     if request.method == "POST":
-        company_email = request.form.get(
-            "company_email",
-            "",
-        ).strip().lower()
+        company_email = (
+            request.form.get(
+                "company_email",
+                "",
+            )
+            .strip()
+            .lower()
+        )
 
         password = request.form.get(
             "password",
@@ -309,12 +284,9 @@ def login():
             (company_email,),
         ).fetchone()
 
-        if (
-            employer is None
-            or not check_password_hash(
-                employer["password_hash"],
-                password,
-            )
+        if employer is None or not check_password_hash(
+            employer["password_hash"],
+            password,
         ):
             connection.close()
 
@@ -341,12 +313,8 @@ def login():
 
         session.clear()
         session["employer_id"] = employer["employer_id"]
-        session["employer_company_name"] = employer[
-            "company_name"
-        ]
-        session["employer_email"] = employer[
-            "company_email"
-        ]
+        session["employer_company_name"] = employer["company_name"]
+        session["employer_email"] = employer["company_email"]
 
         flash(
             "Login successful.",
@@ -359,17 +327,11 @@ def login():
                 "error",
             )
 
-            return redirect(
-                url_for("employer.company_profile")
-            )
+            return redirect(url_for("employer.company_profile"))
 
-        return redirect(
-            url_for("employer.company_preview")
-        )
+        return redirect(url_for("employer.company_preview"))
 
-    return render_template(
-        "employer_login.html"
-    )
+    return render_template("employer_login.html")
 
 
 @employer_bp.route("/employer/logout")
@@ -385,9 +347,7 @@ def logout():
         "success",
     )
 
-    return redirect(
-        url_for("employer.login")
-    )
+    return redirect(url_for("employer.login"))
 
 
 @employer_bp.route(
@@ -436,9 +396,7 @@ def company_profile():
             "error",
         )
 
-        return redirect(
-            url_for("employer.login")
-        )
+        return redirect(url_for("employer.login"))
 
     if request.method == "POST":
         company_name = request.form.get(
@@ -466,10 +424,14 @@ def company_profile():
             "",
         ).strip()
 
-        contact_email = request.form.get(
-            "contact_email",
-            "",
-        ).strip().lower()
+        contact_email = (
+            request.form.get(
+                "contact_email",
+                "",
+            )
+            .strip()
+            .lower()
+        )
 
         contact_number = request.form.get(
             "contact_number",
@@ -494,37 +456,22 @@ def company_profile():
         errors = []
 
         if len(company_name) < 2:
-            errors.append(
-                "Company name must contain at least "
-                "2 characters."
-            )
+            errors.append("Company name must contain at least " "2 characters.")
 
         if not industry:
-            errors.append(
-                "Please select an industry."
-            )
+            errors.append("Please select an industry.")
 
         if len(address) < 5:
-            errors.append(
-                "Please enter the complete company address."
-            )
+            errors.append("Please enter the complete company address.")
 
         if len(company_description) < 30:
-            errors.append(
-                "Company description must contain at least "
-                "30 characters."
-            )
+            errors.append("Company description must contain at least " "30 characters.")
 
         if len(company_description) > 1500:
-            errors.append(
-                "Company description cannot exceed "
-                "1500 characters."
-            )
+            errors.append("Company description cannot exceed " "1500 characters.")
 
         if not EMAIL_PATTERN.fullmatch(contact_email):
-            errors.append(
-                "Please enter a valid contact email."
-            )
+            errors.append("Please enter a valid contact email.")
 
         if not PHONE_PATTERN.fullmatch(contact_number):
             errors.append(
@@ -556,9 +503,7 @@ def company_profile():
                 "employer_company_profile.html",
                 employer=employer,
                 profile=submitted_profile,
-                profile_exists=(
-                    existing_profile is not None
-                ),
+                profile_exists=(existing_profile is not None),
             )
 
         profile_values = (
@@ -598,9 +543,7 @@ def company_profile():
                 ),
             )
 
-            success_message = (
-                "Company profile updated successfully."
-            )
+            success_message = "Company profile updated successfully."
         else:
             connection.execute(
                 """
@@ -625,9 +568,7 @@ def company_profile():
                 ),
             )
 
-            success_message = (
-                "Company profile created successfully."
-            )
+            success_message = "Company profile created successfully."
 
         connection.execute(
             """
@@ -648,18 +589,14 @@ def company_profile():
         connection.close()
 
         session["employer_company_name"] = company_name
-        session["employer_email"] = employer[
-            "company_email"
-        ]
+        session["employer_email"] = employer["company_email"]
 
         flash(
             success_message,
             "success",
         )
 
-        return redirect(
-            url_for("employer.company_preview")
-        )
+        return redirect(url_for("employer.company_preview"))
 
     connection.close()
 
@@ -667,15 +604,11 @@ def company_profile():
         "employer_company_profile.html",
         employer=employer,
         profile=existing_profile,
-        profile_exists=(
-            existing_profile is not None
-        ),
+        profile_exists=(existing_profile is not None),
     )
 
 
-@employer_bp.route(
-    "/employer/company-profile/preview"
-)
+@employer_bp.route("/employer/company-profile/preview")
 @employer_login_required
 def company_preview():
     """
@@ -692,9 +625,7 @@ def company_preview():
             "error",
         )
 
-        return redirect(
-            url_for("employer.company_profile")
-        )
+        return redirect(url_for("employer.company_profile"))
 
     return render_template(
         "company_profile.html",
@@ -704,9 +635,7 @@ def company_preview():
     )
 
 
-@employer_bp.route(
-    "/companies/<int:employer_id>"
-)
+@employer_bp.route("/companies/<int:employer_id>")
 def public_company_profile(employer_id: int):
     """
     Display a public company profile to job seekers
@@ -716,9 +645,7 @@ def public_company_profile(employer_id: int):
     profile = get_company_profile(employer_id)
 
     if profile is None:
-        return render_template(
-            "error.html"
-        ), 404
+        return render_template("error.html"), 404
 
     return render_template(
         "company_profile.html",
