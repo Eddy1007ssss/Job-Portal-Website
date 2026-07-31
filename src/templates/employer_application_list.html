@@ -1,0 +1,344 @@
+{% extends "employer_base.html" %}
+
+{% block title %}
+Applications for {{ job['title'] }} | JobPortal
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/employer_applications.css'
+    ) }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="application-list-page">
+
+    <div class="application-page-heading">
+        <div>
+            <span class="section-label">
+                APPLICATION MANAGEMENT
+            </span>
+
+            <h1>Job Applications</h1>
+
+            <p>
+                Review candidates who applied for
+                <strong>{{ job['title'] }}</strong>.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('jobs.employer_jobs') }}"
+            class="secondary-action"
+        >
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to My Jobs
+        </a>
+    </div>
+
+    <div class="job-summary-card">
+        <div>
+            <span class="job-summary-label">
+                Job posting
+            </span>
+
+            <h2>{{ job['title'] }}</h2>
+
+            <div class="job-summary-meta">
+                <span>
+                    <i class="fa-solid fa-location-dot"></i>
+                    {{ job['location'] or 'Not specified' }}
+                </span>
+
+                <span>
+                    <i class="fa-regular fa-clock"></i>
+                    {{ job['employment_type'] or 'Not specified' }}
+                </span>
+
+                <span>
+                    <i class="fa-solid fa-circle-info"></i>
+                    {{ job['status'] | title }}
+                </span>
+            </div>
+        </div>
+
+        <div class="application-total">
+            <strong>{{ status_counts['all'] }}</strong>
+
+            <span>
+                Application{% if status_counts['all'] != 1 %}s{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="application-statistics">
+
+        <div class="application-stat-card">
+            <span>All</span>
+            <strong>{{ status_counts['all'] }}</strong>
+        </div>
+
+        <div class="application-stat-card">
+            <span>Pending</span>
+            <strong>{{ status_counts['pending'] }}</strong>
+        </div>
+
+        <div class="application-stat-card">
+            <span>Reviewing</span>
+            <strong>{{ status_counts['reviewing'] }}</strong>
+        </div>
+
+        <div class="application-stat-card">
+            <span>Shortlisted</span>
+            <strong>{{ status_counts['shortlisted'] }}</strong>
+        </div>
+
+        <div class="application-stat-card">
+            <span>Accepted</span>
+            <strong>{{ status_counts['accepted'] }}</strong>
+        </div>
+
+        <div class="application-stat-card">
+            <span>Rejected</span>
+            <strong>{{ status_counts['rejected'] }}</strong>
+        </div>
+
+    </div>
+
+    <div class="application-list-card">
+
+        <div class="application-card-heading">
+            <div>
+                <h2>Candidate List</h2>
+
+                <p>
+                    Applicant name, applied date, resume availability,
+                    and current application status.
+                </p>
+            </div>
+        </div>
+
+        {% if applications %}
+
+            <div class="application-table-wrapper">
+                <table class="application-table">
+
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Applied Date</th>
+                            <th>Resume</th>
+                            <th>Status</th>
+                            <th class="action-column">
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for application in applications %}
+
+                            {% set application_status =
+                                application['status']
+                                or 'Pending'
+                            %}
+
+                            {% set status_class =
+                                application_status
+                                | lower
+                                | replace(' ', '-')
+                            %}
+
+                            <tr>
+
+                                <td>
+                                    <div class="applicant-cell">
+
+                                        <div class="applicant-avatar">
+
+                                            {% if application['profile_image'] %}
+
+                                                <img
+                                                    src="{{ url_for(
+                                                        'static',
+                                                        filename=
+                                                            'uploads/profile_images/'
+                                                            ~ application[
+                                                                'profile_image'
+                                                            ]
+                                                    ) }}"
+                                                    alt="{{ application[
+                                                        'applicant_name'
+                                                    ] }}"
+                                                >
+
+                                            {% else %}
+
+                                                {{
+                                                    application[
+                                                        'applicant_name'
+                                                    ][0] | upper
+                                                }}
+
+                                            {% endif %}
+
+                                        </div>
+
+                                        <div class="applicant-summary">
+
+                                            <strong>
+                                                {{
+                                                    application[
+                                                        'applicant_name'
+                                                    ]
+                                                }}
+                                            </strong>
+
+                                            <span>
+                                                {{
+                                                    application[
+                                                        'applicant_email'
+                                                    ]
+                                                }}
+                                            </span>
+
+                                            {% if application['job_title'] %}
+                                                <small>
+                                                    {{
+                                                        application[
+                                                            'job_title'
+                                                        ]
+                                                    }}
+                                                </small>
+                                            {% else %}
+                                                <small>
+                                                    Job Seeker
+                                                </small>
+                                            {% endif %}
+
+                                            {% if application[
+                                                'applicant_location'
+                                            ] %}
+                                                <small>
+                                                    <i
+                                                        class=
+                                                            "fa-solid
+                                                            fa-location-dot"
+                                                    ></i>
+
+                                                    {{
+                                                        application[
+                                                            'applicant_location'
+                                                        ]
+                                                    }}
+                                                </small>
+                                            {% endif %}
+
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="applied-date">
+                                        {{
+                                            application['applied_at']
+                                            if application['applied_at']
+                                            else 'Not available'
+                                        }}
+                                    </span>
+                                </td>
+
+                                <td>
+
+                                    {% if application[
+                                        'available_resume'
+                                    ] %}
+
+                                        <span class="resume-available">
+                                            <i
+                                                class=
+                                                    "fa-regular
+                                                    fa-file-pdf"
+                                            ></i>
+
+                                            Available
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="resume-unavailable">
+                                            <i
+                                                class=
+                                                    "fa-regular
+                                                    fa-file"
+                                            ></i>
+
+                                            Not available
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="application-status
+                                            status-{{ status_class }}"
+                                    >
+                                        {{ application_status | title }}
+                                    </span>
+                                </td>
+
+                                <td class="action-column">
+
+                                    <a
+                                        href="{{ url_for(
+                                            'employer_applications.application_details',
+                                            application_id=application[
+                                                'application_id'
+                                            ]
+                                        ) }}"
+                                        class="view-applicant-button"
+                                    >
+                                        <i class="fa-regular fa-eye"></i>
+                                        View Applicant
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="empty-applications">
+
+                <div class="empty-application-icon">
+                    <i class="fa-regular fa-folder-open"></i>
+                </div>
+
+                <h3>No applications yet</h3>
+
+                <p>
+                    Candidates who apply for this job posting will
+                    appear here.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+{% endblock %}
