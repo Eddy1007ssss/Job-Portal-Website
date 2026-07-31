@@ -1,185 +1,268 @@
 {% extends "employer_base.html" %}
 
-{% block title %}
-My Job Listings | JobPortal
-{% endblock %}
+{% block title %}My Job Listings | JobPortal{% endblock %}
 
 {% block extra_css %}
 <link
     rel="stylesheet"
-    href="{{ url_for('static', filename='css/job_posting.css') }}"
+    href="{{ url_for('static', filename='css/employer_jobs.css') }}"
 >
 {% endblock %}
 
 {% block content %}
-<section class="employer-jobs-page">
-
-    <div class="page-heading-row">
+<section class="employer-jobs-page" aria-labelledby="job-listings-title">
+    <div class="jobs-page-heading">
         <div>
-            <span class="section-label">
-                EMPLOYER DASHBOARD
-            </span>
-
-            <h1>My Job Listings</h1>
-
+            <span class="section-label">EMPLOYER DASHBOARD</span>
+            <h1 id="job-listings-title">My Job Listings</h1>
             <p>
-                Manage the jobs posted by your company and review
-                applications received for each position.
+                Monitor and manage every vacancy posted by your company.
             </p>
         </div>
 
-        <a
-            href="{{ url_for('jobs.post_job') }}"
-            class="primary-button"
-        >
-            <i class="fa-solid fa-plus"></i>
+        <a href="{{ url_for('jobs.post_job') }}" class="post-job-button">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
             Post New Job
         </a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-container">
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+    <div class="jobs-summary-grid" aria-label="Job listing summary">
+        <article class="summary-card summary-total">
+            <div class="summary-icon" aria-hidden="true">
+                <i class="fa-solid fa-briefcase"></i>
             </div>
-        {% endif %}
-    {% endwith %}
+            <div>
+                <span>Total Jobs</span>
+                <strong>{{ summary["total"] }}</strong>
+            </div>
+        </article>
+
+        <article class="summary-card summary-open">
+            <div class="summary-icon" aria-hidden="true">
+                <i class="fa-regular fa-circle-check"></i>
+            </div>
+            <div>
+                <span>Active</span>
+                <strong>{{ summary["open"] }}</strong>
+            </div>
+        </article>
+
+        <article class="summary-card summary-draft">
+            <div class="summary-icon" aria-hidden="true">
+                <i class="fa-regular fa-pen-to-square"></i>
+            </div>
+            <div>
+                <span>Drafts</span>
+                <strong>{{ summary["draft"] }}</strong>
+            </div>
+        </article>
+
+        <article class="summary-card summary-closed">
+            <div class="summary-icon" aria-hidden="true">
+                <i class="fa-solid fa-ban"></i>
+            </div>
+            <div>
+                <span>Closed</span>
+                <strong>{{ summary["closed"] }}</strong>
+            </div>
+        </article>
+    </div>
 
     {% if jobs %}
-        <div class="job-table-container">
-
-            <div class="job-table-heading">
+        <div class="jobs-list-card">
+            <div class="jobs-list-heading">
                 <div>
-                    <h2>Posted Jobs</h2>
-
-                    <p>
-                        View, edit and manage applications for your
-                        job postings.
-                    </p>
+                    <h2>Company Job Postings</h2>
+                    <p>Newest postings are displayed first.</p>
                 </div>
 
                 <span class="job-count">
-                    {{ jobs | length }}
-                    Job{% if jobs | length != 1 %}s{% endif %}
+                    {{ summary["total"] }}
+                    {{ "job" if summary["total"] == 1 else "jobs" }}
                 </span>
             </div>
 
-            <div class="job-table-wrapper">
-                <table class="job-table">
+            <div class="jobs-table-wrapper">
+                <table class="jobs-table">
                     <thead>
                         <tr>
-                            <th>Job Title</th>
-                            <th>Location</th>
-                            <th>Employment Type</th>
+                            <th>Job Posting</th>
                             <th>Status</th>
                             <th>Deadline</th>
-                            <th class="action-column">
-                                Actions
-                            </th>
+                            <th>Applications</th>
+                            <th>Posted</th>
+                            <th class="actions-heading">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         {% for job in jobs %}
                             {% set status_class =
-                                job['status']
+                                job["status"]
                                 | lower
-                                | replace(' ', '-')
+                                | replace(" ", "-")
                             %}
 
                             <tr>
-                                <td>
-                                    <div class="job-title-cell">
-                                        <strong>
-                                            {{ job["title"] }}
-                                        </strong>
+                                <td data-label="Job Posting">
+                                    <div class="job-information">
+                                        <div class="job-icon" aria-hidden="true">
+                                            <i class="fa-solid fa-briefcase"></i>
+                                        </div>
 
-                                        <small>
-                                            Job ID: {{ job["job_id"] }}
-                                        </small>
+                                        <div>
+                                            <strong>{{ job["title"] }}</strong>
+                                            <span>
+                                                <i
+                                                    class="fa-solid fa-location-dot"
+                                                    aria-hidden="true"
+                                                ></i>
+                                                {{ job["location"] }}
+                                                <span class="meta-divider">&bull;</span>
+                                                {{ job["employment_type"] }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </td>
 
-                                <td>
-                                    <span class="job-detail-value">
-                                        <i
-                                            class="fa-solid fa-location-dot"
-                                        ></i>
-
-                                        {{ job["location"] }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="job-detail-value">
-                                        <i class="fa-regular fa-clock"></i>
-
-                                        {{ job["employment_type"] }}
-                                    </span>
-                                </td>
-
-                                <td>
+                                <td data-label="Status">
                                     <span
-                                        class="job-status
-                                            status-{{ status_class }}"
+                                        class="job-status status-{{ status_class }}"
                                     >
+                                        <span class="status-dot" aria-hidden="true"></span>
                                         {{ job["status"] }}
                                     </span>
                                 </td>
 
-                                <td>
+                                <td data-label="Deadline">
                                     {% if job["application_deadline"] %}
-                                        <span class="deadline-value">
+                                        <span class="date-value">
                                             <i
                                                 class="fa-regular fa-calendar"
+                                                aria-hidden="true"
                                             ></i>
-
-                                            {{
-                                                job[
-                                                    "application_deadline"
-                                                ]
-                                            }}
+                                            {{ job["application_deadline"][:10] }}
                                         </span>
                                     {% else %}
-                                        <span class="not-set-value">
-                                            Not set
-                                        </span>
+                                        <span class="not-set-value">Not set</span>
                                     {% endif %}
                                 </td>
 
-                                <td class="action-column">
-                                    <div class="job-action-buttons">
+                                <td data-label="Applications">
+                                    <a
+                                        href="{{ url_for(
+                                            'employer_applications.application_list',
+                                            job_id=job['job_id']
+                                        ) }}"
+                                        class="application-count-link"
+                                    >
+                                        <strong>{{ job["application_count"] }}</strong>
+                                        <span>
+                                            {{
+                                                "application"
+                                                if job["application_count"] == 1
+                                                else "applications"
+                                            }}
+                                        </span>
+                                    </a>
+                                </td>
 
-                                        <a
-                                            href="{{ url_for(
-                                                'employer_applications.application_list',
-                                                job_id=job['job_id']
-                                            ) }}"
-                                            class="applications-button"
-                                        >
-                                            <i
-                                                class="fa-regular fa-file-lines"
-                                            ></i>
-                                            View Applications
-                                        </a>
+                                <td data-label="Posted">
+                                    <span class="date-value">
+                                        {{ job["created_at"][:10] }}
+                                    </span>
+                                </td>
 
+                                <td data-label="Actions" class="actions-cell">
+                                    <div class="job-actions">
                                         <a
                                             href="{{ url_for(
                                                 'jobs.edit_job',
                                                 job_id=job['job_id']
                                             ) }}"
-                                            class="edit-button"
+                                            class="action-button edit-action"
+                                            title="Edit {{ job['title'] }}"
                                         >
                                             <i
                                                 class="fa-regular fa-pen-to-square"
+                                                aria-hidden="true"
                                             ></i>
-                                            Edit
+                                            <span>Edit</span>
                                         </a>
 
+                                        {% if job["status"] == "Open" %}
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for(
+                                                    'jobs.update_job_status',
+                                                    job_id=job['job_id']
+                                                ) }}"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="status"
+                                                    value="Closed"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    class="action-button close-action"
+                                                    title="Close {{ job['title'] }}"
+                                                >
+                                                    <i
+                                                        class="fa-solid fa-ban"
+                                                        aria-hidden="true"
+                                                    ></i>
+                                                    <span>Close</span>
+                                                </button>
+                                            </form>
+                                        {% elif job["status"] == "Closed" %}
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for(
+                                                    'jobs.update_job_status',
+                                                    job_id=job['job_id']
+                                                ) }}"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="status"
+                                                    value="Open"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    class="action-button reopen-action"
+                                                    title="Reopen {{ job['title'] }}"
+                                                >
+                                                    <i
+                                                        class="fa-solid fa-rotate-left"
+                                                        aria-hidden="true"
+                                                    ></i>
+                                                    <span>Reopen</span>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'jobs.delete_job',
+                                                job_id=job['job_id']
+                                            ) }}"
+                                            class="delete-job-form"
+                                            data-job-title="{{ job['title'] }}"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="action-button delete-action"
+                                                title="Delete {{ job['title'] }}"
+                                            >
+                                                <i
+                                                    class="fa-regular fa-trash-can"
+                                                    aria-hidden="true"
+                                                ></i>
+                                                <span>Delete</span>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -187,32 +270,43 @@ My Job Listings | JobPortal
                     </tbody>
                 </table>
             </div>
-
         </div>
     {% else %}
-        <div class="empty-state">
-
-            <div class="empty-state-icon">
+        <div class="empty-jobs-state">
+            <div class="empty-jobs-icon" aria-hidden="true">
                 <i class="fa-regular fa-folder-open"></i>
             </div>
-
             <h2>No job postings yet</h2>
-
             <p>
-                Create your first job posting to start receiving
-                applications from job seekers.
+                Create your first job posting to start receiving applications
+                from job seekers.
             </p>
-
-            <a
-                href="{{ url_for('jobs.post_job') }}"
-                class="primary-button"
-            >
-                <i class="fa-solid fa-plus"></i>
-                Post a Job
+            <a href="{{ url_for('jobs.post_job') }}" class="post-job-button">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Post Your First Job
             </a>
-
         </div>
     {% endif %}
-
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document
+            .querySelectorAll(".delete-job-form")
+            .forEach(function (form) {
+                form.addEventListener("submit", function (event) {
+                    const jobTitle = form.dataset.jobTitle || "this job";
+                    const confirmed = window.confirm(
+                        `Delete "${jobTitle}"? This will also remove its applications.`
+                    );
+
+                    if (!confirmed) {
+                        event.preventDefault();
+                    }
+                });
+            });
+    });
+</script>
 {% endblock %}

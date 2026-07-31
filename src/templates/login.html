@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | JobPortal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/job_seeker_register.css') }}">
+</head>
+<body class="status-page">
+    <main class="status-card">
+        <p class="brand">Job<span>Portal</span></p>
+        <p class="status-kicker">Job seeker login</p>
+        <h1>Your account is ready</h1>
+        <p>Connect this link to your existing login route when you add these registration files to the main project.</p>
+        <a class="secondary-button" href="{{ url_for('job_seeker.register') }}">Back to registration</a>
+    </main>
+</body>
+</html>

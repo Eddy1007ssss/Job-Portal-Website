@@ -140,11 +140,15 @@ def create_seeker(app):
 
 
 def login_seeker(client, seeker_id):
-    with client.session_transaction() as session:
-        session["seeker_id"] = seeker_id
+    with client.session_transaction() as current_session:
+        current_session["seeker_id"] = seeker_id
+        current_session["seeker_authenticated"] = True
 
 
-def test_job_list_page_loads(client):
+def test_job_list_page_loads(client, app):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get("/jobs")
 
     assert response.status_code == 200
@@ -160,6 +164,9 @@ def test_created_job_appears_in_job_list(
         app,
         employer_id,
     )
+
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
 
     response = client.get("/jobs")
 
@@ -178,6 +185,9 @@ def test_job_details_page(
         employer_id,
     )
 
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(f"/jobs/{job_id}")
 
     assert response.status_code == 200
@@ -187,7 +197,11 @@ def test_job_details_page(
 
 def test_nonexistent_job_redirects_to_job_list(
     client,
+    app,
 ):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs/999999",
         follow_redirects=False,
@@ -199,7 +213,11 @@ def test_nonexistent_job_redirects_to_job_list(
 
 def test_nonexistent_job_shows_message(
     client,
+    app,
 ):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs/999999",
         follow_redirects=True,
@@ -223,6 +241,9 @@ def test_job_keyword_search(
         employer_id,
     )
 
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs",
         query_string={
@@ -244,6 +265,9 @@ def test_job_location_filter(
         app,
         employer_id,
     )
+
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
 
     response = client.get(
         "/jobs",
@@ -267,6 +291,9 @@ def test_job_category_filter(
         employer_id,
     )
 
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs",
         query_string={
@@ -280,7 +307,11 @@ def test_job_category_filter(
 
 def test_invalid_page_number_does_not_crash(
     client,
+    app,
 ):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs",
         query_string={
@@ -293,7 +324,11 @@ def test_invalid_page_number_does_not_crash(
 
 def test_negative_page_number_does_not_crash(
     client,
+    app,
 ):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs",
         query_string={
@@ -306,7 +341,11 @@ def test_negative_page_number_does_not_crash(
 
 def test_invalid_sort_option_does_not_crash(
     client,
+    app,
 ):
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+
     response = client.get(
         "/jobs",
         query_string={

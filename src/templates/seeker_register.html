@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Job Seeker Registration | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/seeker_login.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="seeker-login-page">
+    <div class="seeker-login-card seeker-register-card">
+        <div class="seeker-login-icon" aria-hidden="true">
+            <i class="fa-regular fa-user"></i>
+        </div>
+
+        <div class="seeker-login-heading">
+            <span>FOR JOB SEEKERS</span>
+            <h1>Create Your Account</h1>
+            <p>
+                Register to search jobs and submit job applications.
+            </p>
+            <p class="seeker-auth-switch">
+                Already have an account?
+                <a href="{{ url_for('seeker.login') }}">
+                    Login
+                </a>
+            </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="seeker-login-messages" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="seeker-login-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form
+            method="POST"
+            action="{{ url_for('seeker.register') }}"
+            class="seeker-login-form"
+        >
+            <div class="seeker-login-group">
+                <label for="full_name">Full Name</label>
+                <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    value="{{ full_name or '' }}"
+                    placeholder="Enter your full name"
+                    autocomplete="name"
+                    required
+                >
+            </div>
+
+            <div class="seeker-login-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ email or '' }}"
+                    placeholder="example@email.com"
+                    autocomplete="email"
+                    required
+                >
+            </div>
+
+            <div class="seeker-login-group">
+                <label for="contact_number">Phone Number</label>
+                <input
+                    type="tel"
+                    id="contact_number"
+                    name="contact_number"
+                    value="{{ contact_number or '' }}"
+                    placeholder="Example: 0123456789"
+                    autocomplete="tel"
+                    required
+                >
+            </div>
+
+            <div class="seeker-register-form-row">
+                <div class="seeker-login-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="At least 8 characters"
+                        autocomplete="new-password"
+                        required
+                    >
+                </div>
+
+                <div class="seeker-login-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Enter password again"
+                        autocomplete="new-password"
+                        required
+                    >
+                </div>
+            </div>
+
+            <button type="submit" class="seeker-login-submit">
+                Create Account
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}
