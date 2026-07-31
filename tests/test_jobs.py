@@ -474,3 +474,173 @@ def test_seeker_can_remove_saved_job(
         connection.close()
 
     assert saved_job is None
+
+
+# =========================================================
+# Cover letter application tests
+# =========================================================
+
+
+VALID_COVER_LETTER = (
+    "I am excited to apply for this role because my software development "
+    "experience and teamwork skills match the job requirements."
+)
+
+
+def get_application(app, seeker_id, job_id):
+    with app.app_context():
+        connection = get_db_connection()
+        application = connection.execute(
+            """
+            SELECT application_id, cover_letter, status
+            FROM applications
+            WHERE seeker_id = ?
+              AND job_id = ?
+            """,
+            (
+                seeker_id,
+                job_id,
+            ),
+        ).fetchone()
+        connection.close()
+
+    return application
+
+
+def create_application_context(app, client):
+    employer_id = create_employer(app)
+    job_id = create_job(app, employer_id)
+    seeker_id = create_seeker(app)
+    login_seeker(client, seeker_id)
+    return employer_id, seeker_id, job_id
+
+
+def test_job_details_displays_cover_letter_form(client, app):
+    _, _, job_id = create_application_context(app, client)
+
+    response = client.get(f"/jobs/{job_id}")
+    page_text = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert 'name="cover_letter"' in page_text
+    assert 'minlength="50"' in page_text
+    assert 'maxlength="2000"' in page_text
+    assert "Submit Application" in page_text
+
+
+def test_valid_cover_letter_is_saved_with_application(client, app):
+    _, seeker_id, job_id = create_application_context(app, client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": VALID_COVER_LETTER},
+        follow_redirects=False,
+    )
+
+    application = get_application(app, seeker_id, job_id)
+    assert response.status_code == 302
+    assert application is not None
+    assert application["cover_letter"] == VALID_COVER_LETTER
+    assert application["status"] == "Pending"
+
+
+def test_cover_letter_is_trimmed_before_saving(client, app):
+    _, seeker_id, job_id = create_application_context(app, client)
+
+    client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": f"  {VALID_COVER_LETTER}  "},
+    )
+
+    application = get_application(app, seeker_id, job_id)
+    assert application is not None
+    assert application["cover_letter"] == VALID_COVER_LETTER
+
+
+def test_missing_cover_letter_is_rejected(client, app):
+    _, seeker_id, job_id = create_application_context(app, client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": ""},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert get_application(app, seeker_id, job_id) is None
+    assert b"Please write a cover letter before applying." in response.data
+
+
+def test_short_cover_letter_is_rejected(client, app):
+    _, seeker_id, job_id = create_application_context(app, client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": "Too short."},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert get_application(app, seeker_id, job_id) is None
+    assert b"Cover letter must contain at least 50 characters." in response.data
+
+
+def test_long_cover_letter_is_rejected(client, app):
+    _, seeker_id, job_id = create_application_context(app, client)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": "A" * 2001},
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert get_application(app, seeker_id, job_id) is None
+    assert b"Cover letter must not exceed 2000 characters." in response.data
+
+
+def test_guest_cannot_submit_cover_letter(client, app):
+    employer_id = create_employer(app)
+    job_id = create_job(app, employer_id)
+
+    response = client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": VALID_COVER_LETTER},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    with app.app_context():
+        connection = get_db_connection()
+        application_count = connection.execute(
+            "SELECT COUNT(*) FROM applications WHERE job_id = ?",
+            (job_id,),
+        ).fetchone()[0]
+        connection.close()
+    assert application_count == 0
+
+
+def test_employer_can_view_submitted_cover_letter(client, app):
+    employer_id, _, job_id = create_application_context(app, client)
+
+    client.post(
+        f"/applications/jobs/{job_id}/apply",
+        data={"cover_letter": VALID_COVER_LETTER},
+    )
+
+    with app.app_context():
+        connection = get_db_connection()
+        application_id = connection.execute(
+            "SELECT application_id FROM applications WHERE job_id = ?",
+            (job_id,),
+        ).fetchone()["application_id"]
+        connection.close()
+
+    with client.session_transaction() as current_session:
+        current_session.clear()
+        current_session["employer_id"] = employer_id
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+    assert VALID_COVER_LETTER in response.get_data(as_text=True)

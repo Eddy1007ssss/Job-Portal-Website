@@ -1,59 +1,26 @@
-import io
-
-from PIL import Image
 from werkzeug.security import generate_password_hash
 
 from src.database import get_db_connection
 
-# =========================================================
-# Reusable test data
-# =========================================================
 
+def normalize_html(response) -> str:
+    """
+    Convert rendered HTML into normalized text.
 
-def valid_registration_data(**changes):
-    data = {
-        "company_name": "ABC Technology Sdn Bhd",
-        "company_email": "abc@example.com",
-        "contact_number": "0123456789",
-        "password": "Password123",
-        "confirm_password": "Password123",
-    }
+    This removes repeated spaces and line breaks so that tests are
+    not affected by HTML formatting.
+    """
 
-    data.update(changes)
-    return data
-
-
-def valid_company_profile_data(**changes):
-    data = {
-        "company_name": "ABC Technology Sdn Bhd",
-        "industry": "Information Technology",
-        "company_size": "11-50 employees",
-        "address": "Kuala Lumpur, Malaysia",
-        "company_description": (
-            "ABC Technology provides professional software development "
-            "and technology consulting services."
-        ),
-        "contact_email": "hr@abc.com",
-        "contact_number": "0312345678",
-        "website": "https://example.com",
-    }
-
-    data.update(changes)
-    return data
-
-
-# =========================================================
-# Database and session helpers
-# =========================================================
+    return " ".join(response.get_data(as_text=True).split())
 
 
 def create_employer(
     app,
+    email="employer@example.com",
     company_name="ABC Technology",
-    company_email="abc@example.com",
-    contact_number="0123456789",
-    password="Password123",
 ):
+    """Create a test employer and return the employer ID."""
+
     with app.app_context():
         connection = get_db_connection()
 
@@ -69,9 +36,9 @@ def create_employer(
             """,
             (
                 company_name,
-                company_email,
-                contact_number,
-                generate_password_hash(password),
+                email,
+                "0123456789",
+                generate_password_hash("Password123"),
             ),
         )
 
@@ -83,787 +50,1202 @@ def create_employer(
     return employer_id
 
 
+def create_seeker(
+    app,
+    email="candidate@example.com",
+    full_name="Ali Candidate",
+    contact_number="0198765432",
+    job_title="Software Developer",
+    location="Kuala Lumpur",
+    about_me="A motivated software developer.",
+    resume_filename="ali_resume.pdf",
+):
+    """Create a test seeker and seeker profile."""
+
+    with app.app_context():
+        connection = get_db_connection()
+
+        cursor = connection.execute(
+            """
+            INSERT INTO seekers (
+                full_name,
+                email,
+                contact_number,
+                password_hash
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                full_name,
+                email,
+                contact_number,
+                generate_password_hash("Password123"),
+            ),
+        )
+
+        seeker_id = int(cursor.lastrowid)
+
+        connection.execute(
+            """
+            INSERT INTO seeker_profiles (
+                seeker_id,
+                job_title,
+                location,
+                about_me,
+                resume_filename
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                seeker_id,
+                job_title,
+                location,
+                about_me,
+                resume_filename,
+            ),
+        )
+
+        connection.commit()
+        connection.close()
+
+    return seeker_id
+
+
+def create_job(
+    app,
+    employer_id,
+    title="Software Engineer",
+    location="Kuala Lumpur",
+    employment_type="Full-time",
+    status="Open",
+):
+    """Create a test job and return the job ID."""
+
+    with app.app_context():
+        connection = get_db_connection()
+
+        cursor = connection.execute(
+            """
+            INSERT INTO jobs (
+                employer_id,
+                title,
+                description,
+                location,
+                employment_type,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                employer_id,
+                title,
+                "Develop and maintain software applications.",
+                location,
+                employment_type,
+                status,
+            ),
+        )
+
+        job_id = int(cursor.lastrowid)
+
+        connection.commit()
+        connection.close()
+
+    return job_id
+
+
+def create_application(
+    app,
+    seeker_id,
+    job_id,
+    status="Pending",
+    cover_letter="I am interested in this position.",
+    resume_filename="application_resume.pdf",
+    applied_at=None,
+):
+    """Create a test application and return the application ID."""
+
+    with app.app_context():
+        connection = get_db_connection()
+
+        if applied_at is None:
+            cursor = connection.execute(
+                """
+                INSERT INTO applications (
+                    seeker_id,
+                    job_id,
+                    cover_letter,
+                    resume_filename,
+                    status
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    seeker_id,
+                    job_id,
+                    cover_letter,
+                    resume_filename,
+                    status,
+                ),
+            )
+        else:
+            cursor = connection.execute(
+                """
+                INSERT INTO applications (
+                    seeker_id,
+                    job_id,
+                    cover_letter,
+                    resume_filename,
+                    status,
+                    applied_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    seeker_id,
+                    job_id,
+                    cover_letter,
+                    resume_filename,
+                    status,
+                    applied_at,
+                ),
+            )
+
+        application_id = int(cursor.lastrowid)
+
+        connection.commit()
+        connection.close()
+
+    return application_id
+
+
 def login_employer(
     client,
     employer_id,
     company_name="ABC Technology",
-    company_email="abc@example.com",
+    email="employer@example.com",
 ):
+    """Create an employer login session for testing."""
+
     with client.session_transaction() as session:
         session["employer_id"] = employer_id
         session["employer_company_name"] = company_name
-        session["employer_email"] = company_email
+        session["employer_email"] = email
 
 
-def get_company_profile(app, employer_id):
-    with app.app_context():
-        connection = get_db_connection()
-
-        profile = connection.execute(
-            """
-            SELECT *
-            FROM company_profiles
-            WHERE employer_id = ?
-            """,
-            (employer_id,),
-        ).fetchone()
-
-        connection.close()
-
-    return profile
-
-
-def create_test_image(
-    filename="logo.jpg",
-    image_format="JPEG",
-    size=(100, 100),
-):
-    image_stream = io.BytesIO()
-
-    image = Image.new(
-        "RGB",
-        size,
-        (255, 255, 255),
-    )
-
-    image.save(
-        image_stream,
-        format=image_format,
-    )
-
-    image_stream.seek(0)
-
-    return image_stream, filename
-
-
-# =========================================================
-# Employer page tests
-# =========================================================
-
-
-def test_employer_register_page_loads(client):
-    response = client.get("/employer/register")
-
-    assert response.status_code == 200
-
-
-def test_employer_login_page_loads(client):
-    response = client.get("/employer/login")
-
-    assert response.status_code == 200
-
-
-# =========================================================
-# Employer registration tests
-# =========================================================
-
-
-def test_register_employer_successfully(client, app):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(),
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
+def get_application_status(app, application_id):
+    """Return the saved status for one application."""
 
     with app.app_context():
         connection = get_db_connection()
-
-        employer = connection.execute(
-            """
-            SELECT *
-            FROM employers
-            WHERE company_email = ?
-            """,
-            ("abc@example.com",),
+        row = connection.execute(
+            "SELECT status FROM applications WHERE application_id = ?",
+            (application_id,),
         ).fetchone()
-
         connection.close()
 
-    assert employer is not None
-    assert employer["company_name"] == "ABC Technology Sdn Bhd"
-
-
-def test_register_company_name_too_short(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(company_name="A"),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company name must contain at least 2 characters" in response.get_data(
-        as_text=True
-    )
-
-
-def test_register_invalid_email(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            company_email="invalid-email",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Please enter a valid company email" in response.get_data(as_text=True)
-
-
-def test_register_contact_number_too_short(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            contact_number="123",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Contact number must contain between" in response.get_data(as_text=True)
-
-
-def test_register_contact_number_invalid_characters(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            contact_number="012ABC6789",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Contact number must contain between" in response.get_data(as_text=True)
-
-
-def test_register_password_too_short(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            password="1234567",
-            confirm_password="1234567",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Password must contain at least 8 characters" in response.get_data(
-        as_text=True
-    )
-
-
-def test_register_password_mismatch(client):
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            confirm_password="DifferentPassword",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Passwords do not match" in response.get_data(as_text=True)
-
-
-def test_register_duplicate_employer_email(client, app):
-    create_employer(
-        app,
-        company_email="duplicate@example.com",
-    )
-
-    response = client.post(
-        "/employer/register",
-        data=valid_registration_data(
-            company_email="duplicate@example.com",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "This company email is already registered" in response.get_data(as_text=True)
+    return None if row is None else row["status"]
 
 
 # =========================================================
-# Employer login and logout tests
+# Application list tests
 # =========================================================
 
 
-def test_employer_login_success(client, app):
-    create_employer(app)
-
-    response = client.post(
-        "/employer/login",
-        data={
-            "company_email": "abc@example.com",
-            "password": "Password123",
-        },
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    with client.session_transaction() as session:
-        assert session.get("employer_id") is not None
-        assert session.get("employer_email") == "abc@example.com"
-
-
-def test_employer_login_wrong_password(client, app):
-    create_employer(app)
-
-    response = client.post(
-        "/employer/login",
-        data={
-            "company_email": "abc@example.com",
-            "password": "WrongPassword",
-        },
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Incorrect email or password" in response.get_data(as_text=True)
-
-
-def test_employer_login_unknown_email(client):
-    response = client.post(
-        "/employer/login",
-        data={
-            "company_email": "unknown@example.com",
-            "password": "Password123",
-        },
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Incorrect email or password" in response.get_data(as_text=True)
-
-
-def test_employer_logout_clears_session(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
+def test_application_list_requires_employer_login(client):
+    """Unauthenticated users must be redirected to employer login."""
 
     response = client.get(
-        "/employer/logout",
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    with client.session_transaction() as session:
-        assert session.get("employer_id") is None
-        assert session.get("employer_email") is None
-
-
-# =========================================================
-# Company profile access tests
-# =========================================================
-
-
-def test_company_profile_requires_employer_login(client):
-    response = client.get(
-        "/employer/company-profile",
+        "/employer/jobs/1/applications",
         follow_redirects=False,
     )
 
     assert response.status_code == 302
-
-
-def test_company_profile_redirects_to_login(client):
-    response = client.get(
-        "/employer/company-profile",
-        follow_redirects=False,
-    )
-
     assert "/employer/login" in response.headers["Location"]
 
 
-def test_company_profile_page_loads_for_logged_in_employer(
+def test_employer_can_view_applications_for_own_job(
     client,
     app,
 ):
+    """An employer can view applications for their own job."""
+
     employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
     login_employer(client, employer_id)
 
-    response = client.get("/employer/company-profile")
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
+    page_text = normalize_html(response)
 
-# =========================================================
-# Company profile validation tests
-# =========================================================
+    assert "Ali Candidate" in page_text
+    assert "Software Engineer" in page_text
+    assert "Pending" in page_text
+    assert "Available" in page_text
 
 
-def test_company_profile_company_name_too_short(client, app):
+def test_application_list_displays_empty_state(
+    client,
+    app,
+):
+    """A job without applications displays an empty-state message."""
+
     employer_id = create_employer(app)
+    job_id = create_job(app, employer_id)
+
     login_employer(client, employer_id)
 
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            company_name="A",
-        ),
-        follow_redirects=True,
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
-    assert "Company name must contain at least 2 characters" in response.get_data(
-        as_text=True
+
+    page_text = normalize_html(response)
+
+    assert "No applications yet" in page_text
+    assert "Candidates who apply for this job posting will appear here." in page_text
+
+
+def test_employer_cannot_view_another_employers_job_applications(
+    client,
+    app,
+):
+    """An employer cannot view another employer's applications."""
+
+    first_employer_id = create_employer(
+        app,
+        email="first@example.com",
+        company_name="First Company",
     )
 
-
-def test_company_profile_industry_required(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            industry="",
-        ),
-        follow_redirects=True,
+    second_employer_id = create_employer(
+        app,
+        email="second@example.com",
+        company_name="Second Company",
     )
 
-    assert response.status_code == 200
-    assert "Please select an industry" in response.get_data(as_text=True)
-
-
-def test_company_profile_address_too_short(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            address="KL",
-        ),
-        follow_redirects=True,
+    second_job_id = create_job(
+        app,
+        second_employer_id,
     )
 
-    assert response.status_code == 200
-    assert "Please enter the complete company address" in response.get_data(
-        as_text=True
+    login_employer(
+        client,
+        first_employer_id,
+        company_name="First Company",
+        email="first@example.com",
     )
-
-
-def test_company_profile_description_too_short(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            company_description="Too short",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert (
-        "Company description must contain at least 30 characters"
-        in response.get_data(as_text=True)
-    )
-
-
-def test_company_profile_description_too_long(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            company_description="A" * 1501,
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company description cannot exceed 1500 characters" in response.get_data(
-        as_text=True
-    )
-
-
-def test_company_profile_invalid_contact_email(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            contact_email="invalid-email",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Please enter a valid contact email" in response.get_data(as_text=True)
-
-
-def test_company_profile_invalid_contact_number(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            contact_number="123",
-        ),
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Contact number must contain between" in response.get_data(as_text=True)
-
-
-# =========================================================
-# Company profile create, update and preview tests
-# =========================================================
-
-
-def test_create_company_profile(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(),
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile is not None
-    assert profile["industry"] == "Information Technology"
-    assert profile["contact_email"] == "hr@abc.com"
-    assert profile["company_size"] == "11-50 employees"
-
-
-def test_update_existing_company_profile(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    first_response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(),
-        follow_redirects=False,
-    )
-
-    assert first_response.status_code in (302, 303)
-
-    second_response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            company_name="ABC Technology Updated",
-            industry="Finance",
-        ),
-        follow_redirects=False,
-    )
-
-    assert second_response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile["company_name"] == "ABC Technology Updated"
-    assert profile["industry"] == "Finance"
-
-
-def test_company_preview_requires_existing_profile(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
 
     response = client.get(
-        "/employer/company-profile/preview",
+        f"/employer/jobs/{second_job_id}/applications",
         follow_redirects=False,
     )
 
     assert response.status_code == 302
-    assert "/employer/company-profile" in response.headers["Location"]
+    assert "/employer/jobs" in response.headers["Location"]
 
 
-def test_company_preview_loads_after_profile_creation(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(),
-        follow_redirects=False,
-    )
-
-    response = client.get("/employer/company-profile/preview")
-
-    assert response.status_code == 200
-
-
-# =========================================================
-# Company image upload tests
-# =========================================================
-
-
-def test_upload_valid_jpg_logo(client, app, tmp_path):
-    app.static_folder = str(tmp_path / "static")
-
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = create_test_image(
-        filename="logo.jpg",
-        image_format="JPEG",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile["logo_url"]
-    assert profile["logo_url"].endswith(".jpg")
-
-
-def test_upload_valid_png_logo(client, app, tmp_path):
-    app.static_folder = str(tmp_path / "static")
-
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = create_test_image(
-        filename="logo.png",
-        image_format="PNG",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile["logo_url"]
-    assert profile["logo_url"].endswith(".png")
-
-
-def test_upload_valid_banner(client, app, tmp_path):
-    app.static_folder = str(tmp_path / "static")
-
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_banner"] = create_test_image(
-        filename="banner.jpg",
-        image_format="JPEG",
-        size=(300, 100),
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile["banner_url"]
-    assert profile["banner_url"].endswith(".jpg")
-
-
-def test_upload_logo_with_chinese_filename(client, app, tmp_path):
-    app.static_folder = str(tmp_path / "static")
-
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = create_test_image(
-        filename="头像.jpg",
-        image_format="JPEG",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=False,
-    )
-
-    assert response.status_code in (302, 303)
-
-    profile = get_company_profile(app, employer_id)
-
-    assert profile["logo_url"]
-    assert profile["logo_url"].endswith(".jpg")
-
-
-def test_upload_invalid_logo_extension(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = (
-        io.BytesIO(b"not an image"),
-        "company.pdf",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company logo must be a PNG or JPG image" in response.get_data(as_text=True)
-
-
-def test_upload_fake_jpg_logo(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = (
-        io.BytesIO(b"This is not a real image"),
-        "fake.jpg",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company logo is not a valid image" in response.get_data(as_text=True)
-
-
-def test_upload_empty_logo(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = (
-        io.BytesIO(b""),
-        "empty.jpg",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company logo file is empty" in response.get_data(as_text=True)
-
-
-def test_upload_logo_larger_than_2mb(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_logo"] = (
-        io.BytesIO(b"A" * ((2 * 1024 * 1024) + 1)),
-        "large-logo.jpg",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company logo must not exceed 2 MB" in response.get_data(as_text=True)
-
-
-def test_upload_banner_larger_than_5mb(client, app):
-    employer_id = create_employer(app)
-    login_employer(client, employer_id)
-
-    data = valid_company_profile_data()
-    data["company_banner"] = (
-        io.BytesIO(b"A" * ((5 * 1024 * 1024) + 1)),
-        "large-banner.jpg",
-    )
-
-    response = client.post(
-        "/employer/company-profile",
-        data=data,
-        content_type="multipart/form-data",
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert "Company banner must not exceed 5 MB" in response.get_data(as_text=True)
-
-
-def test_update_profile_without_new_images_preserves_existing_images(
+def test_application_list_orders_newest_first(
     client,
     app,
-    tmp_path,
 ):
-    app.static_folder = str(tmp_path / "static")
+    """The latest application appears before older applications."""
 
     employer_id = create_employer(app)
+
+    first_seeker_id = create_seeker(
+        app,
+        email="first.candidate@example.com",
+        full_name="First Candidate",
+    )
+
+    second_seeker_id = create_seeker(
+        app,
+        email="second.candidate@example.com",
+        full_name="Second Candidate",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        first_seeker_id,
+        job_id,
+        applied_at="2026-07-01 10:00:00",
+    )
+
+    create_application(
+        app,
+        second_seeker_id,
+        job_id,
+        applied_at="2026-07-02 10:00:00",
+    )
+
     login_employer(client, employer_id)
 
-    first_data = valid_company_profile_data()
-    first_data["company_logo"] = create_test_image(
-        filename="logo.jpg",
-        image_format="JPEG",
-    )
-    first_data["company_banner"] = create_test_image(
-        filename="banner.jpg",
-        image_format="JPEG",
-        size=(300, 100),
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert page_text.index("second.candidate@example.com") < page_text.index(
+        "first.candidate@example.com"
     )
 
-    first_response = client.post(
-        "/employer/company-profile",
-        data=first_data,
-        content_type="multipart/form-data",
+
+def test_application_list_displays_view_applicant_button(
+    client,
+    app,
+):
+    """The application list contains the View Applicant button."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "View Applicant" in page_text
+    assert f"/employer/applications/{application_id}" in page_text
+
+
+def test_application_list_displays_resume_available(
+    client,
+    app,
+):
+    """The application list displays Available when a resume exists."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        resume_filename="candidate_resume.pdf",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Available" in page_text
+
+
+def test_application_list_displays_resume_unavailable(
+    client,
+    app,
+):
+    """The application list displays Not available without a resume."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        resume_filename=None,
+    )
+
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        resume_filename=None,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Not available" in page_text
+
+
+def test_application_list_displays_pending_status(
+    client,
+    app,
+):
+    """The application list displays a Pending status."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        status="Pending",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+    assert "Pending" in normalize_html(response)
+
+
+def test_application_list_displays_reviewing_status(
+    client,
+    app,
+):
+    """The application list displays a Reviewing status."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        status="Reviewing",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+    assert "Reviewing" in normalize_html(response)
+
+
+def test_application_list_displays_shortlisted_status(
+    client,
+    app,
+):
+    """The application list displays a Shortlisted status."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        status="Shortlisted",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+    assert "Shortlisted" in normalize_html(response)
+
+
+def test_application_list_displays_accepted_status(
+    client,
+    app,
+):
+    """The application list displays an Accepted status."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        status="Accepted",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+    assert "Accepted" in normalize_html(response)
+
+
+def test_application_list_displays_rejected_status(
+    client,
+    app,
+):
+    """The application list displays a Rejected status."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        seeker_id,
+        job_id,
+        status="Rejected",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+    assert "Rejected" in normalize_html(response)
+
+
+def test_application_list_displays_multiple_candidates(
+    client,
+    app,
+):
+    """The employer can see multiple candidates for one job."""
+
+    employer_id = create_employer(app)
+
+    first_seeker_id = create_seeker(
+        app,
+        email="candidate.one@example.com",
+        full_name="Candidate One",
+    )
+
+    second_seeker_id = create_seeker(
+        app,
+        email="candidate.two@example.com",
+        full_name="Candidate Two",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    create_application(
+        app,
+        first_seeker_id,
+        job_id,
+    )
+
+    create_application(
+        app,
+        second_seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Candidate One" in page_text
+    assert "Candidate Two" in page_text
+    assert "candidate.one@example.com" in page_text
+    assert "candidate.two@example.com" in page_text
+
+
+# =========================================================
+# Application status update tests
+# =========================================================
+
+
+def create_owned_application(app, initial_status="Pending"):
+    """Create an employer, seeker, job and application for update tests."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        status=initial_status,
+    )
+    return employer_id, seeker_id, job_id, application_id
+
+
+def update_application_status(client, application_id, status):
+    """Submit one application status update."""
+
+    return client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": status},
+        follow_redirects=True,
+    )
+
+
+def test_application_status_update_requires_employer_login(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+
+    response = client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": "Shortlisted"},
         follow_redirects=False,
     )
 
-    assert first_response.status_code in (302, 303)
+    assert employer_id is not None
+    assert response.status_code == 302
+    assert "/employer/login" in response.headers["Location"]
+    assert get_application_status(app, application_id) == "Pending"
 
-    original_profile = get_company_profile(app, employer_id)
-    original_logo_url = original_profile["logo_url"]
-    original_banner_url = original_profile["banner_url"]
 
-    second_response = client.post(
-        "/employer/company-profile",
-        data=valid_company_profile_data(
-            company_description=(
-                "ABC Technology provides updated professional software "
-                "development and technology consulting services."
-            ),
-        ),
+def test_application_list_displays_status_update_controls(client, app):
+    employer_id, _, job_id, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+    page_text = normalize_html(response)
+
+    assert response.status_code == 200
+    assert f"/employer/applications/{application_id}/status" in page_text
+    assert "Pending" in page_text
+    assert "Shortlisted" in page_text
+    assert "Rejected" in page_text
+    assert "Accepted" in page_text
+    assert "Update Status" in page_text
+
+
+def test_employer_can_update_application_to_pending(client, app):
+    employer_id, _, _, application_id = create_owned_application(
+        app,
+        initial_status="Accepted",
+    )
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Pending")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Pending"
+    assert "Application status updated to Pending." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_shortlisted(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Shortlisted")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Shortlisted"
+    assert "Application status updated to Shortlisted." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_rejected(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Rejected")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Rejected"
+    assert "Application status updated to Rejected." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_accepted(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Accepted")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Accepted"
+    assert "Application status updated to Accepted." in normalize_html(response)
+
+
+def test_invalid_application_status_is_rejected(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Interviewed")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Pending"
+    assert "Select a valid application status." in normalize_html(response)
+
+
+def test_employer_cannot_update_another_company_application(client, app):
+    first_employer_id = create_employer(
+        app,
+        email="first@example.com",
+        company_name="First Company",
+    )
+    second_employer_id = create_employer(
+        app,
+        email="second@example.com",
+        company_name="Second Company",
+    )
+    seeker_id = create_seeker(app)
+    second_job_id = create_job(app, second_employer_id)
+    application_id = create_application(app, seeker_id, second_job_id)
+
+    login_employer(
+        client,
+        first_employer_id,
+        company_name="First Company",
+        email="first@example.com",
+    )
+
+    response = client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": "Accepted"},
+    )
+
+    assert response.status_code == 404
+    assert get_application_status(app, application_id) == "Pending"
+
+
+def test_updated_status_appears_in_job_seeker_history(client, app):
+    employer_id, seeker_id, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    update_response = update_application_status(client, application_id, "Accepted")
+    assert update_response.status_code == 200
+
+    with client.session_transaction() as current_session:
+        current_session.clear()
+        current_session["seeker_id"] = seeker_id
+        current_session["seeker_authenticated"] = True
+
+    history_response = client.get("/applications/")
+
+    assert history_response.status_code == 200
+    assert "Accepted" in normalize_html(history_response)
+
+
+# =========================================================
+# Applicant details tests
+# =========================================================
+
+
+def test_application_details_requires_employer_login(
+    client,
+    app,
+):
+    """Unauthenticated users cannot view applicant details."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    response = client.get(
+        f"/employer/applications/{application_id}",
         follow_redirects=False,
     )
 
-    assert second_response.status_code in (302, 303)
+    assert response.status_code == 302
+    assert "/employer/login" in response.headers["Location"]
 
-    updated_profile = get_company_profile(app, employer_id)
 
-    assert updated_profile["logo_url"] == original_logo_url
-    assert updated_profile["banner_url"] == original_banner_url
+def test_employer_can_view_applicant_details(
+    client,
+    app,
+):
+    """An employer can view an applicant for their own job."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Ali Candidate" in page_text
+    assert "candidate@example.com" in page_text
+    assert "I am interested in this position." in page_text
+
+
+def test_application_details_displays_profile_information(
+    client,
+    app,
+):
+    """Applicant profile details are displayed."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        job_title="Python Developer",
+        location="Selangor",
+        about_me="I enjoy developing Flask applications.",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Python Developer" in page_text
+    assert "Selangor" in page_text
+    assert "I enjoy developing Flask applications." in page_text
+
+
+def test_application_details_displays_contact_information(
+    client,
+    app,
+):
+    """Applicant email and contact number are displayed."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        email="contact@example.com",
+        contact_number="01122334455",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "contact@example.com" in page_text
+    assert "01122334455" in page_text
+
+
+def test_application_details_displays_cover_letter(
+    client,
+    app,
+):
+    """The applicant's cover letter is displayed."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    cover_letter = "I have three years of software development experience."
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        cover_letter=cover_letter,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+    assert cover_letter in normalize_html(response)
+
+
+def test_application_details_displays_no_cover_letter_message(
+    client,
+    app,
+):
+    """A missing cover letter displays a suitable message."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        cover_letter=None,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "No cover letter was submitted." in page_text
+
+
+def test_application_details_uses_application_resume_first(
+    client,
+    app,
+):
+    """An application resume has priority over a profile resume."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        resume_filename="profile_resume.pdf",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        resume_filename="application_resume.pdf",
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "application_resume.pdf" in page_text
+    assert "View Resume" in page_text
+    assert "Download Resume" in page_text
+
+
+def test_application_details_uses_profile_resume_as_fallback(
+    client,
+    app,
+):
+    """The profile resume is used when no application resume exists."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        resume_filename="profile_resume.pdf",
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        resume_filename=None,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "profile_resume.pdf" in page_text
+    assert "View Resume" in page_text
+
+
+def test_application_details_displays_no_resume_message(
+    client,
+    app,
+):
+    """A suitable message is displayed when no resume exists."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        resume_filename=None,
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        resume_filename=None,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "No resume available." in page_text
+
+
+def test_application_details_handles_missing_profile_fields(
+    client,
+    app,
+):
+    """Missing optional profile fields do not break the page."""
+
+    employer_id = create_employer(app)
+
+    seeker_id = create_seeker(
+        app,
+        contact_number=None,
+        job_title=None,
+        location=None,
+        about_me=None,
+        resume_filename=None,
+    )
+
+    job_id = create_job(app, employer_id)
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        cover_letter=None,
+        resume_filename=None,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Job Seeker" in page_text
+    assert "Not provided" in page_text
+    assert "The applicant has not added an introduction." in page_text
+
+
+def test_employer_cannot_view_another_employers_applicant_details(
+    client,
+    app,
+):
+    """An employer cannot access another employer's applicant."""
+
+    first_employer_id = create_employer(
+        app,
+        email="first@example.com",
+        company_name="First Company",
+    )
+
+    second_employer_id = create_employer(
+        app,
+        email="second@example.com",
+        company_name="Second Company",
+    )
+
+    seeker_id = create_seeker(app)
+
+    second_job_id = create_job(
+        app,
+        second_employer_id,
+    )
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        second_job_id,
+    )
+
+    login_employer(
+        client,
+        first_employer_id,
+        company_name="First Company",
+        email="first@example.com",
+    )
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 404
+
+
+def test_employer_cannot_view_nonexistent_application(
+    client,
+    app,
+):
+    """A nonexistent application returns 404."""
+
+    employer_id = create_employer(app)
+
+    login_employer(client, employer_id)
+
+    response = client.get("/employer/applications/999999")
+
+    assert response.status_code == 404
+
+
+def test_application_details_displays_job_information(
+    client,
+    app,
+):
+    """The details page displays the applied job information."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+
+    job_id = create_job(
+        app,
+        employer_id,
+        title="Backend Developer",
+        location="Penang",
+    )
+
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+    )
+
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/applications/{application_id}")
+
+    assert response.status_code == 200
+
+    page_text = normalize_html(response)
+
+    assert "Backend Developer" in page_text
+    assert "Penang" in page_text

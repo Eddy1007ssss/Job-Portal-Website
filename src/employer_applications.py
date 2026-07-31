@@ -9,6 +9,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     session,
     url_for,
 )
@@ -18,6 +19,13 @@ from src.database import get_db_connection
 employer_applications_bp = Blueprint(
     "employer_applications",
     __name__,
+)
+
+APPLICATION_STATUSES = (
+    "Pending",
+    "Shortlisted",
+    "Rejected",
+    "Accepted",
 )
 
 
@@ -161,6 +169,81 @@ def application_list(job_id: int):
         job=job,
         applications=applications,
         status_counts=status_counts,
+        application_statuses=APPLICATION_STATUSES,
+    )
+
+
+@employer_applications_bp.post("/employer/applications/<int:application_id>/status")
+@employer_login_required
+def update_application_status(application_id: int):
+    """Update an application belonging to the logged-in employer."""
+
+    employer_id = int(session["employer_id"])
+    target_status = request.form.get("status", "").strip()
+
+    connection = get_db_connection()
+
+    application = connection.execute(
+        """
+        SELECT
+            applications.application_id,
+            applications.job_id
+        FROM applications
+        JOIN jobs
+            ON jobs.job_id = applications.job_id
+        WHERE applications.application_id = ?
+          AND jobs.employer_id = ?
+        """,
+        (
+            application_id,
+            employer_id,
+        ),
+    ).fetchone()
+
+    if application is None:
+        connection.close()
+        abort(404)
+
+    job_id = int(application["job_id"])
+
+    if target_status not in APPLICATION_STATUSES:
+        connection.close()
+        flash(
+            "Select a valid application status.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "employer_applications.application_list",
+                job_id=job_id,
+            )
+        )
+
+    connection.execute(
+        """
+        UPDATE applications
+        SET
+            status = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE application_id = ?
+        """,
+        (
+            target_status,
+            application_id,
+        ),
+    )
+    connection.commit()
+    connection.close()
+
+    flash(
+        f"Application status updated to {target_status}.",
+        "success",
+    )
+    return redirect(
+        url_for(
+            "employer_applications.application_list",
+            job_id=job_id,
+        )
     )
 
 

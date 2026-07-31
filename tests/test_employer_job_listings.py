@@ -315,3 +315,48 @@ def test_employer_can_delete_own_job_and_its_applications(app, client):
         connection.close()
 
     assert application_count == 0
+
+
+def test_delete_job_requires_employer_login(app, client):
+    employer_id = create_employer(
+        app,
+        "Protected Company",
+        "protected@example.com",
+    )
+    job_id = create_job(app, employer_id, "Protected Job")
+
+    response = client.post(
+        f"/employer/jobs/{job_id}/delete",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert "/employer/login" in response.headers["Location"]
+    assert get_job(app, job_id) is not None
+
+
+def test_delete_job_shows_success_and_removes_it_from_list(app, client):
+    employer_id = create_employer(
+        app,
+        "Delete Company",
+        "delete@example.com",
+    )
+    job_id = create_job(app, employer_id, "Outdated Job Advertisement")
+
+    log_in_employer(
+        client,
+        employer_id,
+        "Delete Company",
+        "delete@example.com",
+    )
+
+    response = client.post(
+        f"/employer/jobs/{job_id}/delete",
+        follow_redirects=True,
+    )
+
+    page_text = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "The job posting was deleted successfully." in page_text
+    assert "Outdated Job Advertisement" not in page_text
+    assert get_job(app, job_id) is None

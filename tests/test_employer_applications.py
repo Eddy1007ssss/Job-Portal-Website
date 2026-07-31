@@ -233,6 +233,20 @@ def login_employer(
         session["employer_email"] = email
 
 
+def get_application_status(app, application_id):
+    """Return the saved status for one application."""
+
+    with app.app_context():
+        connection = get_db_connection()
+        row = connection.execute(
+            "SELECT status FROM applications WHERE application_id = ?",
+            (application_id,),
+        ).fetchone()
+        connection.close()
+
+    return None if row is None else row["status"]
+
+
 # =========================================================
 # Application list tests
 # =========================================================
@@ -649,6 +663,174 @@ def test_application_list_displays_multiple_candidates(
     assert "Candidate Two" in page_text
     assert "candidate.one@example.com" in page_text
     assert "candidate.two@example.com" in page_text
+
+
+# =========================================================
+# Application status update tests
+# =========================================================
+
+
+def create_owned_application(app, initial_status="Pending"):
+    """Create an employer, seeker, job and application for update tests."""
+
+    employer_id = create_employer(app)
+    seeker_id = create_seeker(app)
+    job_id = create_job(app, employer_id)
+    application_id = create_application(
+        app,
+        seeker_id,
+        job_id,
+        status=initial_status,
+    )
+    return employer_id, seeker_id, job_id, application_id
+
+
+def update_application_status(client, application_id, status):
+    """Submit one application status update."""
+
+    return client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": status},
+        follow_redirects=True,
+    )
+
+
+def test_application_status_update_requires_employer_login(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+
+    response = client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": "Shortlisted"},
+        follow_redirects=False,
+    )
+
+    assert employer_id is not None
+    assert response.status_code == 302
+    assert "/employer/login" in response.headers["Location"]
+    assert get_application_status(app, application_id) == "Pending"
+
+
+def test_application_list_displays_status_update_controls(client, app):
+    employer_id, _, job_id, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = client.get(f"/employer/jobs/{job_id}/applications")
+    page_text = normalize_html(response)
+
+    assert response.status_code == 200
+    assert f"/employer/applications/{application_id}/status" in page_text
+    assert "Pending" in page_text
+    assert "Shortlisted" in page_text
+    assert "Rejected" in page_text
+    assert "Accepted" in page_text
+    assert "Update Status" in page_text
+
+
+def test_employer_can_update_application_to_pending(client, app):
+    employer_id, _, _, application_id = create_owned_application(
+        app,
+        initial_status="Accepted",
+    )
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Pending")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Pending"
+    assert "Application status updated to Pending." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_shortlisted(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Shortlisted")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Shortlisted"
+    assert "Application status updated to Shortlisted." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_rejected(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Rejected")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Rejected"
+    assert "Application status updated to Rejected." in normalize_html(response)
+
+
+def test_employer_can_update_application_to_accepted(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Accepted")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Accepted"
+    assert "Application status updated to Accepted." in normalize_html(response)
+
+
+def test_invalid_application_status_is_rejected(client, app):
+    employer_id, _, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    response = update_application_status(client, application_id, "Interviewed")
+
+    assert response.status_code == 200
+    assert get_application_status(app, application_id) == "Pending"
+    assert "Select a valid application status." in normalize_html(response)
+
+
+def test_employer_cannot_update_another_company_application(client, app):
+    first_employer_id = create_employer(
+        app,
+        email="first@example.com",
+        company_name="First Company",
+    )
+    second_employer_id = create_employer(
+        app,
+        email="second@example.com",
+        company_name="Second Company",
+    )
+    seeker_id = create_seeker(app)
+    second_job_id = create_job(app, second_employer_id)
+    application_id = create_application(app, seeker_id, second_job_id)
+
+    login_employer(
+        client,
+        first_employer_id,
+        company_name="First Company",
+        email="first@example.com",
+    )
+
+    response = client.post(
+        f"/employer/applications/{application_id}/status",
+        data={"status": "Accepted"},
+    )
+
+    assert response.status_code == 404
+    assert get_application_status(app, application_id) == "Pending"
+
+
+def test_updated_status_appears_in_job_seeker_history(client, app):
+    employer_id, seeker_id, _, application_id = create_owned_application(app)
+    login_employer(client, employer_id)
+
+    update_response = update_application_status(client, application_id, "Accepted")
+    assert update_response.status_code == 200
+
+    with client.session_transaction() as current_session:
+        current_session.clear()
+        current_session["seeker_id"] = seeker_id
+        current_session["seeker_authenticated"] = True
+
+    history_response = client.get("/applications/")
+
+    assert history_response.status_code == 200
+    assert "Accepted" in normalize_html(history_response)
 
 
 # =========================================================

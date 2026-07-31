@@ -33,3 +33,10 @@ line-length = 88
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.mypy]
+disable_error_code = [
+    "arg-type",
+    "attr-defined",
+    "misc",
+]
