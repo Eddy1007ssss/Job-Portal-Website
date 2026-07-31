@@ -1,8 +1,8 @@
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint,

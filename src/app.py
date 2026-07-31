@@ -1,12 +1,13 @@
 import os
 
 from flask import Flask, render_template
+
 from src.applications import applications_bp
 from src.database import init_database
 from src.employer import employer_bp
+from src.employer_applications import employer_applications_bp
 from src.jobs import jobs_bp
 from src.seeker import seeker_bp
-from src.employer_applications import employer_applications_bp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
