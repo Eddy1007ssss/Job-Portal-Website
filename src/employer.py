@@ -1,7 +1,7 @@
 import re
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import Callable
 from uuid import uuid4
 
 from flask import (

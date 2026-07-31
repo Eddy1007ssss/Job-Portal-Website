@@ -1,5 +1,6 @@
-from src.database import get_db_connection
 from werkzeug.security import generate_password_hash
+
+from src.database import get_db_connection
 
 
 def normalize_html(response) -> str:

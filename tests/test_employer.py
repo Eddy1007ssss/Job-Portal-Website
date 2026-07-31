@@ -1,8 +1,9 @@
 import io
 
 from PIL import Image
-from src.database import get_db_connection
 from werkzeug.security import generate_password_hash
+
+from src.database import get_db_connection
 
 # =========================================================
 # Reusable test data
