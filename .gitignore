@@ -16,3 +16,5 @@ venv/
 *.db
 *.sqlite
 *.sqlite3
+
+src/static/uploads/company_images/

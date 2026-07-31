@@ -1,9 +1,12 @@
 import re
 from functools import wraps
+from pathlib import Path
 from typing import Callable
+from uuid import uuid4
 
 from flask import (
     Blueprint,
+    current_app,
     flash,
     redirect,
     render_template,
@@ -11,10 +14,13 @@ from flask import (
     session,
     url_for,
 )
+from PIL import Image, UnidentifiedImageError
+from werkzeug.datastructures import FileStorage
 from werkzeug.security import (
     check_password_hash,
     generate_password_hash,
 )
+from werkzeug.utils import secure_filename
 
 from src.database import get_db_connection
 
@@ -23,6 +29,11 @@ employer_bp = Blueprint("employer", __name__)
 EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 PHONE_PATTERN = re.compile(r"^[0-9+\-\s]{8,15}$")
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
+ALLOWED_IMAGE_FORMATS = {"PNG", "JPEG"}
+
+LOGO_MAXIMUM_SIZE = 2 * 1024 * 1024
+BANNER_MAXIMUM_SIZE = 5 * 1024 * 1024
 
 
 def employer_login_required(view_function: Callable) -> Callable:
@@ -96,6 +107,116 @@ def get_company_profile(employer_id: int):
     connection.close()
 
     return profile
+
+
+class ImageUploadError(ValueError):
+    """Raised when a company image upload is invalid."""
+
+
+def validate_company_image(
+    image_file: FileStorage,
+    maximum_size: int,
+    image_name: str,
+) -> str:
+    if not image_file or not image_file.filename:
+        raise ImageUploadError(
+            f"No {image_name.lower()} file was selected."
+        )
+
+    # Read the extension from the original filename.
+    # This supports filenames containing Chinese characters.
+    original_filename = image_file.filename.strip()
+
+    if "." not in original_filename:
+        raise ImageUploadError(
+            f"{image_name} must be a PNG or JPG image."
+        )
+
+    extension = original_filename.rsplit(".", 1)[1].lower()
+
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ImageUploadError(
+            f"{image_name} must be a PNG or JPG image."
+        )
+
+    image_file.stream.seek(0, 2)
+    file_size = image_file.stream.tell()
+    image_file.stream.seek(0)
+
+    if file_size <= 0:
+        raise ImageUploadError(
+            f"{image_name} file is empty."
+        )
+
+    if file_size > maximum_size:
+        maximum_mb = maximum_size // (1024 * 1024)
+
+        raise ImageUploadError(
+            f"{image_name} must not exceed {maximum_mb} MB."
+        )
+
+    try:
+        with Image.open(image_file.stream) as uploaded_image:
+            uploaded_image.verify()
+            image_format = uploaded_image.format
+
+    except (UnidentifiedImageError, OSError, SyntaxError) as error:
+        raise ImageUploadError(
+            f"{image_name} is not a valid image."
+        ) from error
+
+    finally:
+        image_file.stream.seek(0)
+
+    if image_format not in ALLOWED_IMAGE_FORMATS:
+        raise ImageUploadError(
+            f"{image_name} must be a PNG or JPG image."
+        )
+
+    return "png" if image_format == "PNG" else "jpg"
+
+def save_company_image(
+    image_file: FileStorage,
+    employer_id: int,
+    image_type: str,
+    maximum_size: int,
+) -> str:
+    image_name = (
+        "Company logo"
+        if image_type == "logo"
+        else "Company banner"
+    )
+
+    extension = validate_company_image(
+        image_file=image_file,
+        maximum_size=maximum_size,
+        image_name=image_name,
+    )
+
+    upload_folder = (
+        Path(current_app.static_folder)
+        / "uploads"
+        / "company_images"
+    )
+
+    upload_folder.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    filename = (
+        f"employer_{employer_id}_"
+        f"{image_type}_{uuid4().hex}.{extension}"
+    )
+
+    image_path = upload_folder / filename
+
+    image_file.save(image_path)
+
+    return url_for(
+        "static",
+        filename=f"uploads/company_images/{filename}",
+    )
 
 
 @employer_bp.route(
@@ -443,17 +564,25 @@ def company_profile():
             "",
         ).strip()
 
-        logo_url = request.form.get(
-            "logo_url",
-            "",
-        ).strip()
-
-        banner_url = request.form.get(
-            "banner_url",
-            "",
-        ).strip()
+        logo_file = request.files.get("company_logo")
+        banner_file = request.files.get("company_banner")
 
         errors = []
+
+        # Keep existing images when the employer does not upload replacements.
+        logo_url = (
+            existing_profile["logo_url"]
+            if existing_profile is not None
+            and existing_profile["logo_url"]
+            else ""
+        )
+
+        banner_url = (
+            existing_profile["banner_url"]
+            if existing_profile is not None
+            and existing_profile["banner_url"]
+            else ""
+        )
 
         if len(company_name) < 2:
             errors.append("Company name must contain at least " "2 characters.")
@@ -479,6 +608,29 @@ def company_profile():
                 "8 and 15 characters and may include "
                 "numbers, spaces, + or -."
             )
+
+        # Validate and save newly uploaded images only when all text fields
+        # are valid. Existing image paths are preserved otherwise.
+        if not errors:
+            try:
+                if logo_file and logo_file.filename:
+                    logo_url = save_company_image(
+                        image_file=logo_file,
+                        employer_id=employer_id,
+                        image_type="logo",
+                        maximum_size=LOGO_MAXIMUM_SIZE,
+                    )
+
+                if banner_file and banner_file.filename:
+                    banner_url = save_company_image(
+                        image_file=banner_file,
+                        employer_id=employer_id,
+                        image_type="banner",
+                        maximum_size=BANNER_MAXIMUM_SIZE,
+                    )
+
+            except ImageUploadError as error:
+                errors.append(str(error))
 
         submitted_profile = {
             "company_name": company_name,

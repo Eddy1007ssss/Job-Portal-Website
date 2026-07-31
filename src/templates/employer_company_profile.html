@@ -63,6 +63,7 @@
         id="companyProfileForm"
         method="POST"
         action="{{ url_for('employer.company_profile') }}"
+        enctype="multipart/form-data"
         class="
             profile-form-card
             {% if profile_exists %}
@@ -546,172 +547,196 @@
         ========================================== -->
         <div class="form-section">
 
-            <div class="form-section-heading">
-                <h2>Company Images</h2>
+    <div class="form-section-heading">
+        <h2>Company Images</h2>
 
-                <p>
-                    Paste an image URL for the company logo
-                    and banner.
-                </p>
+        <p>
+            Upload a company logo and banner image.
+            Only PNG and JPG images are allowed.
+        </p>
+    </div>
+
+    <div class="form-grid">
+
+        <!-- =====================================
+             Company logo
+        ====================================== -->
+        <div class="form-group">
+
+            <label for="company_logo">
+                Company Logo
+            </label>
+
+            <div class="image-upload-area">
+
+                <input
+                    type="file"
+                    id="company_logo"
+                    name="company_logo"
+                    class="image-file-input"
+                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                >
+
+                <label
+                    for="company_logo"
+                    class="image-upload-button"
+                >
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Choose Company Logo
+                </label>
+
+                <span
+                    id="logoFileName"
+                    class="selected-file-name"
+                >
+                    No new logo selected
+                </span>
+
             </div>
 
+            <small class="field-help">
+                Accepted formats: PNG, JPG and JPEG.
+                Maximum file size: 2 MB.
+            </small>
 
-            <div class="form-grid">
+            <small
+                class="field-error"
+                id="companyLogoError"
+            ></small>
 
-                <!-- Logo URL -->
-                <div class="form-group">
+            <div class="image-preview-container">
 
-                    <label for="logo_url">
-                        Logo URL
-                    </label>
+                <span class="image-preview-label">
+                    Logo Preview
+                </span>
 
-                    <input
-                        type="url"
-                        id="logo_url"
-                        name="logo_url"
-                        value="{{
+                <div class="logo-preview-box">
+
+                    <img
+                        id="logoPreview"
+                        src="{{
                             profile['logo_url']
-                            if profile
+                            if profile and profile['logo_url']
                             else ''
                         }}"
-                        placeholder="https://example.com/logo.png"
-                        maxlength="500"
+                        alt="Company logo preview"
+                        class="
+                            form-logo-preview
+                            {% if not profile
+                                or not profile['logo_url'] %}
+                                hidden
+                            {% endif %}
+                        "
                     >
-
-                    <small
-                        class="field-help"
-                    >
-                        Recommended: square image with a transparent
-                        or white background.
-                    </small>
-
-                    <small
-                        class="field-error"
-                        id="logoUrlError"
-                    ></small>
-
 
                     <div
-                        class="image-preview-container"
-                        id="logoPreviewContainer"
+                        id="logoPreviewPlaceholder"
+                        class="
+                            form-logo-placeholder
+                            {% if profile
+                                and profile['logo_url'] %}
+                                hidden
+                            {% endif %}
+                        "
                     >
-                        <span class="image-preview-label">
-                            Logo Preview
-                        </span>
-
-                        <div class="logo-preview-box">
-
-                            <img
-                                id="logoPreview"
-                                src="{{
-                                    profile['logo_url']
-                                    if profile and profile['logo_url']
-                                    else ''
-                                }}"
-                                alt="Company logo preview"
-                                class="
-                                    form-logo-preview
-                                    {% if not profile
-                                        or not profile['logo_url'] %}
-                                        hidden
-                                    {% endif %}
-                                "
-                            >
-
-                            <div
-                                id="logoPreviewPlaceholder"
-                                class="
-                                    form-logo-placeholder
-                                    {% if profile
-                                        and profile['logo_url'] %}
-                                        hidden
-                                    {% endif %}
-                                "
-                            >
-                                <i class="fa-regular fa-building"></i>
-                            </div>
-
-                        </div>
+                        <i class="fa-regular fa-building"></i>
                     </div>
 
                 </div>
+            </div>
 
+        </div>
 
-                <!-- Banner URL -->
-                <div class="form-group">
+        <!-- =====================================
+             Company banner
+        ====================================== -->
+        <div class="form-group">
 
-                    <label for="banner_url">
-                        Banner URL
-                    </label>
+            <label for="company_banner">
+                Company Banner Image
+            </label>
 
-                    <input
-                        type="url"
-                        id="banner_url"
-                        name="banner_url"
-                        value="{{
+            <div class="image-upload-area">
+
+                <input
+                    type="file"
+                    id="company_banner"
+                    name="company_banner"
+                    class="image-file-input"
+                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                >
+
+                <label
+                    for="company_banner"
+                    class="image-upload-button"
+                >
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    Choose Company Banner
+                </label>
+
+                <span
+                    id="bannerFileName"
+                    class="selected-file-name"
+                >
+                    No new banner selected
+                </span>
+
+            </div>
+
+            <small class="field-help">
+                Accepted formats: PNG, JPG and JPEG.
+                Maximum file size: 5 MB.
+                Recommended ratio: 3:1.
+            </small>
+
+            <small
+                class="field-error"
+                id="companyBannerError"
+            ></small>
+
+            <div class="image-preview-container">
+
+                <span class="image-preview-label">
+                    Banner Preview
+                </span>
+
+                <div class="banner-preview-box">
+
+                    <img
+                        id="bannerPreview"
+                        src="{{
                             profile['banner_url']
-                            if profile
+                            if profile and profile['banner_url']
                             else ''
                         }}"
-                        placeholder="https://example.com/banner.jpg"
-                        maxlength="500"
+                        alt="Company banner preview"
+                        class="
+                            form-banner-preview
+                            {% if not profile
+                                or not profile['banner_url'] %}
+                                hidden
+                            {% endif %}
+                        "
                     >
-
-                    <small class="field-help">
-                        Recommended: wide image with a 3:1 ratio.
-                    </small>
-
-                    <small
-                        class="field-error"
-                        id="bannerUrlError"
-                    ></small>
-
 
                     <div
-                        class="image-preview-container"
-                        id="bannerPreviewContainer"
+                        id="bannerPreviewPlaceholder"
+                        class="
+                            form-banner-placeholder
+                            {% if profile
+                                and profile['banner_url'] %}
+                                hidden
+                            {% endif %}
+                        "
                     >
-                        <span class="image-preview-label">
-                            Banner Preview
-                        </span>
-
-                        <div class="banner-preview-box">
-
-                            <img
-                                id="bannerPreview"
-                                src="{{
-                                    profile['banner_url']
-                                    if profile and profile['banner_url']
-                                    else ''
-                                }}"
-                                alt="Company banner preview"
-                                class="
-                                    form-banner-preview
-                                    {% if not profile
-                                        or not profile['banner_url'] %}
-                                        hidden
-                                    {% endif %}
-                                "
-                            >
-
-                            <div
-                                id="bannerPreviewPlaceholder"
-                                class="
-                                    form-banner-placeholder
-                                    {% if profile
-                                        and profile['banner_url'] %}
-                                        hidden
-                                    {% endif %}
-                                "
-                            >
-                                <i class="fa-regular fa-image"></i>
-                                <span>Banner preview</span>
-                            </div>
-
-                        </div>
+                        <i class="fa-regular fa-image"></i>
+                        <span>Banner preview</span>
                     </div>
 
                 </div>
+            </div>
+
+        </div>
 
             </div>
         </div>

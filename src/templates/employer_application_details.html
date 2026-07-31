@@ -1,0 +1,520 @@
+{% extends "employer_base.html" %}
+
+{% block title %}
+{{ application['applicant_name'] }} | Application Details
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/employer_applications.css'
+    ) }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="application-details-page">
+
+    <div class="application-page-heading">
+        <div>
+            <span class="section-label">
+                APPLICANT DETAILS
+            </span>
+
+            <h1>{{ application['applicant_name'] }}</h1>
+
+            <p>
+                Application for
+                <strong>{{ application['job_title'] }}</strong>
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for(
+                'employer_applications.application_list',
+                job_id=application['job_id']
+            ) }}"
+            class="secondary-action"
+        >
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Applications
+        </a>
+    </div>
+
+    <div class="application-detail-layout">
+
+        <div class="application-detail-main">
+
+            <!-- Applicant Overview -->
+            <article class="detail-card applicant-overview">
+
+                <div class="large-applicant-avatar">
+                    {% if application['profile_image'] %}
+                        <img
+                            src="{{ url_for(
+                                'static',
+                                filename='uploads/profile_images/'
+                                    ~ application['profile_image']
+                            ) }}"
+                            alt="{{ application['applicant_name'] }}"
+                        >
+                    {% else %}
+                        {{ application['applicant_name'][0] | upper }}
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2>{{ application['applicant_name'] }}</h2>
+
+                    <p>
+                        {{
+                            application['applicant_job_title']
+                            or 'Job Seeker'
+                        }}
+                    </p>
+
+                    <span
+                        class="application-status status-{{
+                            application['status']
+                            | lower
+                            | replace(' ', '-')
+                        }}"
+                    >
+                        {{ application['status'] | title }}
+                    </span>
+                </div>
+
+            </article>
+
+            <!-- About Candidate -->
+            <article class="detail-card">
+                <h2>About Candidate</h2>
+
+                <p class="detail-paragraph preserve-lines">
+                    {{
+                        application['about_me']
+                        or 'The applicant has not added an introduction.'
+                    }}
+                </p>
+            </article>
+
+            <!-- Cover Letter -->
+            <article class="detail-card">
+                <h2>Cover Letter</h2>
+
+                <p class="detail-paragraph preserve-lines">
+                    {{
+                        application['cover_letter']
+                        or 'No cover letter was submitted.'
+                    }}
+                </p>
+            </article>
+
+            <!-- Skills -->
+            <article class="detail-card">
+                <h2>Skills</h2>
+
+                {% if application['skills'] %}
+                    <div class="applicant-skill-list">
+
+                        {% for skill in application['skills'] %}
+                            <span class="applicant-skill-tag">
+                                {{ skill['skill_name'] }}
+                            </span>
+                        {% endfor %}
+
+                    </div>
+                {% else %}
+                    <p class="detail-paragraph">
+                        No skills information is available.
+                    </p>
+                {% endif %}
+            </article>
+
+            <!-- Work Experience -->
+            <article class="detail-card">
+                <h2>Work Experience</h2>
+
+                {% if application['experiences'] %}
+
+                    <div class="applicant-record-list">
+
+                        {% for experience in application['experiences'] %}
+
+                            <div class="applicant-record">
+                                <h3>
+                                    {{
+                                        experience['position_title']
+                                        or 'Position not specified'
+                                    }}
+                                </h3>
+
+                                <p class="record-organization">
+                                    {{
+                                        experience['company_name']
+                                        or 'Company not specified'
+                                    }}
+                                </p>
+
+                                <p class="record-date">
+                                    {{
+                                        experience['start_date']
+                                        or 'Start date not provided'
+                                    }}
+                                    –
+                                    {{
+                                        experience['end_date']
+                                        or 'Present'
+                                    }}
+                                </p>
+
+                                {% if experience['description'] %}
+                                    <p class="detail-paragraph preserve-lines">
+                                        {{ experience['description'] }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+                    <p class="detail-paragraph">
+                        No work experience information is available.
+                    </p>
+                {% endif %}
+            </article>
+
+            <!-- Education -->
+            <article class="detail-card">
+                <h2>Education</h2>
+
+                {% if application['education_items'] %}
+
+                    <div class="applicant-record-list">
+
+                        {% for education in application['education_items'] %}
+
+                            <div class="applicant-record">
+                                <h3>
+                                    {{
+                                        education['qualification']
+                                        or 'Qualification not specified'
+                                    }}
+                                </h3>
+
+                                <p class="record-organization">
+                                    {{
+                                        education['institution']
+                                        or 'Institution not specified'
+                                    }}
+                                </p>
+
+                                <p class="record-date">
+                                    {{
+                                        education['start_year']
+                                        or 'Start year not provided'
+                                    }}
+                                    –
+                                    {{
+                                        education['end_year']
+                                        or 'Present'
+                                    }}
+                                </p>
+
+                                {% if education['status'] %}
+                                    <p>
+                                        Status:
+                                        <strong>
+                                            {{ education['status'] }}
+                                        </strong>
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+                    <p class="detail-paragraph">
+                        No education information is available.
+                    </p>
+                {% endif %}
+            </article>
+
+            <!-- Languages -->
+            <article class="detail-card">
+                <h2>Languages</h2>
+
+                {% if application['languages'] %}
+
+                    <div class="detail-information-list">
+
+                        {% for language in application['languages'] %}
+                            <div>
+                                <i class="fa-solid fa-language"></i>
+
+                                <span>
+                                    <small>
+                                        {{ language['language_name'] }}
+                                    </small>
+
+                                    <strong>
+                                        {{
+                                            language['proficiency']
+                                            or 'Not specified'
+                                        }}
+                                    </strong>
+                                </span>
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+                    <p class="detail-paragraph">
+                        No language information is available.
+                    </p>
+                {% endif %}
+            </article>
+
+            <!-- Certificates -->
+            <article class="detail-card">
+                <h2>Certificates</h2>
+
+                {% if application['certificates'] %}
+
+                    <div class="applicant-record-list">
+
+                        {% for certificate in application['certificates'] %}
+
+                            <div class="applicant-record">
+                                <h3>
+                                    {{ certificate['certificate_name'] }}
+                                </h3>
+
+                                {% if certificate['issuer'] %}
+                                    <p class="record-organization">
+                                        Issued by
+                                        {{ certificate['issuer'] }}
+                                    </p>
+                                {% endif %}
+
+                                {% if certificate['issue_date'] %}
+                                    <p class="record-date">
+                                        Issue date:
+                                        {{ certificate['issue_date'] }}
+                                    </p>
+                                {% endif %}
+
+                                {% if certificate['certificate_filename'] %}
+                                    <a
+                                        href="{{ url_for(
+                                            'static',
+                                            filename='uploads/certificates/'
+                                                ~ certificate[
+                                                    'certificate_filename'
+                                                ]
+                                        ) }}"
+                                        class="secondary-action"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="fa-regular fa-file"></i>
+                                        View Certificate
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+                    <p class="detail-paragraph">
+                        No certificates are available.
+                    </p>
+                {% endif %}
+            </article>
+
+        </div>
+
+        <aside class="application-detail-side">
+
+            <!-- Contact Information -->
+            <article class="detail-card">
+                <h2>Contact Information</h2>
+
+                <div class="detail-information-list">
+
+                    <div>
+                        <i class="fa-regular fa-envelope"></i>
+
+                        <span>
+                            <small>Email</small>
+
+                            <strong>
+                                {{ application['applicant_email'] }}
+                            </strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-solid fa-phone"></i>
+
+                        <span>
+                            <small>Contact Number</small>
+
+                            <strong>
+                                {{
+                                    application['applicant_contact']
+                                    or 'Not provided'
+                                }}
+                            </strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-solid fa-location-dot"></i>
+
+                        <span>
+                            <small>Location</small>
+
+                            <strong>
+                                {{
+                                    application['applicant_location']
+                                    or 'Not provided'
+                                }}
+                            </strong>
+                        </span>
+                    </div>
+
+                </div>
+            </article>
+
+            <!-- Resume -->
+            <article class="detail-card">
+                <h2>Applicant Resume</h2>
+
+                {% if application['available_resume'] %}
+
+                    <div class="resume-information">
+                        <i class="fa-regular fa-file-pdf"></i>
+
+                        <p>
+                            The applicant has uploaded a resume.
+                        </p>
+                    </div>
+
+                    <div class="resume-actions">
+
+                        <a
+                            href="{{ url_for(
+                                'static',
+                                filename='uploads/resumes/'
+                                    ~ application['available_resume']
+                            ) }}"
+                            class="primary-action"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i class="fa-regular fa-eye"></i>
+                            View Resume
+                        </a>
+
+                        <a
+                            href="{{ url_for(
+                                'static',
+                                filename='uploads/resumes/'
+                                    ~ application['available_resume']
+                            ) }}"
+                            class="secondary-action"
+                            download
+                        >
+                            <i class="fa-solid fa-download"></i>
+                            Download Resume
+                        </a>
+
+                    </div>
+
+                {% else %}
+                    <div class="resume-unavailable-message">
+                        <i class="fa-regular fa-file"></i>
+
+                        <p>No resume available.</p>
+                    </div>
+                {% endif %}
+            </article>
+
+            <!-- Application Information -->
+            <article class="detail-card">
+                <h2>Application Information</h2>
+
+                <div class="detail-information-list">
+
+                    <div>
+                        <i class="fa-solid fa-briefcase"></i>
+
+                        <span>
+                            <small>Applied Position</small>
+
+                            <strong>
+                                {{ application['job_title'] }}
+                            </strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-solid fa-location-dot"></i>
+
+                        <span>
+                            <small>Job Location</small>
+
+                            <strong>
+                                {{
+                                    application['job_location']
+                                    or 'Not provided'
+                                }}
+                            </strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-regular fa-calendar"></i>
+
+                        <span>
+                            <small>Applied Date</small>
+
+                            <strong>
+                                {{
+                                    application['applied_at']
+                                    or 'Not available'
+                                }}
+                            </strong>
+                        </span>
+                    </div>
+
+                    <div>
+                        <i class="fa-solid fa-circle-info"></i>
+
+                        <span>
+                            <small>Application Status</small>
+
+                            <strong>
+                                {{ application['status'] | title }}
+                            </strong>
+                        </span>
+                    </div>
+
+                </div>
+            </article>
+
+        </aside>
+
+    </div>
+</section>
+{% endblock %}
