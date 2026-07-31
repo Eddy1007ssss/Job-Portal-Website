@@ -25,6 +25,7 @@ def create_employer(
                 "test-password-hash",
             ),
         )
+        assert cursor.lastrowid is not None
         employer_id = int(cursor.lastrowid)
         connection.commit()
         connection.close()
@@ -63,6 +64,7 @@ def create_job(
                 "2026-09-30",
             ),
         )
+        assert cursor.lastrowid is not None
         job_id = int(cursor.lastrowid)
         connection.commit()
         connection.close()
@@ -90,6 +92,7 @@ def create_application(app, job_id: int, number: int) -> None:
                     "test-password-hash",
                 ),
             )
+            assert cursor.lastrowid is not None
             seeker_id = int(cursor.lastrowid)
 
             connection.execute(

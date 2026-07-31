@@ -287,6 +287,66 @@
     white-space: nowrap;
 }
 
+.status-management,
+.status-update-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-management {
+    min-width: 340px;
+}
+
+.status-select {
+    min-height: 34px;
+    padding: 6px 28px 6px 9px;
+    color: var(--employer-text);
+    background: #ffffff;
+    border: 1px solid var(--employer-border);
+    border-radius: 8px;
+    font: inherit;
+    font-size: 11px;
+}
+
+.status-select:focus {
+    border-color: var(--employer-primary);
+    outline: 3px solid rgba(37, 99, 235, 0.12);
+}
+
+.status-update-button {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    color: #ffffff;
+    background: var(--employer-primary);
+    border: 1px solid var(--employer-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-update-button:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.visually-hidden {
+    width: 1px;
+    height: 1px;
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 .status-pending,
 .status-submitted {
     color: #b54708;

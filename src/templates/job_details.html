@@ -117,21 +117,13 @@
 
             {% else %}
 
-                <form
-                    method="POST"
-                    action="{{ url_for(
-                        'applications.apply_job',
-                        job_id=job.job_id
-                    ) }}"
+                <a
+                    href="#application-form"
+                    class="apply-job-button"
                 >
-                    <button
-                        type="submit"
-                        class="apply-job-button"
-                    >
-                        <i class="fa-solid fa-paper-plane"></i>
-                        Apply This Job
-                    </button>
-                </form>
+                    <i class="fa-solid fa-paper-plane"></i>
+                    Apply This Job
+                </a>
 
             {% endif %}
 
@@ -175,6 +167,65 @@
         </div>
 
     </section>
+
+
+    {% if not has_applied and job.status == "Open" %}
+
+        <section
+            id="application-form"
+            class="cover-letter-card card"
+        >
+            <div class="cover-letter-heading">
+                <span class="cover-letter-icon">
+                    <i class="fa-regular fa-file-lines"></i>
+                </span>
+
+                <div>
+                    <h2>Apply for This Job</h2>
+                    <p>
+                        Introduce yourself and explain why you are
+                        suitable for this role.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'applications.apply_job',
+                    job_id=job.job_id
+                ) }}"
+                class="cover-letter-form"
+            >
+                <label for="coverLetter">
+                    Cover Letter <span aria-hidden="true">*</span>
+                </label>
+
+                <textarea
+                    id="coverLetter"
+                    name="cover_letter"
+                    minlength="50"
+                    maxlength="2000"
+                    required
+                    placeholder="Tell the employer about your relevant skills, experience and interest in this job."
+                ></textarea>
+
+                <div class="cover-letter-help">
+                    <span>Minimum 50 characters.</span>
+                    <span id="coverLetterCount">0 / 2000</span>
+                </div>
+
+                <button
+                    type="submit"
+                    class="submit-application-button"
+                >
+                    <i class="fa-solid fa-paper-plane"></i>
+                    Submit Application
+                </button>
+            </form>
+        </section>
+
+    {% endif %}
 
 
     <div class="job-details-layout">
@@ -475,6 +526,24 @@
                     );
                 }
             });
+        }
+
+        const coverLetter =
+            document.getElementById("coverLetter");
+        const coverLetterCount =
+            document.getElementById("coverLetterCount");
+
+        if (coverLetter && coverLetterCount) {
+            const updateCoverLetterCount = function () {
+                coverLetterCount.textContent =
+                    `${coverLetter.value.length} / 2000`;
+            };
+
+            coverLetter.addEventListener(
+                "input",
+                updateCoverLetterCount
+            );
+            updateCoverLetterCount();
         }
     });
 </script>

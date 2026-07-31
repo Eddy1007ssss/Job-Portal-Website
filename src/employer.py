@@ -175,7 +175,11 @@ def save_company_image(
         image_name=image_name,
     )
 
-    upload_folder = Path(current_app.static_folder) / "uploads" / "company_images"
+    static_folder = current_app.static_folder
+    if static_folder is None:
+        raise RuntimeError("Flask static folder is not configured.")
+
+    upload_folder = Path(static_folder) / "uploads" / "company_images"
 
     upload_folder.mkdir(
         parents=True,
@@ -602,8 +606,8 @@ def company_profile():
                         maximum_size=BANNER_MAXIMUM_SIZE,
                     )
 
-            except ImageUploadError as error:
-                errors.append(str(error))
+            except ImageUploadError as upload_error:
+                errors.append(str(upload_error))
 
         submitted_profile = {
             "company_name": company_name,
@@ -621,8 +625,8 @@ def company_profile():
         if errors:
             connection.close()
 
-            for error in errors:
-                flash(error, "error")
+            for error_message in errors:
+                flash(error_message, "error")
 
             return render_template(
                 "employer_company_profile.html",

@@ -75,7 +75,11 @@ def _is_pdf(file) -> bool:
 
 
 def _folder(name: str) -> Path:
-    path = Path(current_app.static_folder) / "uploads" / name
+    static_folder = current_app.static_folder
+    if static_folder is None:
+        raise RuntimeError("Flask static folder is not configured.")
+
+    path = Path(static_folder) / "uploads" / name
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -172,7 +176,12 @@ def ensure_demo_seeker() -> int:
             generate_password_hash("Password123"),
         ),
     )
-    seeker_id = int(cursor.lastrowid)
+    inserted_seeker_id = cursor.lastrowid
+    if inserted_seeker_id is None:
+        db.close()
+        raise RuntimeError("Failed to create the demo seeker account.")
+
+    seeker_id = int(inserted_seeker_id)
 
     db.execute(
         """

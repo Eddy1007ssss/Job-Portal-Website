@@ -214,7 +214,11 @@ def get_or_create_demo_employer(
         ),
     )
 
-    return int(cursor.lastrowid)
+    employer_id = cursor.lastrowid
+    if employer_id is None:
+        raise RuntimeError("Failed to create the demo employer account.")
+
+    return int(employer_id)
 
 
 def seed_demo_jobs() -> None:
