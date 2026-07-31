@@ -1,6 +1,7 @@
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from uuid import uuid4
 
 from flask import (
@@ -22,7 +23,6 @@ from src.database import get_db_connection
 seeker_bp = Blueprint("seeker", __name__)
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 RESUME_EXTENSIONS = {"pdf", "doc", "docx"}
-CERTIFICATE_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "doc", "docx"}
 CERTIFICATE_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
 
 
@@ -57,9 +57,7 @@ def _validate_issue_month(issue_date: str) -> str | None:
     if not issue_date:
         return None
 
-    from datetime import date
-
-    current_month = date.today().strftime("%Y-%m")
+    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).strftime("%Y-%m")
 
     if issue_date > current_month:
         return "Certificate issue date cannot be in the future."
@@ -86,7 +84,7 @@ def _validate_date_range(
 ) -> str | None:
     start_date = _parse_month(start_value)
     end_date = _parse_month(end_value)
-    current_month = date.today().replace(day=1)
+    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).date().replace(day=1)
 
     if not start_date:
         return "Please enter a valid start date."
@@ -514,35 +512,6 @@ def add_experience():
     )
 
     flash("Experience added successfully.", "success")
-    return redirect(url_for("seeker.profile"))
-
-    date_error = _validate_date_range(start_date, end_date)
-
-    if date_error:
-        flash(date_error, "error")
-        return redirect(url_for("seeker.profile"))
-
-    _insert(
-        "seeker_experiences",
-        [
-            "seeker_id",
-            "position_title",
-            "company_name",
-            "start_date",
-            "end_date",
-            "description",
-        ],
-        [
-            current_seeker_id(),
-            position,
-            company,
-            start_date,
-            end_date,
-            request.form.get("description", "").strip(),
-        ],
-    )
-
-    flash("Experience added.", "success")
     return redirect(url_for("seeker.profile"))
 
 
