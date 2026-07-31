@@ -3,6 +3,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     session,
     url_for,
 )
@@ -14,6 +15,9 @@ applications_bp = Blueprint(
     __name__,
     url_prefix="/applications",
 )
+
+COVER_LETTER_MIN_LENGTH = 50
+COVER_LETTER_MAX_LENGTH = 2000
 
 
 @applications_bp.route("/")
@@ -142,6 +146,50 @@ def apply_job(job_id: int):
             )
         )
 
+    cover_letter = request.form.get("cover_letter", "").strip()
+
+    if not cover_letter:
+        connection.close()
+
+        flash(
+            "Please write a cover letter before applying.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "jobs.job_details",
+                job_id=job_id,
+            )
+        )
+
+    if len(cover_letter) < COVER_LETTER_MIN_LENGTH:
+        connection.close()
+
+        flash(
+            "Cover letter must contain at least 50 characters.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "jobs.job_details",
+                job_id=job_id,
+            )
+        )
+
+    if len(cover_letter) > COVER_LETTER_MAX_LENGTH:
+        connection.close()
+
+        flash(
+            "Cover letter must not exceed 2000 characters.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "jobs.job_details",
+                job_id=job_id,
+            )
+        )
+
     seeker_profile = connection.execute(
         """
         SELECT resume_filename
@@ -158,14 +206,16 @@ def apply_job(job_id: int):
         INSERT INTO applications (
             seeker_id,
             job_id,
+            cover_letter,
             resume_filename,
             status
         )
-        VALUES (?, ?, ?, 'Pending')
+        VALUES (?, ?, ?, ?, 'Pending')
         """,
         (
             seeker_id,
             job_id,
+            cover_letter,
             resume_filename,
         ),
     )

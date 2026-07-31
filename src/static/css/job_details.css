@@ -138,6 +138,7 @@
     background-color: #2563eb;
     border: 1px solid #2563eb;
     cursor: pointer;
+    text-decoration: none;
     box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
 }
 
@@ -164,6 +165,118 @@
     color: #ffffff;
     background-color: #2563eb;
     border-color: #2563eb;
+}
+
+
+/* Cover letter form */
+
+.cover-letter-card {
+    margin-bottom: 24px;
+    padding: 30px;
+}
+
+.cover-letter-heading {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.cover-letter-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    background-color: #eff6ff;
+    border-radius: 11px;
+}
+
+.cover-letter-heading h2 {
+    margin: 0 0 6px;
+    color: #111827;
+    font-size: 20px;
+}
+
+.cover-letter-heading p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cover-letter-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.cover-letter-form label {
+    margin-bottom: 9px;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.cover-letter-form label span {
+    color: #dc2626;
+}
+
+.cover-letter-form textarea {
+    width: 100%;
+    min-height: 190px;
+    padding: 15px 16px;
+    resize: vertical;
+    color: #111827;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.cover-letter-form textarea::placeholder {
+    color: #9ca3af;
+}
+
+.cover-letter-form textarea:focus {
+    border-color: #2563eb;
+    outline: 3px solid rgba(37, 99, 235, 0.13);
+}
+
+.cover-letter-help {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.submit-application-button {
+    min-height: 47px;
+    margin-top: 20px;
+    padding: 0 22px;
+    align-self: flex-end;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    color: #ffffff;
+    background-color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+}
+
+.submit-application-button:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
 }
 
 
@@ -386,9 +499,19 @@
     }
 
     .job-content-card,
+    .cover-letter-card,
     .job-overview-card,
     .company-contact-card,
     .share-job-card {
         padding: 21px;
+    }
+
+    .cover-letter-help {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .submit-application-button {
+        width: 100%;
     }
 }
