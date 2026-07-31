@@ -15,7 +15,6 @@ from flask import (
 
 from src.database import get_db_connection
 
-
 employer_applications_bp = Blueprint(
     "employer_applications",
     __name__,
@@ -73,9 +72,7 @@ def get_owned_job(
     return job
 
 
-@employer_applications_bp.route(
-    "/employer/jobs/<int:job_id>/applications"
-)
+@employer_applications_bp.route("/employer/jobs/<int:job_id>/applications")
 @employer_login_required
 def application_list(job_id: int):
     """
@@ -167,9 +164,7 @@ def application_list(job_id: int):
     )
 
 
-@employer_applications_bp.route(
-    "/employer/applications/<int:application_id>"
-)
+@employer_applications_bp.route("/employer/applications/<int:application_id>")
 @employer_login_required
 def application_details(application_id: int):
     """

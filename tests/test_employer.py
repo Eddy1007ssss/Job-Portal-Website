@@ -1,6 +1,5 @@
 import io
 
-import pytest
 from PIL import Image
 from src.database import get_db_connection
 from werkzeug.security import generate_password_hash
@@ -8,6 +7,7 @@ from werkzeug.security import generate_password_hash
 # =========================================================
 # Reusable test data
 # =========================================================
+
 
 def valid_registration_data(**changes):
     data = {
@@ -44,6 +44,7 @@ def valid_company_profile_data(**changes):
 # =========================================================
 # Database and session helpers
 # =========================================================
+
 
 def create_employer(
     app,
@@ -138,6 +139,7 @@ def create_test_image(
 # Employer page tests
 # =========================================================
 
+
 def test_employer_register_page_loads(client):
     response = client.get("/employer/register")
 
@@ -153,6 +155,7 @@ def test_employer_login_page_loads(client):
 # =========================================================
 # Employer registration tests
 # =========================================================
+
 
 def test_register_employer_successfully(client, app):
     response = client.post(
@@ -189,9 +192,8 @@ def test_register_company_name_too_short(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company name must contain at least 2 characters"
-        in response.get_data(as_text=True)
+    assert "Company name must contain at least 2 characters" in response.get_data(
+        as_text=True
     )
 
 
@@ -205,10 +207,7 @@ def test_register_invalid_email(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Please enter a valid company email"
-        in response.get_data(as_text=True)
-    )
+    assert "Please enter a valid company email" in response.get_data(as_text=True)
 
 
 def test_register_contact_number_too_short(client):
@@ -221,10 +220,7 @@ def test_register_contact_number_too_short(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Contact number must contain between"
-        in response.get_data(as_text=True)
-    )
+    assert "Contact number must contain between" in response.get_data(as_text=True)
 
 
 def test_register_contact_number_invalid_characters(client):
@@ -237,10 +233,7 @@ def test_register_contact_number_invalid_characters(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Contact number must contain between"
-        in response.get_data(as_text=True)
-    )
+    assert "Contact number must contain between" in response.get_data(as_text=True)
 
 
 def test_register_password_too_short(client):
@@ -254,9 +247,8 @@ def test_register_password_too_short(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Password must contain at least 8 characters"
-        in response.get_data(as_text=True)
+    assert "Password must contain at least 8 characters" in response.get_data(
+        as_text=True
     )
 
 
@@ -288,15 +280,13 @@ def test_register_duplicate_employer_email(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "This company email is already registered"
-        in response.get_data(as_text=True)
-    )
+    assert "This company email is already registered" in response.get_data(as_text=True)
 
 
 # =========================================================
 # Employer login and logout tests
 # =========================================================
+
 
 def test_employer_login_success(client, app):
     create_employer(app)
@@ -367,6 +357,7 @@ def test_employer_logout_clears_session(client, app):
 # Company profile access tests
 # =========================================================
 
+
 def test_company_profile_requires_employer_login(client):
     response = client.get(
         "/employer/company-profile",
@@ -401,6 +392,7 @@ def test_company_profile_page_loads_for_logged_in_employer(
 # Company profile validation tests
 # =========================================================
 
+
 def test_company_profile_company_name_too_short(client, app):
     employer_id = create_employer(app)
     login_employer(client, employer_id)
@@ -414,9 +406,8 @@ def test_company_profile_company_name_too_short(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company name must contain at least 2 characters"
-        in response.get_data(as_text=True)
+    assert "Company name must contain at least 2 characters" in response.get_data(
+        as_text=True
     )
 
 
@@ -433,10 +424,7 @@ def test_company_profile_industry_required(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Please select an industry"
-        in response.get_data(as_text=True)
-    )
+    assert "Please select an industry" in response.get_data(as_text=True)
 
 
 def test_company_profile_address_too_short(client, app):
@@ -452,9 +440,8 @@ def test_company_profile_address_too_short(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Please enter the complete company address"
-        in response.get_data(as_text=True)
+    assert "Please enter the complete company address" in response.get_data(
+        as_text=True
     )
 
 
@@ -490,9 +477,8 @@ def test_company_profile_description_too_long(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company description cannot exceed 1500 characters"
-        in response.get_data(as_text=True)
+    assert "Company description cannot exceed 1500 characters" in response.get_data(
+        as_text=True
     )
 
 
@@ -509,10 +495,7 @@ def test_company_profile_invalid_contact_email(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Please enter a valid contact email"
-        in response.get_data(as_text=True)
-    )
+    assert "Please enter a valid contact email" in response.get_data(as_text=True)
 
 
 def test_company_profile_invalid_contact_number(client, app):
@@ -528,15 +511,13 @@ def test_company_profile_invalid_contact_number(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Contact number must contain between"
-        in response.get_data(as_text=True)
-    )
+    assert "Contact number must contain between" in response.get_data(as_text=True)
 
 
 # =========================================================
 # Company profile create, update and preview tests
 # =========================================================
+
 
 def test_create_company_profile(client, app):
     employer_id = create_employer(app)
@@ -618,6 +599,7 @@ def test_company_preview_loads_after_profile_creation(client, app):
 # =========================================================
 # Company image upload tests
 # =========================================================
+
 
 def test_upload_valid_jpg_logo(client, app, tmp_path):
     app.static_folder = str(tmp_path / "static")
@@ -746,10 +728,7 @@ def test_upload_invalid_logo_extension(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company logo must be a PNG or JPG image"
-        in response.get_data(as_text=True)
-    )
+    assert "Company logo must be a PNG or JPG image" in response.get_data(as_text=True)
 
 
 def test_upload_fake_jpg_logo(client, app):
@@ -770,10 +749,7 @@ def test_upload_fake_jpg_logo(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company logo is not a valid image"
-        in response.get_data(as_text=True)
-    )
+    assert "Company logo is not a valid image" in response.get_data(as_text=True)
 
 
 def test_upload_empty_logo(client, app):
@@ -794,10 +770,7 @@ def test_upload_empty_logo(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company logo file is empty"
-        in response.get_data(as_text=True)
-    )
+    assert "Company logo file is empty" in response.get_data(as_text=True)
 
 
 def test_upload_logo_larger_than_2mb(client, app):
@@ -806,9 +779,7 @@ def test_upload_logo_larger_than_2mb(client, app):
 
     data = valid_company_profile_data()
     data["company_logo"] = (
-        io.BytesIO(
-            b"A" * ((2 * 1024 * 1024) + 1)
-        ),
+        io.BytesIO(b"A" * ((2 * 1024 * 1024) + 1)),
         "large-logo.jpg",
     )
 
@@ -820,10 +791,7 @@ def test_upload_logo_larger_than_2mb(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company logo must not exceed 2 MB"
-        in response.get_data(as_text=True)
-    )
+    assert "Company logo must not exceed 2 MB" in response.get_data(as_text=True)
 
 
 def test_upload_banner_larger_than_5mb(client, app):
@@ -832,9 +800,7 @@ def test_upload_banner_larger_than_5mb(client, app):
 
     data = valid_company_profile_data()
     data["company_banner"] = (
-        io.BytesIO(
-            b"A" * ((5 * 1024 * 1024) + 1)
-        ),
+        io.BytesIO(b"A" * ((5 * 1024 * 1024) + 1)),
         "large-banner.jpg",
     )
 
@@ -846,10 +812,7 @@ def test_upload_banner_larger_than_5mb(client, app):
     )
 
     assert response.status_code == 200
-    assert (
-        "Company banner must not exceed 5 MB"
-        in response.get_data(as_text=True)
-    )
+    assert "Company banner must not exceed 5 MB" in response.get_data(as_text=True)
 
 
 def test_update_profile_without_new_images_preserves_existing_images(

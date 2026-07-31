@@ -20,7 +20,6 @@ from werkzeug.security import (
     check_password_hash,
     generate_password_hash,
 )
-from werkzeug.utils import secure_filename
 
 from src.database import get_db_connection
 
@@ -119,41 +118,31 @@ def validate_company_image(
     image_name: str,
 ) -> str:
     if not image_file or not image_file.filename:
-        raise ImageUploadError(
-            f"No {image_name.lower()} file was selected."
-        )
+        raise ImageUploadError(f"No {image_name.lower()} file was selected.")
 
     # Read the extension from the original filename.
     # This supports filenames containing Chinese characters.
     original_filename = image_file.filename.strip()
 
     if "." not in original_filename:
-        raise ImageUploadError(
-            f"{image_name} must be a PNG or JPG image."
-        )
+        raise ImageUploadError(f"{image_name} must be a PNG or JPG image.")
 
     extension = original_filename.rsplit(".", 1)[1].lower()
 
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
-        raise ImageUploadError(
-            f"{image_name} must be a PNG or JPG image."
-        )
+        raise ImageUploadError(f"{image_name} must be a PNG or JPG image.")
 
     image_file.stream.seek(0, 2)
     file_size = image_file.stream.tell()
     image_file.stream.seek(0)
 
     if file_size <= 0:
-        raise ImageUploadError(
-            f"{image_name} file is empty."
-        )
+        raise ImageUploadError(f"{image_name} file is empty.")
 
     if file_size > maximum_size:
         maximum_mb = maximum_size // (1024 * 1024)
 
-        raise ImageUploadError(
-            f"{image_name} must not exceed {maximum_mb} MB."
-        )
+        raise ImageUploadError(f"{image_name} must not exceed {maximum_mb} MB.")
 
     try:
         with Image.open(image_file.stream) as uploaded_image:
@@ -161,19 +150,16 @@ def validate_company_image(
             image_format = uploaded_image.format
 
     except (UnidentifiedImageError, OSError, SyntaxError) as error:
-        raise ImageUploadError(
-            f"{image_name} is not a valid image."
-        ) from error
+        raise ImageUploadError(f"{image_name} is not a valid image.") from error
 
     finally:
         image_file.stream.seek(0)
 
     if image_format not in ALLOWED_IMAGE_FORMATS:
-        raise ImageUploadError(
-            f"{image_name} must be a PNG or JPG image."
-        )
+        raise ImageUploadError(f"{image_name} must be a PNG or JPG image.")
 
     return "png" if image_format == "PNG" else "jpg"
+
 
 def save_company_image(
     image_file: FileStorage,
@@ -181,11 +167,7 @@ def save_company_image(
     image_type: str,
     maximum_size: int,
 ) -> str:
-    image_name = (
-        "Company logo"
-        if image_type == "logo"
-        else "Company banner"
-    )
+    image_name = "Company logo" if image_type == "logo" else "Company banner"
 
     extension = validate_company_image(
         image_file=image_file,
@@ -193,21 +175,14 @@ def save_company_image(
         image_name=image_name,
     )
 
-    upload_folder = (
-        Path(current_app.static_folder)
-        / "uploads"
-        / "company_images"
-    )
+    upload_folder = Path(current_app.static_folder) / "uploads" / "company_images"
 
     upload_folder.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    filename = (
-        f"employer_{employer_id}_"
-        f"{image_type}_{uuid4().hex}.{extension}"
-    )
+    filename = f"employer_{employer_id}_" f"{image_type}_{uuid4().hex}.{extension}"
 
     image_path = upload_folder / filename
 
@@ -572,15 +547,13 @@ def company_profile():
         # Keep existing images when the employer does not upload replacements.
         logo_url = (
             existing_profile["logo_url"]
-            if existing_profile is not None
-            and existing_profile["logo_url"]
+            if existing_profile is not None and existing_profile["logo_url"]
             else ""
         )
 
         banner_url = (
             existing_profile["banner_url"]
-            if existing_profile is not None
-            and existing_profile["banner_url"]
+            if existing_profile is not None and existing_profile["banner_url"]
             else ""
         )
 

@@ -10,9 +10,7 @@ def normalize_html(response) -> str:
     not affected by HTML formatting.
     """
 
-    return " ".join(
-        response.get_data(as_text=True).split()
-    )
+    return " ".join(response.get_data(as_text=True).split())
 
 
 def create_employer(
@@ -269,9 +267,7 @@ def test_employer_can_view_applications_for_own_job(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
@@ -294,19 +290,14 @@ def test_application_list_displays_empty_state(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
     page_text = normalize_html(response)
 
     assert "No applications yet" in page_text
-    assert (
-        "Candidates who apply for this job posting will appear here."
-        in page_text
-    )
+    assert "Candidates who apply for this job posting will appear here." in page_text
 
 
 def test_employer_cannot_view_another_employers_job_applications(
@@ -386,17 +377,13 @@ def test_application_list_orders_newest_first(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
     page_text = normalize_html(response)
 
-    assert page_text.index(
-        "second.candidate@example.com"
-    ) < page_text.index(
+    assert page_text.index("second.candidate@example.com") < page_text.index(
         "first.candidate@example.com"
     )
 
@@ -419,19 +406,14 @@ def test_application_list_displays_view_applicant_button(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
     page_text = normalize_html(response)
 
     assert "View Applicant" in page_text
-    assert (
-        f"/employer/applications/{application_id}"
-        in page_text
-    )
+    assert f"/employer/applications/{application_id}" in page_text
 
 
 def test_application_list_displays_resume_available(
@@ -453,9 +435,7 @@ def test_application_list_displays_resume_available(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
@@ -488,9 +468,7 @@ def test_application_list_displays_resume_unavailable(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
@@ -518,9 +496,7 @@ def test_application_list_displays_pending_status(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
     assert "Pending" in normalize_html(response)
@@ -545,9 +521,7 @@ def test_application_list_displays_reviewing_status(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
     assert "Reviewing" in normalize_html(response)
@@ -572,9 +546,7 @@ def test_application_list_displays_shortlisted_status(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
     assert "Shortlisted" in normalize_html(response)
@@ -599,9 +571,7 @@ def test_application_list_displays_accepted_status(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
     assert "Accepted" in normalize_html(response)
@@ -626,9 +596,7 @@ def test_application_list_displays_rejected_status(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
     assert "Rejected" in normalize_html(response)
@@ -670,9 +638,7 @@ def test_application_list_displays_multiple_candidates(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/jobs/{job_id}/applications"
-    )
+    response = client.get(f"/employer/jobs/{job_id}/applications")
 
     assert response.status_code == 200
 
@@ -732,9 +698,7 @@ def test_employer_can_view_applicant_details(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -770,9 +734,7 @@ def test_application_details_displays_profile_information(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -807,9 +769,7 @@ def test_application_details_displays_contact_information(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -829,9 +789,7 @@ def test_application_details_displays_cover_letter(
     seeker_id = create_seeker(app)
     job_id = create_job(app, employer_id)
 
-    cover_letter = (
-        "I have three years of software development experience."
-    )
+    cover_letter = "I have three years of software development experience."
 
     application_id = create_application(
         app,
@@ -842,9 +800,7 @@ def test_application_details_displays_cover_letter(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
     assert cover_letter in normalize_html(response)
@@ -869,9 +825,7 @@ def test_application_details_displays_no_cover_letter_message(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -904,9 +858,7 @@ def test_application_details_uses_application_resume_first(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -941,9 +893,7 @@ def test_application_details_uses_profile_resume_as_fallback(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -977,9 +927,7 @@ def test_application_details_displays_no_resume_message(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -1017,9 +965,7 @@ def test_application_details_handles_missing_profile_fields(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
@@ -1027,10 +973,7 @@ def test_application_details_handles_missing_profile_fields(
 
     assert "Job Seeker" in page_text
     assert "Not provided" in page_text
-    assert (
-        "The applicant has not added an introduction."
-        in page_text
-    )
+    assert "The applicant has not added an introduction." in page_text
 
 
 def test_employer_cannot_view_another_employers_applicant_details(
@@ -1071,9 +1014,7 @@ def test_employer_cannot_view_another_employers_applicant_details(
         email="first@example.com",
     )
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 404
 
@@ -1088,9 +1029,7 @@ def test_employer_cannot_view_nonexistent_application(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        "/employer/applications/999999"
-    )
+    response = client.get("/employer/applications/999999")
 
     assert response.status_code == 404
 
@@ -1119,9 +1058,7 @@ def test_application_details_displays_job_information(
 
     login_employer(client, employer_id)
 
-    response = client.get(
-        f"/employer/applications/{application_id}"
-    )
+    response = client.get(f"/employer/applications/{application_id}")
 
     assert response.status_code == 200
 
