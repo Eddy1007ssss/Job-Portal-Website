@@ -94,6 +94,11 @@ def settings():
     return "<h1>Settings</h1>"
 
 
+@app.route("/register")
+def register():
+    return "<h1>Register</h1>"
+
+
 if __name__ == "__main__":
     app.run(
         debug=True,

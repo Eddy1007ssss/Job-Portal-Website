@@ -1,0 +1,130 @@
+.seeker-login-page {
+    min-height: calc(100vh - var(--header-height));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    background:
+        radial-gradient(
+            circle at 15% 15%,
+            rgba(37, 99, 235, 0.13),
+            transparent 32%
+        ),
+        var(--page-background);
+}
+
+.seeker-login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 38px;
+    background-color: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+}
+
+.seeker-login-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    color: var(--white);
+    background-color: var(--primary-color);
+    border-radius: 14px;
+    font-size: 20px;
+}
+
+.seeker-login-heading {
+    margin-bottom: 26px;
+}
+
+.seeker-login-heading span {
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+.seeker-login-heading h1 {
+    margin: 8px 0;
+    color: var(--text-dark);
+    font-size: 30px;
+}
+
+.seeker-login-heading p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.seeker-login-messages {
+    margin-bottom: 18px;
+}
+
+.seeker-login-message {
+    padding: 11px 13px;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.seeker-login-message.error {
+    color: #b91c1c;
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.seeker-login-group {
+    margin-bottom: 18px;
+}
+
+.seeker-login-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-normal);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.seeker-login-group input {
+    width: 100%;
+    min-height: 47px;
+    padding: 11px 13px;
+    color: var(--text-dark);
+    background-color: var(--white);
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    outline: none;
+}
+
+.seeker-login-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.seeker-login-submit {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 4px;
+    color: var(--white);
+    background-color: var(--primary-color);
+    border: 0;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seeker-login-submit:hover {
+    background-color: var(--primary-dark);
+}
+
+@media (max-width: 520px) {
+    .seeker-login-card {
+        padding: 30px 22px;
+    }
+}

@@ -118,8 +118,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .pop()
             ?.toLowerCase();
 
-        if (!["pdf", "doc", "docx"].includes(extension)) {
-            alert("Please select a PDF, DOC or DOCX file.");
+        if (
+            extension !== "pdf" ||
+            file.type !== "application/pdf"
+        ) {
+            alert("Please select a valid PDF file.");
             resumeInput.value = "";
             selectedResumeName.textContent = "";
             return;

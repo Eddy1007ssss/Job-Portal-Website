@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registration Successful | JobPortal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/job_seeker_register.css') }}">
+</head>
+<body class="status-page">
+    <main class="status-card">
+        <p class="brand">Job<span>Portal</span></p>
+        <p class="status-kicker">Account created</p>
+        <h1>Welcome to JobPortal</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="status">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <p>You can now log in, complete your profile and start applying for jobs.</p>
+        <a class="submit-button button-link" href="{{ url_for('login') }}">Continue to login</a>
+    </main>
+</body>
+</html>

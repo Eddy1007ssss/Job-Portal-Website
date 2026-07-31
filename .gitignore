@@ -17,4 +17,4 @@ venv/
 *.sqlite
 *.sqlite3
 
-src/static/uploads/company_images/
+src/static/uploads/

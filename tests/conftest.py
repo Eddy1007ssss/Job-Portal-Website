@@ -12,6 +12,9 @@ def app(tmp_path):
 
     previous_database_path = os.environ.get("DATABASE_PATH")
 
+    # Remember Flask's real static folder.
+    original_static_folder = flask_app.static_folder
+
     flask_app.config.update(
         TESTING=True,
         SECRET_KEY="pytest-secret-key",
@@ -21,6 +24,9 @@ def app(tmp_path):
     init_database(flask_app)
 
     yield flask_app
+
+    # Restore the static folder after every test.
+    flask_app.static_folder = original_static_folder
 
     if previous_database_path is None:
         os.environ.pop(

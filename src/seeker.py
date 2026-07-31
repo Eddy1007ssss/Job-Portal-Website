@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
@@ -15,19 +16,62 @@ from flask import (
     session,
     url_for,
 )
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from src.database import get_db_connection
 
 seeker_bp = Blueprint("seeker", __name__)
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
-RESUME_EXTENSIONS = {"pdf", "doc", "docx"}
+RESUME_EXTENSIONS = {"pdf"}
 CERTIFICATE_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
+EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+PHONE_PATTERN = re.compile(r"^[0-9+\-\s]{8,15}$")
+
+
+def _clear_seeker_session() -> None:
+    session.pop("seeker_id", None)
+    session.pop("seeker_name", None)
+    session.pop("seeker_email", None)
+    session.pop("seeker_authenticated", None)
+
+
+@seeker_bp.before_request
+def require_seeker_login():
+    """Protect every seeker route except registration, login and logout."""
+
+    public_endpoints = {
+        "seeker.register",
+        "seeker.login",
+        "seeker.logout",
+    }
+
+    if request.endpoint in public_endpoints:
+        return None
+
+    if (
+        session.get("seeker_id") is None
+        or session.get("seeker_authenticated") is not True
+    ):
+        _clear_seeker_session()
+        flash("Please log in as a job seeker first.", "error")
+        return redirect(url_for("seeker.login"))
+
+    return None
 
 
 def _allowed(filename: str, extensions: set[str]) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in extensions
+
+
+def _is_pdf(file) -> bool:
+    """Confirm that an uploaded file has a real PDF signature."""
+
+    original_position = file.stream.tell()
+    signature = file.stream.read(5)
+    file.stream.seek(original_position)
+
+    return signature == b"%PDF-"
 
 
 def _folder(name: str) -> Path:
@@ -222,9 +266,10 @@ def ensure_demo_seeker() -> int:
 
 def current_seeker_id() -> int:
     seeker_id = session.get("seeker_id")
+
     if seeker_id is None:
-        seeker_id = ensure_demo_seeker()
-        session["seeker_id"] = seeker_id
+        raise RuntimeError("A seeker login is required.")
+
     return int(seeker_id)
 
 
@@ -268,6 +313,165 @@ def load_profile(seeker_id: int) -> dict | None:
     ).fetchall()
     db.close()
     return profile
+
+
+@seeker_bp.route(
+    "/seeker/register",
+    methods=["GET", "POST"],
+)
+def register():
+    """Register and sign in a new job seeker."""
+
+    if session.get("seeker_id") is not None:
+        return redirect(url_for("jobs.list_jobs"))
+
+    if request.method == "GET":
+        return render_template("seeker_register.html")
+
+    full_name = request.form.get("full_name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    contact_number = request.form.get("contact_number", "").strip()
+    password = request.form.get("password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    errors = []
+
+    if len(full_name) < 2:
+        errors.append("Full name must contain at least 2 characters.")
+
+    if not EMAIL_PATTERN.fullmatch(email):
+        errors.append("Please enter a valid email address.")
+
+    if not PHONE_PATTERN.fullmatch(contact_number):
+        errors.append(
+            "Phone number must contain between 8 and 15 characters "
+            "and may include numbers, spaces, + or -."
+        )
+
+    if len(password) < 8:
+        errors.append("Password must contain at least 8 characters.")
+
+    if password != confirm_password:
+        errors.append("Passwords do not match.")
+
+    db = get_db_connection()
+    existing_seeker = db.execute(
+        "SELECT seeker_id FROM seekers WHERE email = ?",
+        (email,),
+    ).fetchone()
+
+    if existing_seeker is not None:
+        errors.append("This email address is already registered.")
+
+    if errors:
+        db.close()
+
+        for error in errors:
+            flash(error, "error")
+
+        return render_template(
+            "seeker_register.html",
+            full_name=full_name,
+            email=email,
+            contact_number=contact_number,
+        )
+
+    try:
+        cursor = db.execute(
+            """
+            INSERT INTO seekers (
+                full_name,
+                email,
+                contact_number,
+                password_hash
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                full_name,
+                email,
+                contact_number,
+                generate_password_hash(password),
+            ),
+        )
+        seeker_id = int(cursor.lastrowid)
+        db.execute(
+            "INSERT INTO seeker_profiles (seeker_id) VALUES (?)",
+            (seeker_id,),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        db.rollback()
+        db.close()
+        flash("This email address is already registered.", "error")
+        return render_template(
+            "seeker_register.html",
+            full_name=full_name,
+            email=email,
+            contact_number=contact_number,
+        )
+
+    db.close()
+
+    session.clear()
+    session["seeker_id"] = seeker_id
+    session["seeker_name"] = full_name
+    session["seeker_email"] = email
+    session["seeker_authenticated"] = True
+
+    flash("Your job seeker account was created successfully.", "success")
+    return redirect(url_for("jobs.list_jobs"))
+
+
+@seeker_bp.route(
+    "/seeker/login",
+    methods=["GET", "POST"],
+)
+def login():
+    """Log in a registered job seeker."""
+
+    if session.get("seeker_id") is not None:
+        return redirect(url_for("jobs.list_jobs"))
+
+    if request.method == "GET":
+        return render_template("seeker_login.html")
+
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+
+    db = get_db_connection()
+    seeker = db.execute(
+        """
+        SELECT
+            seeker_id,
+            full_name,
+            email,
+            password_hash
+        FROM seekers
+        WHERE email = ?
+        """,
+        (email,),
+    ).fetchone()
+    db.close()
+
+    if seeker is None or not check_password_hash(
+        seeker["password_hash"],
+        password,
+    ):
+        flash("Incorrect email or password.", "error")
+        return render_template(
+            "seeker_login.html",
+            email=email,
+        )
+
+    session.clear()
+    session["seeker_id"] = int(seeker["seeker_id"])
+    session["seeker_name"] = seeker["full_name"]
+    session["seeker_email"] = seeker["email"]
+    session["seeker_authenticated"] = True
+
+    flash("Welcome back! You can now find and apply for jobs.", "success")
+    return redirect(url_for("jobs.list_jobs"))
 
 
 @seeker_bp.route("/seeker-profile")
@@ -375,8 +579,13 @@ def upload_resume():
     seeker_id = current_seeker_id()
     file = request.files.get("resume")
 
-    if not file or not file.filename or not _allowed(file.filename, RESUME_EXTENSIONS):
-        flash("Select a PDF, DOC or DOCX resume.", "error")
+    if (
+        not file
+        or not file.filename
+        or not _allowed(file.filename, RESUME_EXTENSIONS)
+        or not _is_pdf(file)
+    ):
+        flash("Please select a valid PDF resume.", "error")
         return redirect(url_for("seeker.profile"))
 
     extension = secure_filename(file.filename).rsplit(".", 1)[1].lower()
@@ -748,6 +957,6 @@ def delete_language(item_id: int):
 
 @seeker_bp.route("/seeker/logout")
 def logout():
-    session.pop("seeker_id", None)
+    _clear_seeker_session()
     flash("You have logged out successfully.", "success")
     return redirect(url_for("home"))

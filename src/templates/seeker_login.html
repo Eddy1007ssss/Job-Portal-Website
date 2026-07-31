@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Job Seeker Login | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/seeker_login.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="seeker-login-page">
+    <div class="seeker-login-card">
+        <div class="seeker-login-icon" aria-hidden="true">
+            <i class="fa-regular fa-user"></i>
+        </div>
+
+        <div class="seeker-login-heading">
+            <span>FOR JOB SEEKERS</span>
+            <h1>Job Seeker Login</h1>
+            <p>
+                Log in to search available jobs and manage
+                your applications.
+            </p>
+            <p class="seeker-auth-switch">
+                Do not have an account?
+                <a href="{{ url_for('seeker.register') }}">
+                    Register now
+                </a>
+            </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="seeker-login-messages" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="seeker-login-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form
+            method="POST"
+            action="{{ url_for('seeker.login') }}"
+            class="seeker-login-form"
+        >
+            <div class="seeker-login-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ email or '' }}"
+                    placeholder="example@email.com"
+                    autocomplete="email"
+                    required
+                >
+            </div>
+
+            <div class="seeker-login-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="seeker-login-submit">
+                Login
+            </button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -5,7 +5,7 @@
 .auth-page {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: calc(100vh - 72px);
+    min-height: 100vh;
     background: #ffffff;
 }
 
@@ -105,6 +105,44 @@
 
 .login-container {
     max-width: 430px;
+}
+
+.back-to-seeker-link {
+    min-height: 38px;
+    margin-bottom: 26px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+        color 0.2s,
+        background 0.2s,
+        border-color 0.2s,
+        transform 0.2s;
+}
+
+.back-to-seeker-link span {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.back-to-seeker-link:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    transform: translateX(-2px);
+}
+
+.back-to-seeker-link:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+    outline-offset: 3px;
 }
 
 .auth-heading {

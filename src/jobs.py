@@ -721,8 +721,10 @@ def get_current_seeker_id() -> int | None:
     Return the logged-in seeker ID from the session.
     """
 
-    seeker_id = session.get("seeker_id")
+    if session.get("seeker_authenticated") is not True:
+        return None
 
+    seeker_id = session.get("seeker_id")
     if seeker_id is None:
         return None
 
@@ -737,6 +739,13 @@ def list_jobs():
     """
     Display searchable and filterable job listings.
     """
+
+    if get_current_seeker_id() is None:
+        flash(
+            "Please log in as a job seeker before searching for jobs.",
+            "error",
+        )
+        return redirect(url_for("seeker.login"))
 
     initialise_job_tables()
     seed_demo_jobs()
@@ -870,6 +879,15 @@ def post_job():
     """
     Allow an employer to create or save a job posting.
     """
+
+    employer_id = session.get("employer_id")
+
+    if employer_id is None:
+        flash(
+            "Please log in as an employer before posting a job.",
+            "error",
+        )
+        return redirect(url_for("employer.login"))
 
     initialise_job_tables()
 
@@ -1027,12 +1045,6 @@ def post_job():
             form_data=request.form,
         )
 
-    employer_id = session.get("employer_id")
-
-    # Temporary value for testing before employer login is completed.
-    if employer_id is None:
-        employer_id = 1
-
     status = "Draft" if action == "draft" else "Open"
 
     connection = get_db_connection()
@@ -1108,26 +1120,20 @@ def post_job():
             "success",
         )
 
-    return redirect(url_for("jobs.list_jobs"))
+    return redirect(url_for("jobs.employer_jobs"))
 
 
 @jobs_bp.route("/employer/jobs")
 def employer_jobs():
-    """
-
-    Show jobs posted by the currently logged-in employer.
-
-    """
+    """Show jobs posted by the currently logged-in employer."""
 
     employer_id = session.get("employer_id")
 
     if employer_id is None:
-
         flash(
             "Please log in as an employer.",
             "error",
         )
-
         return redirect(url_for("employer.login"))
 
     initialise_job_tables()
@@ -1136,43 +1142,153 @@ def employer_jobs():
 
     jobs = connection.execute(
         """
-
         SELECT
-
-            job_id,
-
-            title,
-
-            location,
-
-            employment_type,
-
-            salary_min,
-
-            salary_max,
-
-            status,
-
-            created_at,
-
-            application_deadline
-
+            jobs.job_id,
+            jobs.title,
+            jobs.location,
+            jobs.employment_type,
+            jobs.salary_min,
+            jobs.salary_max,
+            jobs.status,
+            jobs.created_at,
+            jobs.application_deadline,
+            (
+                SELECT COUNT(*)
+                FROM applications
+                WHERE applications.job_id = jobs.job_id
+            ) AS application_count
         FROM jobs
-
-        WHERE employer_id = ?
-
-        ORDER BY created_at DESC
-
+        WHERE jobs.employer_id = ?
+        ORDER BY jobs.created_at DESC
         """,
         (employer_id,),
     ).fetchall()
 
     connection.close()
 
+    summary = {
+        "total": len(jobs),
+        "open": sum(job["status"] == "Open" for job in jobs),
+        "closed": sum(job["status"] == "Closed" for job in jobs),
+        "draft": sum(job["status"] == "Draft" for job in jobs),
+    }
+
     return render_template(
         "employer_jobs.html",
         jobs=jobs,
+        summary=summary,
     )
+
+
+@jobs_bp.route(
+    "/employer/jobs/<int:job_id>/status",
+    methods=["POST"],
+)
+def update_job_status(job_id: int):
+    """Close or reopen a job owned by the logged-in employer."""
+
+    employer_id = session.get("employer_id")
+
+    if employer_id is None:
+        flash(
+            "Please log in as an employer.",
+            "error",
+        )
+        return redirect(url_for("employer.login"))
+
+    target_status = request.form.get("status", "").strip()
+
+    if target_status not in {"Open", "Closed"}:
+        flash(
+            "The requested job status is invalid.",
+            "error",
+        )
+        return redirect(url_for("jobs.employer_jobs"))
+
+    initialise_job_tables()
+    connection = get_db_connection()
+
+    cursor = connection.execute(
+        """
+        UPDATE jobs
+        SET
+            status = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE job_id = ?
+          AND employer_id = ?
+        """,
+        (
+            target_status,
+            job_id,
+            employer_id,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+    if cursor.rowcount == 0:
+        flash(
+            "The selected job posting was not found.",
+            "error",
+        )
+        return redirect(url_for("jobs.employer_jobs"))
+
+    action_name = "reopened" if target_status == "Open" else "closed"
+    flash(
+        f"The job posting has been {action_name}.",
+        "success",
+    )
+
+    return redirect(url_for("jobs.employer_jobs"))
+
+
+@jobs_bp.route(
+    "/employer/jobs/<int:job_id>/delete",
+    methods=["POST"],
+)
+def delete_job(job_id: int):
+    """Delete a job owned by the logged-in employer."""
+
+    employer_id = session.get("employer_id")
+
+    if employer_id is None:
+        flash(
+            "Please log in as an employer.",
+            "error",
+        )
+        return redirect(url_for("employer.login"))
+
+    initialise_job_tables()
+    connection = get_db_connection()
+
+    cursor = connection.execute(
+        """
+        DELETE FROM jobs
+        WHERE job_id = ?
+          AND employer_id = ?
+        """,
+        (
+            job_id,
+            employer_id,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+    if cursor.rowcount == 0:
+        flash(
+            "The selected job posting was not found.",
+            "error",
+        )
+    else:
+        flash(
+            "The job posting was deleted successfully.",
+            "success",
+        )
+
+    return redirect(url_for("jobs.employer_jobs"))
 
 
 @jobs_bp.route(
@@ -1417,6 +1533,13 @@ def edit_job(job_id: int):
 
 @jobs_bp.route("/jobs/<int:job_id>")
 def job_details(job_id: int):
+    if get_current_seeker_id() is None:
+        flash(
+            "Please log in as a job seeker before viewing job details.",
+            "error",
+        )
+        return redirect(url_for("seeker.login"))
+
     connection = get_db_connection()
     seeker_id = session.get("seeker_id")
 
