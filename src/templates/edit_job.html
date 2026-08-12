@@ -377,7 +377,11 @@
                         type="number"
                         id="vacancies"
                         name="vacancies"
-                        value="1"
+                        value="{{
+                            form_data.get('vacancies')
+                            if form_data
+                            else job['vacancies']
+                        }}"
                         min="1"
                         max="100"
                         required

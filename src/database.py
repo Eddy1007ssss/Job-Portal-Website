@@ -215,6 +215,7 @@ def init_database(app) -> None:
                 employment_type TEXT NOT NULL,
                 salary_min REAL,
                 salary_max REAL,
+                vacancies INTEGER NOT NULL DEFAULT 1,
                 category TEXT,
                 experience_level TEXT,
                 work_mode TEXT,

@@ -6,6 +6,7 @@ from src.applications import applications_bp
 from src.database import init_database
 from src.employer import employer_bp
 from src.employer_applications import employer_applications_bp
+from src.employer_dashboard import employer_dashboard_bp
 from src.jobs import jobs_bp
 from src.seeker import seeker_bp
 
@@ -35,6 +36,7 @@ def create_app() -> Flask:
     app.register_blueprint(jobs_bp)
     app.register_blueprint(applications_bp)
     app.register_blueprint(employer_applications_bp)
+    app.register_blueprint(employer_dashboard_bp)
 
     init_database(app)
 

@@ -9,6 +9,22 @@
                 Employer Menu
             </span>
 
+            <!-- Dashboard -->
+             <a
+                href="{{ url_for('employer_dashboard.dashboard') }}"
+                class="employer-sidebar-link {{
+                    'active'
+                    if request.endpoint == 'employer_dashboard.dashboard'
+                    else ''
+                }}"
+            >
+                <span class="sidebar-link-icon">
+                    <i class="fa-solid fa-table-columns"></i>
+                </span>
+
+                <span>Dashboard</span>
+            </a>
+
 
             <!-- Company profile -->
             <a
