@@ -21,12 +21,18 @@ employer_applications_bp = Blueprint(
     __name__,
 )
 
+
 APPLICATION_STATUSES = (
     "Pending",
     "Shortlisted",
     "Rejected",
     "Accepted",
 )
+
+
+# =========================================================
+# Employer authentication
+# =========================================================
 
 
 def employer_login_required(view_function: Callable) -> Callable:
@@ -39,6 +45,7 @@ def employer_login_required(view_function: Callable) -> Callable:
                 "Please log in as an employer first.",
                 "error",
             )
+
             return redirect(url_for("employer.login"))
 
         return view_function(*args, **kwargs)
@@ -46,11 +53,18 @@ def employer_login_required(view_function: Callable) -> Callable:
     return wrapped_view
 
 
+# =========================================================
+# Job ownership helper
+# =========================================================
+
+
 def get_owned_job(
     employer_id: int,
     job_id: int,
 ):
-    """Return a job only if it belongs to the logged-in employer."""
+    """
+    Return a job only if it belongs to the logged-in employer.
+    """
 
     connection = get_db_connection()
 
@@ -63,6 +77,7 @@ def get_owned_job(
             location,
             employment_type,
             status,
+            vacancies,
             created_at,
             application_deadline
         FROM jobs
@@ -80,11 +95,17 @@ def get_owned_job(
     return job
 
 
+# =========================================================
+# Employer application list
+# =========================================================
+
+
 @employer_applications_bp.route("/employer/jobs/<int:job_id>/applications")
 @employer_login_required
 def application_list(job_id: int):
     """
-    Display all applications submitted for one employer-owned job.
+    Display all applications submitted for one
+    employer-owned job.
     """
 
     employer_id = int(session["employer_id"])
@@ -99,6 +120,7 @@ def application_list(job_id: int):
             "The selected job posting was not found.",
             "error",
         )
+
         return redirect(url_for("jobs.employer_jobs"))
 
     connection = get_db_connection()
@@ -119,7 +141,8 @@ def application_list(job_id: int):
             seekers.contact_number AS applicant_contact,
 
             seeker_profiles.job_title,
-            seeker_profiles.location AS applicant_location,
+            seeker_profiles.location
+                AS applicant_location,
             seeker_profiles.profile_image,
 
             COALESCE(
@@ -130,10 +153,12 @@ def application_list(job_id: int):
         FROM applications
 
         JOIN seekers
-            ON seekers.seeker_id = applications.seeker_id
+            ON seekers.seeker_id =
+               applications.seeker_id
 
         LEFT JOIN seeker_profiles
-            ON seeker_profiles.seeker_id = seekers.seeker_id
+            ON seeker_profiles.seeker_id =
+               seekers.seeker_id
 
         WHERE applications.job_id = ?
 
@@ -173,24 +198,57 @@ def application_list(job_id: int):
     )
 
 
-@employer_applications_bp.post("/employer/applications/<int:application_id>/status")
+# =========================================================
+# Update application status
+# =========================================================
+
+
+@employer_applications_bp.post("/employer/applications/" "<int:application_id>/status")
 @employer_login_required
-def update_application_status(application_id: int):
-    """Update an application belonging to the logged-in employer."""
+def update_application_status(
+    application_id: int,
+):
+    """
+    Update an employer-owned application status.
+
+    When changing an application to Accepted:
+    1. Check the job vacancy limit.
+    2. Prevent accepting more applicants than vacancies.
+    3. Automatically close the job when all vacancies
+       have been filled.
+    """
 
     employer_id = int(session["employer_id"])
-    target_status = request.form.get("status", "").strip()
+
+    target_status = request.form.get(
+        "status",
+        "",
+    ).strip()
 
     connection = get_db_connection()
+
+    # -----------------------------------------------------
+    # Retrieve the application and associated job
+    # -----------------------------------------------------
 
     application = connection.execute(
         """
         SELECT
             applications.application_id,
-            applications.job_id
+            applications.job_id,
+            applications.status
+                AS current_status,
+
+            jobs.title AS job_title,
+            jobs.status AS job_status,
+            jobs.vacancies
+
         FROM applications
+
         JOIN jobs
-            ON jobs.job_id = applications.job_id
+            ON jobs.job_id =
+               applications.job_id
+
         WHERE applications.application_id = ?
           AND jobs.employer_id = ?
         """,
@@ -200,24 +258,109 @@ def update_application_status(application_id: int):
         ),
     ).fetchone()
 
+    # -----------------------------------------------------
+    # Application ownership validation
+    # -----------------------------------------------------
+
     if application is None:
         connection.close()
         abort(404)
 
     job_id = int(application["job_id"])
 
+    # -----------------------------------------------------
+    # Application status validation
+    # -----------------------------------------------------
+
     if target_status not in APPLICATION_STATUSES:
         connection.close()
+
         flash(
             "Select a valid application status.",
             "error",
         )
+
         return redirect(
             url_for(
                 "employer_applications.application_list",
                 job_id=job_id,
             )
         )
+
+    current_status = str(application["current_status"] or "").strip()
+
+    job_status = str(application["job_status"] or "").strip()
+
+    try:
+        vacancies = int(application["vacancies"])
+    except TypeError, ValueError:
+        vacancies = 1
+
+    vacancies = max(vacancies, 1)
+
+    # -----------------------------------------------------
+    # Vacancy validation when accepting an applicant
+    # -----------------------------------------------------
+
+    if target_status == "Accepted" and current_status != "Accepted":
+        accepted_result = connection.execute(
+            """
+            SELECT
+                COUNT(*) AS total
+            FROM applications
+            WHERE job_id = ?
+              AND LOWER(status) = 'accepted'
+            """,
+            (job_id,),
+        ).fetchone()
+
+        accepted_count = int(accepted_result["total"])
+
+        # Job already has enough accepted applicants.
+        if accepted_count >= vacancies:
+            connection.close()
+
+            flash(
+                (
+                    "This job has already reached "
+                    "its vacancy limit. No more "
+                    "applicants can be accepted."
+                ),
+                "error",
+            )
+
+            return redirect(
+                url_for(
+                    "employer_applications." "application_list",
+                    job_id=job_id,
+                )
+            )
+
+        # Prevent accepting new applicants for a manually
+        # closed job unless it was closed because capacity
+        # was already full.
+        if job_status.lower() == "closed":
+            connection.close()
+
+            flash(
+                (
+                    "This job posting is already "
+                    "closed. Reopen the job before "
+                    "accepting another applicant."
+                ),
+                "error",
+            )
+
+            return redirect(
+                url_for(
+                    "employer_applications." "application_list",
+                    job_id=job_id,
+                )
+            )
+
+    # -----------------------------------------------------
+    # Update application status
+    # -----------------------------------------------------
 
     connection.execute(
         """
@@ -232,29 +375,98 @@ def update_application_status(application_id: int):
             application_id,
         ),
     )
+
+    # -----------------------------------------------------
+    # Check vacancy capacity after acceptance
+    # -----------------------------------------------------
+
+    if target_status == "Accepted":
+        accepted_result = connection.execute(
+            """
+            SELECT
+                COUNT(*) AS total
+            FROM applications
+            WHERE job_id = ?
+              AND LOWER(status) = 'accepted'
+            """,
+            (job_id,),
+        ).fetchone()
+
+        accepted_count = int(accepted_result["total"])
+
+        # -------------------------------------------------
+        # Automatically close job if capacity is full
+        # -------------------------------------------------
+
+        if accepted_count >= vacancies:
+            connection.execute(
+                """
+                UPDATE jobs
+                SET
+                    status = 'Closed',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE job_id = ?
+                  AND employer_id = ?
+                """,
+                (
+                    job_id,
+                    employer_id,
+                ),
+            )
+
+            connection.commit()
+            connection.close()
+
+            flash(
+                (
+                    "Application accepted successfully. "
+                    f"The job has filled all "
+                    f"{vacancies} "
+                    f"vacanc"
+                    f"{'y' if vacancies == 1 else 'ies'} "
+                    "and has been closed automatically."
+                ),
+                "success",
+            )
+
+            return redirect(
+                url_for(
+                    "employer_applications." "application_list",
+                    job_id=job_id,
+                )
+            )
+
     connection.commit()
     connection.close()
 
     flash(
-        f"Application status updated to {target_status}.",
+        ("Application status updated to " f"{target_status}."),
         "success",
     )
+
     return redirect(
         url_for(
-            "employer_applications.application_list",
+            "employer_applications." "application_list",
             job_id=job_id,
         )
     )
 
 
-@employer_applications_bp.route("/employer/applications/<int:application_id>")
+# =========================================================
+# Applicant details
+# =========================================================
+
+
+@employer_applications_bp.route("/employer/applications/" "<int:application_id>")
 @employer_login_required
-def application_details(application_id: int):
+def application_details(
+    application_id: int,
+):
     """
     Display one applicant's details.
 
-    The application is returned only if the associated job belongs
-    to the currently logged-in employer.
+    The application is returned only if the associated
+    job belongs to the currently logged-in employer.
     """
 
     employer_id = int(session["employer_id"])
@@ -275,13 +487,20 @@ def application_details(application_id: int):
 
             jobs.title AS job_title,
             jobs.location AS job_location,
+            jobs.status AS job_status,
+            jobs.vacancies,
 
-            seekers.full_name AS applicant_name,
-            seekers.email AS applicant_email,
-            seekers.contact_number AS applicant_contact,
+            seekers.full_name
+                AS applicant_name,
+            seekers.email
+                AS applicant_email,
+            seekers.contact_number
+                AS applicant_contact,
 
-            seeker_profiles.job_title AS applicant_job_title,
-            seeker_profiles.location AS applicant_location,
+            seeker_profiles.job_title
+                AS applicant_job_title,
+            seeker_profiles.location
+                AS applicant_location,
             seeker_profiles.about_me,
             seeker_profiles.profile_image,
 
@@ -293,13 +512,16 @@ def application_details(application_id: int):
         FROM applications
 
         JOIN jobs
-            ON jobs.job_id = applications.job_id
+            ON jobs.job_id =
+               applications.job_id
 
         JOIN seekers
-            ON seekers.seeker_id = applications.seeker_id
+            ON seekers.seeker_id =
+               applications.seeker_id
 
         LEFT JOIN seeker_profiles
-            ON seeker_profiles.seeker_id = seekers.seeker_id
+            ON seeker_profiles.seeker_id =
+               seekers.seeker_id
 
         WHERE applications.application_id = ?
           AND jobs.employer_id = ?
@@ -316,6 +538,10 @@ def application_details(application_id: int):
 
     seeker_id = int(application_row["seeker_id"])
 
+    # -----------------------------------------------------
+    # Applicant skills
+    # -----------------------------------------------------
+
     skills = connection.execute(
         """
         SELECT
@@ -327,6 +553,10 @@ def application_details(application_id: int):
         """,
         (seeker_id,),
     ).fetchall()
+
+    # -----------------------------------------------------
+    # Applicant education
+    # -----------------------------------------------------
 
     education_items = connection.execute(
         """
@@ -344,6 +574,10 @@ def application_details(application_id: int):
         (seeker_id,),
     ).fetchall()
 
+    # -----------------------------------------------------
+    # Applicant work experience
+    # -----------------------------------------------------
+
     experiences = connection.execute(
         """
         SELECT
@@ -360,6 +594,10 @@ def application_details(application_id: int):
         (seeker_id,),
     ).fetchall()
 
+    # -----------------------------------------------------
+    # Applicant languages
+    # -----------------------------------------------------
+
     languages = connection.execute(
         """
         SELECT
@@ -372,6 +610,10 @@ def application_details(application_id: int):
         """,
         (seeker_id,),
     ).fetchall()
+
+    # -----------------------------------------------------
+    # Applicant certificates
+    # -----------------------------------------------------
 
     certificates = connection.execute(
         """

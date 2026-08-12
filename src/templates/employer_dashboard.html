@@ -1,0 +1,495 @@
+{% extends "employer_base.html" %}
+
+{% block title %}
+Employer Dashboard | JobPortal
+{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/employer_dashboard.css'
+    ) }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="employer-dashboard-page">
+
+    <!-- =====================================================
+         DASHBOARD HEADING
+    ====================================================== -->
+    <div class="dashboard-heading">
+        <div>
+            <span class="section-label">
+                EMPLOYER DASHBOARD
+            </span>
+
+            <h1>
+                Welcome back,
+                {{ session.get(
+                    'employer_company_name',
+                    'Employer'
+                ) }}
+            </h1>
+
+            <p>
+                Monitor your job postings, vacancies and
+                recruitment applications.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('jobs.post_job') }}"
+            class="dashboard-primary-button"
+        >
+            <i class="fa-solid fa-plus"></i>
+            Post New Job
+        </a>
+    </div>
+
+
+    <!-- =====================================================
+         DASHBOARD STATISTICS
+    ====================================================== -->
+    <div class="dashboard-statistics">
+
+        <!-- Total Job Postings -->
+        <article class="dashboard-stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+
+            <div>
+                <span>Total Job Postings</span>
+
+                <strong>
+                    {{
+                        statistics[
+                            'total_job_postings'
+                        ]
+                    }}
+                </strong>
+            </div>
+
+        </article>
+
+
+        <!-- Active Vacancies -->
+        <article class="dashboard-stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div>
+                <span>Active Vacancies</span>
+
+                <strong>
+                    {{
+                        statistics[
+                            'active_vacancies'
+                        ]
+                    }}
+                </strong>
+            </div>
+
+        </article>
+
+
+        <!-- Closed Vacancies -->
+        <article class="dashboard-stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+
+            <div>
+                <span>Closed Vacancies</span>
+
+                <strong>
+                    {{
+                        statistics[
+                            'closed_vacancies'
+                        ]
+                    }}
+                </strong>
+            </div>
+
+        </article>
+
+
+        <!-- Applications Received -->
+        <article class="dashboard-stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div>
+                <span>Applications Received</span>
+
+                <strong>
+                    {{
+                        statistics[
+                            'total_applications'
+                        ]
+                    }}
+                </strong>
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <!-- =====================================================
+         RECENT JOB POSTINGS
+    ====================================================== -->
+    <div class="dashboard-content-card">
+
+        <div class="dashboard-card-heading">
+            <div>
+                <h2>Recent Job Postings</h2>
+
+                <p>
+                    View the latest vacancies posted by
+                    your company.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for(
+                    'jobs.employer_jobs'
+                ) }}"
+                class="dashboard-link"
+            >
+                View All Jobs
+            </a>
+        </div>
+
+
+        {% if recent_jobs %}
+
+            <div class="dashboard-table-wrapper">
+
+                <table class="dashboard-job-table">
+
+                    <thead>
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Applications</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for job in recent_jobs %}
+
+                            {% set status_class =
+                                job['status']
+                                | lower
+                                | replace(' ', '-')
+                            %}
+
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        {{ job['title'] }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {{
+                                        job['location']
+                                        or 'Not specified'
+                                    }}
+                                </td>
+
+                                <td>
+                                    {{
+                                        job[
+                                            'employment_type'
+                                        ]
+                                        or 'Not specified'
+                                    }}
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="dashboard-status
+                                            status-{{
+                                                status_class
+                                            }}"
+                                    >
+                                        {{
+                                            job['status']
+                                            | title
+                                        }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{
+                                        job[
+                                            'application_count'
+                                        ]
+                                    }}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{ url_for(
+                                            'employer_applications.application_list',
+                                            job_id=job[
+                                                'job_id'
+                                            ]
+                                        ) }}"
+                                        class="dashboard-view-button"
+                                    >
+                                        <i
+                                            class="fa-regular fa-eye"
+                                        ></i>
+
+                                        <span>
+                                            View Applications
+                                        </span>
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="dashboard-empty-state">
+
+                <i
+                    class="fa-regular fa-folder-open"
+                ></i>
+
+                <h3>No job postings yet</h3>
+
+                <p>
+                    Post your first vacancy to begin
+                    receiving applications.
+                </p>
+
+                <a
+                    href="{{ url_for(
+                        'jobs.post_job'
+                    ) }}"
+                    class="dashboard-primary-button"
+                >
+                    Post a Job
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         RECENT APPLICANTS
+    ====================================================== -->
+    <div
+        class="dashboard-content-card
+               recent-applicants-card"
+    >
+
+        <div class="dashboard-card-heading">
+            <div>
+
+                <h2>
+                    Recent Applicants
+                </h2>
+
+                <p>
+                    View the latest candidates who submitted
+                    applications to your job postings.
+                </p>
+
+            </div>
+        </div>
+
+
+        {% if recent_applicants %}
+
+            <div class="dashboard-table-wrapper">
+
+                <table class="dashboard-job-table">
+
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Applied For</th>
+                            <th>Application Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for applicant in recent_applicants %}
+
+                            {% set status_class =
+                                applicant['status']
+                                | lower
+                                | replace(' ', '-')
+                            %}
+
+                            <tr>
+
+                                <!-- Applicant -->
+                                <td>
+
+                                    <div
+                                        class="recent-applicant-info"
+                                    >
+
+                                        <strong>
+                                            {{
+                                                applicant[
+                                                    'applicant_name'
+                                                ]
+                                            }}
+                                        </strong>
+
+                                        <small>
+                                            {{
+                                                applicant[
+                                                    'applicant_email'
+                                                ]
+                                            }}
+                                        </small>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- Job Title -->
+                                <td>
+
+                                    {{
+                                        applicant[
+                                            'job_title'
+                                        ]
+                                    }}
+
+                                </td>
+
+
+                                <!-- Application Date -->
+                                <td>
+
+                                    {{
+                                        applicant[
+                                            'applied_at'
+                                        ]
+                                        or 'Not available'
+                                    }}
+
+                                </td>
+
+
+                                <!-- Status -->
+                                <td>
+
+                                    <span
+                                        class="dashboard-status
+                                            status-{{
+                                                status_class
+                                            }}"
+                                    >
+                                        {{
+                                            applicant[
+                                                'status'
+                                            ]
+                                            | title
+                                        }}
+                                    </span>
+
+                                </td>
+
+
+                                <!-- Action -->
+                                <td>
+
+                                    <a
+                                        href="{{ url_for(
+                                            'employer_applications.application_details',
+                                            application_id=applicant[
+                                                'application_id'
+                                            ]
+                                        ) }}"
+                                        class="dashboard-view-button"
+                                    >
+
+                                        <i
+                                            class="fa-regular fa-eye"
+                                        ></i>
+
+                                        <span>
+                                            View Applicant
+                                        </span>
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+            <div class="dashboard-empty-state">
+
+                <i
+                    class="fa-regular fa-user"
+                ></i>
+
+                <h3>
+                    No recent applicants
+                </h3>
+
+                <p>
+                    New applicants will appear here when
+                    job seekers submit applications to
+                    your vacancies.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+{% endblock %}

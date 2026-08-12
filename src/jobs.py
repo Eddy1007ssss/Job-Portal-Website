@@ -117,6 +117,8 @@ def initialise_job_tables() -> None:
 
             salary_max REAL,
 
+            vacancies INTEGER NOT NULL DEFAULT 1,
+
             status TEXT NOT NULL DEFAULT 'Open',
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -138,6 +140,7 @@ def initialise_job_tables() -> None:
         "company_logo": "TEXT",
         "is_featured": "INTEGER NOT NULL DEFAULT 0",
         "updated_at": "TIMESTAMP",
+        "vacancies": "INTEGER NOT NULL DEFAULT 1",
     }
 
     for column_name, column_definition in additional_columns.items():
@@ -891,12 +894,17 @@ def post_job():
             "Please log in as an employer before posting a job.",
             "error",
         )
+
         return redirect(url_for("employer.login"))
 
     initialise_job_tables()
 
     if request.method == "GET":
         return render_template("job_posting.html")
+
+    # =====================================================
+    # Read form data
+    # =====================================================
 
     title = request.form.get(
         "job_title",
@@ -938,6 +946,11 @@ def post_job():
         "",
     ).strip()
 
+    vacancies_value = request.form.get(
+        "vacancies",
+        "",
+    ).strip()
+
     description = request.form.get(
         "job_description",
         "",
@@ -968,6 +981,10 @@ def post_job():
         "publish",
     )
 
+    # =====================================================
+    # Required field validation
+    # =====================================================
+
     required_fields = {
         "Job title": title,
         "Job category": category,
@@ -975,6 +992,7 @@ def post_job():
         "Workplace type": work_mode,
         "Location": location,
         "Experience level": experience_level,
+        "Number of vacancies": vacancies_value,
     }
 
     for field_name, field_value in required_fields.items():
@@ -1023,10 +1041,15 @@ def post_job():
                 form_data=request.form,
             )
 
+    # =====================================================
+    # Salary validation
+    # =====================================================
+
     try:
         salary_min = float(salary_min_value) if salary_min_value else None
 
         salary_max = float(salary_max_value) if salary_max_value else None
+
     except ValueError:
         flash(
             "Salary must contain numbers only.",
@@ -1049,7 +1072,54 @@ def post_job():
             form_data=request.form,
         )
 
+    # =====================================================
+    # Vacancy validation
+    # =====================================================
+
+    try:
+        vacancies = int(vacancies_value)
+    except ValueError:
+        flash(
+            "Number of vacancies must be a valid whole number.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    if vacancies < 1:
+        flash(
+            "Number of vacancies must be at least 1.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    if vacancies > 100:
+        flash(
+            "Number of vacancies cannot exceed 100.",
+            "error",
+        )
+
+        return render_template(
+            "job_posting.html",
+            form_data=request.form,
+        )
+
+    # =====================================================
+    # Determine job status
+    # =====================================================
+
     status = "Draft" if action == "draft" else "Open"
+
+    # =====================================================
+    # Insert job
+    # =====================================================
 
     connection = get_db_connection()
 
@@ -1064,6 +1134,7 @@ def post_job():
                 employment_type,
                 salary_min,
                 salary_max,
+                vacancies,
                 status,
                 category,
                 experience_level,
@@ -1073,7 +1144,12 @@ def post_job():
                 benefits,
                 application_deadline
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?
+            )
             """,
             (
                 employer_id,
@@ -1083,6 +1159,7 @@ def post_job():
                 employment_type,
                 salary_min,
                 salary_max,
+                vacancies,
                 status,
                 category,
                 experience_level,
@@ -1100,8 +1177,11 @@ def post_job():
         connection.rollback()
 
         flash(
-            "Unable to create the job. Please make sure "
-            "the employer account exists.",
+            (
+                "Unable to create the job. "
+                "Please make sure the employer "
+                "account exists."
+            ),
             "error",
         )
 
@@ -1112,6 +1192,10 @@ def post_job():
 
     finally:
         connection.close()
+
+    # =====================================================
+    # Success message
+    # =====================================================
 
     if status == "Draft":
         flash(
@@ -1301,15 +1385,12 @@ def delete_job(job_id: int):
 )
 def edit_job(job_id: int):
     """
-
     Allow an employer to edit one of their existing jobs.
-
     """
 
     employer_id = session.get("employer_id")
 
     if employer_id is None:
-
         flash(
             "Please log in as an employer.",
             "error",
@@ -1321,17 +1402,16 @@ def edit_job(job_id: int):
 
     connection = get_db_connection()
 
+    # =====================================================
+    # Retrieve employer-owned job
+    # =====================================================
+
     job = connection.execute(
         """
-
         SELECT *
-
         FROM jobs
-
         WHERE job_id = ?
-
           AND employer_id = ?
-
         """,
         (
             job_id,
@@ -1340,7 +1420,6 @@ def edit_job(job_id: int):
     ).fetchone()
 
     if job is None:
-
         connection.close()
 
         flash(
@@ -1350,6 +1429,10 @@ def edit_job(job_id: int):
 
         return redirect(url_for("jobs.employer_jobs"))
 
+    # =====================================================
+    # Display edit page
+    # =====================================================
+
     if request.method == "GET":
         connection.close()
 
@@ -1358,6 +1441,10 @@ def edit_job(job_id: int):
             job=job,
             form_data=None,
         )
+
+    # =====================================================
+    # Read submitted values
+    # =====================================================
 
     title = request.form.get(
         "job_title",
@@ -1399,6 +1486,11 @@ def edit_job(job_id: int):
         "",
     ).strip()
 
+    vacancies_value = request.form.get(
+        "vacancies",
+        "",
+    ).strip()
+
     description = request.form.get(
         "job_description",
         "",
@@ -1424,6 +1516,10 @@ def edit_job(job_id: int):
         "",
     ).strip()
 
+    # =====================================================
+    # Required field validation
+    # =====================================================
+
     required_fields = {
         "Job title": title,
         "Job category": category,
@@ -1431,6 +1527,7 @@ def edit_job(job_id: int):
         "Workplace type": work_mode,
         "Location": location,
         "Experience level": experience_level,
+        "Number of vacancies": vacancies_value,
         "Job description": description,
         "Requirements": requirements,
         "Application deadline": application_deadline,
@@ -1450,6 +1547,10 @@ def edit_job(job_id: int):
                 job=job,
                 form_data=request.form,
             )
+
+    # =====================================================
+    # Salary validation
+    # =====================================================
 
     try:
         salary_min = float(salary_min_value) if salary_min_value else None
@@ -1484,6 +1585,95 @@ def edit_job(job_id: int):
             form_data=request.form,
         )
 
+    # =====================================================
+    # Vacancy number validation
+    # =====================================================
+
+    try:
+        vacancies = int(vacancies_value)
+    except ValueError:
+        connection.close()
+
+        flash(
+            "Number of vacancies must be a valid whole number.",
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    if vacancies < 1:
+        connection.close()
+
+        flash(
+            "Number of vacancies must be at least 1.",
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    if vacancies > 100:
+        connection.close()
+
+        flash(
+            "Number of vacancies cannot exceed 100.",
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    # =====================================================
+    # Accepted applicant validation
+    # =====================================================
+
+    accepted_result = connection.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM applications
+        WHERE job_id = ?
+          AND LOWER(status) = 'accepted'
+        """,
+        (job_id,),
+    ).fetchone()
+
+    accepted_count = int(accepted_result["total"])
+
+    # Do not allow employer to reduce vacancies below
+    # the number of applicants already accepted.
+    if vacancies < accepted_count:
+        connection.close()
+
+        flash(
+            (
+                "Number of vacancies cannot be lower "
+                f"than the {accepted_count} applicant"
+                f"{'' if accepted_count == 1 else 's'} "
+                "already accepted for this job."
+            ),
+            "error",
+        )
+
+        return render_template(
+            "edit_job.html",
+            job=job,
+            form_data=request.form,
+        )
+
+    # =====================================================
+    # Update job
+    # =====================================================
+
     connection.execute(
         """
         UPDATE jobs
@@ -1496,6 +1686,7 @@ def edit_job(job_id: int):
             salary_min = ?,
             salary_max = ?,
             experience_level = ?,
+            vacancies = ?,
             description = ?,
             requirements = ?,
             responsibilities = ?,
@@ -1514,6 +1705,7 @@ def edit_job(job_id: int):
             salary_min,
             salary_max,
             experience_level,
+            vacancies,
             description,
             requirements,
             responsibilities,
@@ -1523,6 +1715,26 @@ def edit_job(job_id: int):
             employer_id,
         ),
     )
+
+    # =====================================================
+    # Automatically close if already full
+    # =====================================================
+
+    if accepted_count > 0 and accepted_count >= vacancies:
+        connection.execute(
+            """
+            UPDATE jobs
+            SET
+                status = 'Closed',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE job_id = ?
+              AND employer_id = ?
+            """,
+            (
+                job_id,
+                employer_id,
+            ),
+        )
 
     connection.commit()
     connection.close()
