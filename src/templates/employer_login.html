@@ -90,6 +90,14 @@
                     >
                 </div>
 
+                <div class="employer-forgot-password-row">
+                    <a
+                        href="{{ url_for('password_reset.request_password_reset', account_type='employer') }}"
+                    >
+                        Forgot password?
+                    </a>
+                </div>
+
                 <button
                     type="submit"
                     class="primary-button"

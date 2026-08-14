@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Applications | JobPortal{% endblock %}
+{% block title %}Application History | JobPortal{% endblock %}
 
 {% block extra_css %}
 <link
@@ -11,7 +11,10 @@
 
 {% block content %}
 <div class="applications-page">
-    <section class="applications-container" aria-labelledby="applications-title">
+    <section
+        class="applications-container"
+        aria-labelledby="applications-title"
+    >
         <header class="applications-heading">
             <div class="applications-heading-copy">
                 <p class="page-label">
@@ -21,10 +24,11 @@
                     Job Seeker
                 </p>
 
-                <h1 id="applications-title">My Applications</h1>
+                <h1 id="applications-title">Application History</h1>
 
                 <p class="applications-description">
-                    View the jobs you have applied for and track their current status.
+                    Review every job you have applied for and track its
+                    current status.
                 </p>
             </div>
 
@@ -32,83 +36,237 @@
                 href="{{ url_for('jobs.list_jobs') }}"
                 class="find-jobs-button"
             >
-                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <i
+                    class="fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                ></i>
                 <span>Find More Jobs</span>
             </a>
         </header>
 
-        {% if applications %}
+        {% if total_application_count %}
+            <form
+                class="application-filters"
+                method="GET"
+                action="{{ url_for('applications.list_applications') }}"
+            >
+                <div class="filter-field">
+                    <label for="applicationStatusFilter">Status</label>
+                    <select
+                        id="applicationStatusFilter"
+                        name="status"
+                    >
+                        {% for value, label in status_options %}
+                            <option
+                                value="{{ value }}"
+                                {{
+                                    'selected'
+                                    if selected_status == value
+                                    else ''
+                                }}
+                            >
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-field">
+                    <label for="applicationSort">Sort by</label>
+                    <select id="applicationSort" name="sort">
+                        {% for value, label in sort_options %}
+                            <option
+                                value="{{ value }}"
+                                {{
+                                    'selected'
+                                    if selected_sort == value
+                                    else ''
+                                }}
+                            >
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button class="apply-filter-button" type="submit">
+                    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                    Apply
+                </button>
+
+                {% if filters_active %}
+                    <a
+                        class="clear-filter-link"
+                        href="{{
+                            url_for('applications.list_applications')
+                        }}"
+                    >
+                        Clear filters
+                    </a>
+                {% endif %}
+            </form>
+
             <div class="applications-summary" aria-live="polite">
                 <div>
                     <h2>Submitted applications</h2>
-                    <p>Your latest application appears first.</p>
+                    <p>
+                        {% if selected_sort == 'newest' %}
+                            Your latest application appears first.
+                        {% else %}
+                            Applications follow your selected sorting.
+                        {% endif %}
+                    </p>
                 </div>
 
                 <span class="applications-count">
-                    {{ applications|length }}
-                    {{ "application" if applications|length == 1 else "applications" }}
+                    {% if applications|length == total_application_count %}
+                        {{ total_application_count }}
+                    {% else %}
+                        {{ applications|length }} of
+                        {{ total_application_count }}
+                    {% endif %}
+                    {{
+                        "application"
+                        if total_application_count == 1
+                        else "applications"
+                    }}
                 </span>
             </div>
 
-            <div class="applications-list">
-                {% for application in applications %}
-                    <article class="application-card">
-                        <div class="application-main">
-                            <div class="application-icon" aria-hidden="true">
-                                <i class="fa-solid fa-briefcase"></i>
-                            </div>
-
-                            <div class="application-information">
-                                <a
-                                    href="{{ url_for(
-                                        'jobs.job_details',
-                                        job_id=application['job_id']
-                                    ) }}"
-                                    class="application-title"
+            {% if applications %}
+                <div class="applications-list">
+                    {% for application in applications %}
+                        <article class="application-card">
+                            <div class="application-main">
+                                <div
+                                    class="application-icon"
+                                    aria-hidden="true"
                                 >
-                                    {{ application["title"] }}
-                                </a>
+                                    <i class="fa-solid fa-briefcase"></i>
+                                </div>
 
-                                <p class="company-name">
-                                    {{ application["company_name"] }}
-                                </p>
+                                <div class="application-information">
+                                    <a
+                                        href="{{
+                                            url_for(
+                                                'jobs.job_details',
+                                                job_id=application['job_id']
+                                            )
+                                        }}"
+                                        class="application-title"
+                                    >
+                                        {{ application["title"] }}
+                                    </a>
 
-                                <div class="application-meta">
-                                    <span>
-                                        <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-                                        {{ application["location"] }}
-                                    </span>
+                                    <p class="company-name">
+                                        {{ application["company_name"] }}
+                                    </p>
 
-                                    <span>
-                                        <i class="fa-regular fa-clock" aria-hidden="true"></i>
-                                        {{ application["employment_type"] }}
-                                    </span>
+                                    <div class="application-meta">
+                                        <span>
+                                            <i
+                                                class="fa-solid fa-location-dot"
+                                                aria-hidden="true"
+                                            ></i>
+                                            {{ application["location"] }}
+                                        </span>
+
+                                        <span>
+                                            <i
+                                                class="fa-regular fa-clock"
+                                                aria-hidden="true"
+                                            ></i>
+                                            {{ application["employment_type"] }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="application-status-section">
-                            <span
-                                class="application-status status-{{
-                                    application['application_status']
-                                    | lower
-                                    | replace(' ', '-')
-                                }}"
-                            >
-                                <span class="status-dot" aria-hidden="true"></span>
-                                {{ application["application_status"] }}
-                            </span>
+                            <div class="application-status-section">
+                                <span
+                                    class="application-status status-{{
+                                        application['application_status']
+                                        | lower
+                                        | replace(' ', '-')
+                                    }}"
+                                >
+                                    <span
+                                        class="status-dot"
+                                        aria-hidden="true"
+                                    ></span>
+                                    {{ application["application_status"] }}
+                                </span>
 
-                            {% if application["applied_at"] %}
                                 <p>
-                                    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
-                                    Applied {{ application["applied_at"][:10] }}
+                                    <i
+                                        class="fa-regular fa-calendar"
+                                        aria-hidden="true"
+                                    ></i>
+                                    Applied
+                                    {{ application["application_date"] }}
                                 </p>
-                            {% endif %}
-                        </div>
-                    </article>
-                {% endfor %}
-            </div>
+
+                                {% if application[
+                                    "application_status"
+                                ] == "Pending" %}
+                                    <form
+                                        method="POST"
+                                        action="{{
+                                            url_for(
+                                                'applications.withdraw_job_application',
+                                                application_id=application[
+                                                    'application_id'
+                                                ]
+                                            )
+                                        }}"
+                                        class="withdraw-application-form"
+                                        data-job-title="{{
+                                            application['title'] | e
+                                        }}"
+                                    >
+                                        <button
+                                            class="withdraw-application-button"
+                                            type="submit"
+                                        >
+                                            <i
+                                                class="fa-solid fa-ban"
+                                                aria-hidden="true"
+                                            ></i>
+                                            Withdraw Application
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-applications filtered-empty-state">
+                    <div class="empty-icon" aria-hidden="true">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </div>
+
+                    <h2>No matching applications</h2>
+
+                    <p>
+                        No application matches the selected status. Clear the
+                        filters to view your full application history.
+                    </p>
+
+                    <a
+                        href="{{
+                            url_for('applications.list_applications')
+                        }}"
+                        class="find-jobs-button"
+                    >
+                        <i
+                            class="fa-solid fa-rotate-left"
+                            aria-hidden="true"
+                        ></i>
+                        <span>Clear Filters</span>
+                    </a>
+                </div>
+            {% endif %}
         {% else %}
             <div class="empty-applications">
                 <div class="empty-icon" aria-hidden="true">
@@ -118,19 +276,30 @@
                 <h2>No applications yet</h2>
 
                 <p>
-                    When you apply for a job, it will appear here so you can
-                    keep track of its status.
+                    When you apply for a job, it will appear here with the job
+                    title, company name, application date and current status.
                 </p>
 
                 <a
                     href="{{ url_for('jobs.list_jobs') }}"
                     class="find-jobs-button"
                 >
-                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <i
+                        class="fa-solid fa-magnifying-glass"
+                        aria-hidden="true"
+                    ></i>
                     <span>Browse Jobs</span>
                 </a>
             </div>
         {% endif %}
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script
+    src="{{
+        url_for('static', filename='js/application_history.js')
+    }}"
+></script>
 {% endblock %}

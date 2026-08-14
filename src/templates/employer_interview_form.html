@@ -1,0 +1,183 @@
+{% extends "employer_base.html" %}
+
+{% block title %}Manage Interview | Employer Portal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interviews.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="employer-interview-form-page">
+    <header class="employer-interview-heading form-heading">
+        <div>
+            <span class="employer-interview-label">INTERVIEW MANAGEMENT</span>
+            <h1>{{ "Reschedule Interview" if interview else "Schedule Interview" }}</h1>
+            <p>Create an invitation for the shortlisted applicant.</p>
+        </div>
+        <a href="{{ url_for('employer_applications.application_details', application_id=application.application_id) }}" class="interview-back-button">
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Applicant
+        </a>
+    </header>
+
+    <div class="interview-form-layout">
+        <aside class="interview-candidate-summary">
+            <span class="candidate-summary-avatar">
+                {{ application.applicant_name[:1] | upper }}
+            </span>
+            <span class="employer-interview-label">SHORTLISTED CANDIDATE</span>
+            <h2>{{ application.applicant_name }}</h2>
+            <p>{{ application.applicant_email }}</p>
+
+            <div class="candidate-job-panel">
+                <i class="fa-solid fa-briefcase"></i>
+                <div>
+                    <small>Position</small>
+                    <strong>{{ application.job_title }}</strong>
+                </div>
+            </div>
+            <div class="candidate-job-panel">
+                <i class="fa-solid fa-location-dot"></i>
+                <div>
+                    <small>Job Location</small>
+                    <strong>{{ application.job_location }}</strong>
+                </div>
+            </div>
+
+            {% if interview %}
+                <div class="current-interview-status">
+                    <span>Current Invitation</span>
+                    <strong class="interview-status status-{{ interview.status | lower }}">
+                        {{ interview.status }}
+                    </strong>
+                </div>
+            {% endif %}
+        </aside>
+
+        <main class="interview-form-card">
+            {% if can_schedule %}
+                <div class="interview-form-title">
+                    <span><i class="fa-regular fa-calendar-plus"></i></span>
+                    <div>
+                        <h2>Interview Details</h2>
+                        <p>All times are shown in Malaysia Time (MYT).</p>
+                    </div>
+                </div>
+
+                <form method="POST" id="interviewScheduleForm">
+                    <div class="interview-form-row">
+                        <div class="interview-form-field">
+                            <label for="scheduledDate">Interview Date</label>
+                            <input
+                                type="date"
+                                id="scheduledDate"
+                                name="scheduled_date"
+                                value="{{ form_data.scheduled_date }}"
+                                min="{{ minimum_date }}"
+                                max="{{ maximum_date }}"
+                                required
+                            >
+                        </div>
+                        <div class="interview-form-field">
+                            <label for="scheduledTime">Start Time</label>
+                            <input
+                                type="time"
+                                id="scheduledTime"
+                                name="scheduled_time"
+                                value="{{ form_data.scheduled_time }}"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="interview-form-row">
+                        <div class="interview-form-field">
+                            <label for="durationMinutes">Duration</label>
+                            <select id="durationMinutes" name="duration_minutes" required>
+                                {% for duration in [30, 45, 60, 90, 120] %}
+                                    <option value="{{ duration }}" {% if form_data.duration_minutes | int == duration %}selected{% endif %}>
+                                        {{ duration }} minutes
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="interview-form-field">
+                            <label for="interviewMode">Interview Mode</label>
+                            <select id="interviewMode" name="interview_mode" required>
+                                {% for mode in interview_modes %}
+                                    <option value="{{ mode }}" {% if form_data.interview_mode == mode %}selected{% endif %}>
+                                        {{ mode }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="interview-form-field">
+                        <label for="locationOrLink" id="locationOrLinkLabel">
+                            Meeting Link
+                        </label>
+                        <input
+                            type="text"
+                            id="locationOrLink"
+                            name="location_or_link"
+                            value="{{ form_data.location_or_link }}"
+                            placeholder="https://meet.example.com/interview"
+                            maxlength="500"
+                            required
+                        >
+                        <small id="locationOrLinkHelp">
+                            Enter a complete http or https meeting link.
+                        </small>
+                    </div>
+
+                    <div class="interview-form-field">
+                        <label for="interviewNotes">Instructions for Applicant</label>
+                        <textarea
+                            id="interviewNotes"
+                            name="notes"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="Add preparation notes, documents to bring or contact instructions."
+                        >{{ form_data.notes }}</textarea>
+                        <small>Optional · Maximum 1000 characters</small>
+                    </div>
+
+                    {% if interview %}
+                        <div class="reschedule-warning">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Rescheduling changes the invitation to Pending and
+                            asks the applicant to respond again.
+                        </div>
+                    {% endif %}
+
+                    <div class="interview-form-actions">
+                        <a href="{{ url_for('interviews.employer_interviews') }}">Cancel</a>
+                        <button type="submit">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            {{ "Send Updated Invitation" if interview else "Send Interview Invitation" }}
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="interview-requirement-state">
+                    <span><i class="fa-solid fa-user-check"></i></span>
+                    <h2>Shortlist this applicant first</h2>
+                    <p>
+                        The application status is currently
+                        <strong>{{ application.application_status }}</strong>.
+                        Change it to Shortlisted before scheduling an interview.
+                    </p>
+                    <a href="{{ url_for('employer_applications.application_list', job_id=application.job_id) }}">
+                        Update Application Status
+                    </a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/interviews.js') }}"></script>
+{% endblock %}

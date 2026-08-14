@@ -1,0 +1,219 @@
+{% extends "employer_base.html" %}
+
+{% block title %}Interviews | Employer Portal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interviews.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="employer-interviews-page">
+    <header class="employer-interview-heading">
+        <div>
+            <span class="employer-interview-label">INTERVIEW MANAGEMENT</span>
+            <h1>Scheduled Interviews</h1>
+            <p>Manage interview invitations and track applicant responses.</p>
+        </div>
+    </header>
+
+    <section class="employer-interview-stats">
+        <article>
+            <span><i class="fa-solid fa-calendar-days"></i></span>
+            <div><strong>{{ summary.total }}</strong><small>Total Interviews</small></div>
+        </article>
+        <article>
+            <span class="pending"><i class="fa-regular fa-clock"></i></span>
+            <div><strong>{{ summary.pending }}</strong><small>Awaiting Response</small></div>
+        </article>
+        <article>
+            <span class="accepted"><i class="fa-solid fa-circle-check"></i></span>
+            <div><strong>{{ summary.accepted }}</strong><small>Accepted</small></div>
+        </article>
+        <article>
+            <span class="completed"><i class="fa-solid fa-flag-checkered"></i></span>
+            <div><strong>{{ summary.completed }}</strong><small>Completed</small></div>
+        </article>
+    </section>
+
+    <nav class="interview-status-tabs" aria-label="Filter interviews">
+        <a href="{{ url_for('interviews.employer_interviews') }}" class="{{ 'active' if selected_status == 'All' else '' }}">
+            All
+        </a>
+        {% for status in status_options %}
+            <a
+                href="{{ url_for('interviews.employer_interviews', status=status) }}"
+                class="{{ 'active' if selected_status == status else '' }}"
+            >
+                {{ status }}
+            </a>
+        {% endfor %}
+    </nav>
+
+    {% if interviews %}
+        <div class="employer-interview-table-card">
+            <div class="employer-interview-table-scroll">
+                <table class="employer-interview-table">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Position</th>
+                            <th>Schedule</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                            <th class="interview-actions-heading">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for interview in interviews %}
+                            <tr>
+                                <td>
+                                    <div class="interview-applicant-cell">
+                                        <span>{{ interview.applicant_name[:1] | upper }}</span>
+                                        <div>
+                                            <strong>{{ interview.applicant_name }}</strong>
+                                            <small>{{ interview.applicant_email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong class="interview-job-title">{{ interview.job_title }}</strong>
+                                </td>
+                                <td>
+                                    <div class="interview-schedule-cell">
+                                        <strong>{{ interview.display_date }}</strong>
+                                        <small>{{ interview.display_time }} · {{ interview.duration_minutes }} min</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="interview-mode-badge">
+                                        <i class="fa-solid {{
+                                            'fa-video' if interview.interview_mode == 'Online'
+                                            else 'fa-phone' if interview.interview_mode == 'Phone'
+                                            else 'fa-location-dot'
+                                        }}"></i>
+                                        {{ interview.interview_mode }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="interview-status status-{{ interview.status | lower }}">
+                                        {{ interview.status }}
+                                    </span>
+                                    {% if interview.status == 'Declined' and interview.seeker_response_reason %}
+                                        <small class="interview-table-reason">
+                                            <strong>Reason:</strong>
+                                            {{ interview.seeker_response_reason }}
+                                        </small>
+                                    {% elif interview.status == 'Cancelled' and interview.cancellation_reason %}
+                                        <small class="interview-table-reason">
+                                            <strong>Cancellation:</strong>
+                                            {{ interview.cancellation_reason }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="employer-interview-actions">
+                                        <a
+                                            href="{{ url_for('interviews.manage_interview', application_id=interview.application_id) }}"
+                                            title="View or reschedule interview"
+                                        >
+                                            <i class="fa-solid fa-pen"></i>
+                                            Manage
+                                        </a>
+
+                                        {% if interview.status in ['Pending', 'Accepted'] %}
+                                            <button
+                                                type="button"
+                                                class="cancel-interview-action"
+                                                title="Cancel interview"
+                                                data-open-dialog="cancelInterview{{ interview.interview_id }}"
+                                                aria-haspopup="dialog"
+                                            >
+                                                <i class="fa-solid fa-ban"></i>
+                                            </button>
+
+                                            <dialog
+                                                id="cancelInterview{{ interview.interview_id }}"
+                                                class="interview-reason-dialog"
+                                            >
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for('interviews.cancel', interview_id=interview.interview_id) }}"
+                                                >
+                                                    <header>
+                                                        <span class="reason-dialog-icon cancel">
+                                                            <i class="fa-solid fa-calendar-xmark"></i>
+                                                        </span>
+                                                        <div>
+                                                            <h3>Cancel Interview?</h3>
+                                                            <p>
+                                                                Give {{ interview.applicant_name }} a clear reason
+                                                                for the cancellation.
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            class="reason-dialog-close"
+                                                            data-close-dialog
+                                                            aria-label="Close"
+                                                        >
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
+                                                    </header>
+                                                    <label for="cancelReason{{ interview.interview_id }}">
+                                                        Reason for cancelling
+                                                    </label>
+                                                    <textarea
+                                                        id="cancelReason{{ interview.interview_id }}"
+                                                        name="reason"
+                                                        rows="5"
+                                                        minlength="5"
+                                                        maxlength="500"
+                                                        placeholder="For example: The interviewer is unavailable at this time."
+                                                        required
+                                                    ></textarea>
+                                                    <small>Required · 5–500 characters</small>
+                                                    <footer>
+                                                        <button type="button" data-close-dialog>
+                                                            Keep Interview
+                                                        </button>
+                                                        <button type="submit" class="confirm-cancel-button">
+                                                            <i class="fa-solid fa-ban"></i>
+                                                            Cancel Interview
+                                                        </button>
+                                                    </footer>
+                                                </form>
+                                            </dialog>
+                                        {% endif %}
+
+                                        {% if interview.status == 'Accepted' and not interview.is_upcoming %}
+                                            <form method="POST" action="{{ url_for('interviews.complete', interview_id=interview.interview_id) }}">
+                                                <button type="submit" class="complete-interview-action" title="Mark completed">
+                                                    <i class="fa-solid fa-check-double"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <section class="employer-interview-empty">
+            <span><i class="fa-regular fa-calendar"></i></span>
+            <h2>No interviews found</h2>
+            <p>
+                Shortlist an applicant and schedule an interview from the
+                applicant details page.
+            </p>
+            <a href="{{ url_for('jobs.employer_jobs') }}">View Job Listings</a>
+        </section>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/interviews.js') }}"></script>
+{% endblock %}

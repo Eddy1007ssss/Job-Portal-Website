@@ -24,7 +24,7 @@
     {% endif %}
 {% endwith %}
 
-<div class="jobs-page">
+<div class="jobs-page jobs-main">
 
     <div class="breadcrumb">
         <a href="{{ url_for('home') }}">Home</a>
@@ -33,15 +33,28 @@
     </div>
 
     <section class="jobs-page-heading">
-        <div>
+        <div class="jobs-heading-copy">
             <p class="eyebrow">Career Opportunities</p>
             <h1>Find Your Dream Job</h1>
-            <p>Search and filter vacancies from trusted employers.</p>
+            <p>
+                Search by job title, company or skill and discover
+                opportunities that match you.
+            </p>
         </div>
 
-        <div class="result-summary">
-            <strong>{{ total }}</strong>
-            <span>jobs found</span>
+        <div
+            class="result-summary"
+            aria-label="{{ total_jobs }} open jobs found"
+        >
+            <span class="result-summary-icon">
+                <i class="fa-solid fa-briefcase"></i>
+            </span>
+            <div>
+                <strong>{{ total_jobs }}</strong>
+                <span>
+                    {{ "job" if total_jobs == 1 else "jobs" }} found
+                </span>
+            </div>
         </div>
     </section>
 
@@ -49,7 +62,10 @@
 
         <aside class="filter-panel card">
             <div class="filter-heading">
-                <h2>Filters</h2>
+                <h2>
+                    <i class="fa-solid fa-sliders"></i>
+                    Filters
+                </h2>
                 <a href="{{ url_for('jobs.list_jobs') }}">Clear All</a>
             </div>
 
@@ -69,7 +85,8 @@
                             name="keyword"
                             type="search"
                             value="{{ filters.keyword }}"
-                            placeholder="Job title, company..."
+                            placeholder="Job title, company or skill"
+                            autocomplete="off"
                         >
                     </div>
                 </div>
@@ -163,30 +180,49 @@
                 </fieldset>
 
                 <div class="filter-group">
+                    <label for="workMode">Workplace Type</label>
+
+                    <select id="workMode" name="work_mode">
+                        <option value="">All Workplace Types</option>
+
+                        {% for option in ["On-site", "Hybrid", "Remote"] %}
+                            <option
+                                value="{{ option }}"
+                                {% if filters.work_mode == option %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ option }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
                     <label>Annual Salary</label>
 
                     <div class="salary-grid">
                         <input
-                            name="min_salary"
+                            name="minimum_salary"
                             type="number"
                             min="0"
                             step="1000"
                             value="{{
-                                filters.min_salary
-                                if filters.min_salary is not none
+                                filters.minimum_salary
+                                if filters.minimum_salary is not none
                                 else ''
                             }}"
                             placeholder="Minimum"
                         >
 
                         <input
-                            name="max_salary"
+                            name="maximum_salary"
                             type="number"
                             min="0"
                             step="1000"
                             value="{{
-                                filters.max_salary
-                                if filters.max_salary is not none
+                                filters.maximum_salary
+                                if filters.maximum_salary is not none
                                 else ''
                             }}"
                             placeholder="Maximum"
@@ -216,8 +252,15 @@
                 <div>
                     <h2>Available Jobs</h2>
                     <p>
-                        Showing page {{ current_page }}
-                        of {{ total_pages }}
+                        {% if total_jobs == 0 %}
+                            No open roles match your filters
+                        {% elif filters.keyword %}
+                            {{ total_jobs }} result{% if total_jobs != 1 %}s{% endif %}
+                            for “{{ filters.keyword }}”
+                        {% else %}
+                            Showing {{ jobs | length }} of {{ total_jobs }} jobs
+                            · Page {{ current_page }} of {{ total_pages }}
+                        {% endif %}
                     </p>
                 </div>
 
@@ -232,8 +275,9 @@
                         ('category', filters.category),
                         ('employment_type', filters.employment_type),
                         ('experience_level', filters.experience_level),
-                        ('min_salary', filters.min_salary or ''),
-                        ('max_salary', filters.max_salary or '')
+                        ('work_mode', filters.work_mode),
+                        ('minimum_salary', filters.minimum_salary or ''),
+                        ('maximum_salary', filters.maximum_salary or '')
                     ] %}
                         <input
                             type="hidden"
@@ -282,8 +326,8 @@
                         </option>
 
                         <option
-                            value="title"
-                            {% if filters.sort == "title" %}
+                            value="title_az"
+                            {% if filters.sort == "title_az" %}
                                 selected
                             {% endif %}
                         >
@@ -298,8 +342,25 @@
                 {% for job in jobs %}
                     <article class="job-card card">
 
-                        <div class="job-logo">
-                            <span>{{ job.company_name[:1] | upper }}</span>
+                        <div
+                            class="job-logo
+                            {% if job.company_logo %}has-logo{% endif %}"
+                        >
+                            {% if job.company_logo %}
+                                <img
+                                    src="{{ url_for(
+                                        'static',
+                                        filename=job.company_logo
+                                    ) }}"
+                                    alt="{{ job.company_name }} logo"
+                                    loading="lazy"
+                                    data-company-logo
+                                >
+                            {% endif %}
+
+                            <span class="logo-fallback" aria-hidden="true">
+                                {{ job.company_name[:1] | upper }}
+                            </span>
                         </div>
 
                         <div class="job-card-content">
@@ -323,11 +384,20 @@
                                     </p>
                                 </div>
 
-                                {% if job.is_featured %}
-                                    <span class="featured-badge">
-                                        Featured
-                                    </span>
-                                {% endif %}
+                                <div class="job-card-badges">
+                                    {% if job.category %}
+                                        <span class="category-badge">
+                                            {{ job.category }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if job.is_featured %}
+                                        <span class="featured-badge">
+                                            <i class="fa-solid fa-star"></i>
+                                            Featured
+                                        </span>
+                                    {% endif %}
+                                </div>
                             </div>
 
                             <div class="job-meta">
@@ -361,17 +431,14 @@
                                 <div class="salary">
                                     {% if job.salary_min or job.salary_max %}
                                         <strong>
-                                            RM {{
-                                                "{:,.0f}".format(
-                                                    job.salary_min or 0
-                                                )
-                                            }}
-                                            –
-                                            RM {{
-                                                "{:,.0f}".format(
-                                                    job.salary_max or 0
-                                                )
-                                            }}
+                                            {% if job.salary_min and job.salary_max %}
+                                                RM {{ "{:,.0f}".format(job.salary_min) }}
+                                                – RM {{ "{:,.0f}".format(job.salary_max) }}
+                                            {% elif job.salary_min %}
+                                                From RM {{ "{:,.0f}".format(job.salary_min) }}
+                                            {% else %}
+                                                Up to RM {{ "{:,.0f}".format(job.salary_max) }}
+                                            {% endif %}
                                         </strong>
                                         <span>per year</span>
                                     {% else %}
@@ -401,6 +468,11 @@
                                             {% if job.is_saved %}saved{% endif %}"
                                             type="submit"
                                             title="Save job"
+                                            aria-label="{{
+                                                'Remove saved job'
+                                                if job.is_saved
+                                                else 'Save job'
+                                            }}: {{ job.title }}"
                                         >
                                             <i
                                                 class="
@@ -467,8 +539,9 @@
                                     category=filters.category,
                                     employment_type=filters.employment_type,
                                     experience_level=filters.experience_level,
-                                    min_salary=filters.min_salary,
-                                    max_salary=filters.max_salary,
+                                    work_mode=filters.work_mode,
+                                    minimum_salary=filters.minimum_salary,
+                                    maximum_salary=filters.maximum_salary,
                                     sort=filters.sort,
                                     page=page_number
                                 )

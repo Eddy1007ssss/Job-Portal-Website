@@ -14,6 +14,7 @@ from flask import (
     url_for,
 )
 
+from src.application_withdrawal import can_employer_update_application
 from src.database import get_db_connection
 
 employer_applications_bp = Blueprint(
@@ -174,6 +175,7 @@ def application_list(job_id: int):
         "shortlisted": 0,
         "accepted": 0,
         "rejected": 0,
+        "withdrawn": 0,
     }
 
     for application in applications:
@@ -288,6 +290,21 @@ def update_application_status(
         )
 
     current_status = str(application["current_status"] or "").strip()
+
+    if not can_employer_update_application(current_status):
+        connection.close()
+
+        flash(
+            "A withdrawn application cannot be reviewed or updated.",
+            "error",
+        )
+
+        return redirect(
+            url_for(
+                "employer_applications.application_list",
+                job_id=job_id,
+            )
+        )
 
     job_status = str(application["job_status"] or "").strip()
 

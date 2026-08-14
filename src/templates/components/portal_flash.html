@@ -1,0 +1,16 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="portal-flash-container" aria-live="polite">
+            {% for category, message in messages %}
+                <div class="portal-flash flash-{{ category }}">
+                    <i class="fa-solid {{
+                        'fa-circle-check'
+                        if category == 'success'
+                        else 'fa-circle-exclamation'
+                    }}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}

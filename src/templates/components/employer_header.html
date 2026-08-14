@@ -1,80 +1,81 @@
 <header class="employer-header">
     <div class="employer-header-container">
-
-        <!-- Employer portal logo -->
         <a
-            href="{{ url_for('employer.company_preview') }}"
-            class="employer-header-logo"
-            aria-label="Go to company profile"
+            href="{{ url_for('employer_dashboard.dashboard') }}"
+            class="employer-header-brand"
+            aria-label="Go to employer dashboard"
         >
-            <span class="employer-logo-icon">
-                J
+            <span class="employer-header-logo-icon">
+                <i class="fa-solid fa-briefcase"></i>
             </span>
-
-            <span class="employer-logo-text">
-                JobPortal
-            </span>
-
-            <span class="employer-portal-label">
-                Employer
+            <span class="employer-header-brand-copy">
+                <span class="employer-header-logo-text">
+                    Job<span>Portal</span>
+                </span>
+                <span class="employer-header-portal-label">
+                    Employer Workspace
+                </span>
             </span>
         </a>
 
-
-        <!-- Right-side employer information -->
         <div class="employer-header-actions">
+            <a
+                href="{{ url_for('employer_notifications.notification_list') }}"
+                class="employer-header-notification {{
+                    'active'
+                    if request.endpoint and
+                       request.endpoint.startswith('employer_notifications.')
+                    else ''
+                }}"
+                aria-label="Employer notifications"
+                title="Notifications"
+            >
+                <i class="fa-regular fa-bell"></i>
+                {% if employer_notification_count %}
+                    <span class="employer-header-notification-badge">
+                        {{ employer_notification_count if employer_notification_count < 100 else '99+' }}
+                    </span>
+                {% endif %}
+            </a>
 
-            <div class="employer-header-account">
+            <span class="employer-header-divider" aria-hidden="true"></span>
 
-                <!-- Company avatar -->
-                <div
-                    class="employer-account-avatar"
-                    aria-hidden="true"
-                >
+            <a
+                href="{{ url_for('employer.company_preview') }}"
+                class="employer-header-company"
+                title="View company profile"
+            >
+                <span class="employer-company-avatar" aria-hidden="true">
                     {{
                         session.get(
-                            "employer_company_name",
-                            "E"
+                            'employer_company_name',
+                            'E'
                         )[0] | upper
                     }}
-                </div>
-
-
-                <!-- Company information -->
-                <div class="employer-account-information">
-
-                    <strong class="employer-account-name">
+                </span>
+                <span class="employer-header-company-information">
+                    <strong class="employer-header-company-name">
                         {{
                             session.get(
-                                "employer_company_name",
-                                "Employer"
+                                'employer_company_name',
+                                'Employer'
                             )
                         }}
                     </strong>
-
-                    <span class="employer-account-email">
-                        {{
-                            session.get(
-                                "employer_email",
-                                ""
-                            )
-                        }}
+                    <span class="employer-header-company-email">
+                        {{ session.get('employer_email', '') }}
                     </span>
+                </span>
+            </a>
 
-                </div>
-
-
-                <!-- Logout -->
-                <a
-                    href="{{ url_for('employer.logout') }}"
-                    class="employer-header-logout"
-                >
-                    Logout
-                </a>
-
-            </div>
-
+            <a
+                href="{{ url_for('employer.logout') }}"
+                class="employer-header-logout"
+                title="Logout"
+            >
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
         </div>
-
     </div>
 </header>

@@ -123,7 +123,7 @@
 
 .application-statistics {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 18px;
 }
@@ -165,6 +165,60 @@
     margin-bottom: 5px;
     color: var(--employer-text);
     font-size: 17px;
+}
+
+.interview-action-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239, 246, 255, 0.9),
+            #ffffff 65%
+        );
+    border-color: #bfdbfe;
+}
+
+.interview-action-icon {
+    width: 43px;
+    height: 43px;
+    margin-bottom: 13px;
+    display: grid;
+    place-items: center;
+    color: var(--employer-primary);
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 11px;
+}
+
+.interview-action-card p {
+    margin: 7px 0 15px;
+    color: var(--employer-text-secondary);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.schedule-interview-button,
+.interview-status-link {
+    min-height: 39px;
+    padding: 9px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.schedule-interview-button {
+    color: #ffffff;
+    background: var(--employer-primary);
+}
+
+.interview-status-link {
+    color: var(--employer-primary);
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
 }
 
 .application-card-heading p {
@@ -370,10 +424,21 @@
     background: #ecfdf3;
 }
 
-.status-rejected,
-.status-withdrawn {
+.status-rejected {
     color: #b42318;
     background: #fef3f2;
+}
+
+.status-withdrawn {
+    color: #475467;
+    background: #f2f4f7;
+}
+
+.withdrawn-notice {
+    color: #667085;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .action-column {

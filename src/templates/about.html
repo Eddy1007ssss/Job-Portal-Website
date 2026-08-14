@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/portal_pages.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<div class="portal-page about-page">
+    <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>About Us</span>
+    </nav>
+
+    <section class="about-hero portal-card">
+        <div class="about-hero-content">
+            <p class="portal-eyebrow">About JobPortal</p>
+            <h1>Helping people find work that moves them forward</h1>
+            <p>
+                JobPortal connects job seekers with trusted employers through
+                a simple, transparent, and accessible recruitment experience.
+            </p>
+
+            <div class="about-hero-actions">
+                <a class="portal-primary-button" href="{{
+                    url_for('jobs.list_jobs')
+                }}">
+                    Explore Jobs
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a class="portal-secondary-button" href="{{
+                    url_for('companies')
+                }}">
+                    View Companies
+                </a>
+            </div>
+        </div>
+
+        <div class="about-visual" aria-hidden="true">
+            <div class="about-visual-main">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <span class="about-float-card float-one">
+                <i class="fa-solid fa-check"></i>
+                Better matches
+            </span>
+            <span class="about-float-card float-two">
+                <i class="fa-solid fa-users"></i>
+                Trusted employers
+            </span>
+        </div>
+    </section>
+
+    <section class="about-stats" aria-label="JobPortal statistics">
+        <article class="portal-card">
+            <span><i class="fa-regular fa-building"></i></span>
+            <div>
+                <strong>{{ stats.company_count }}</strong>
+                <p>Company profiles</p>
+            </div>
+        </article>
+        <article class="portal-card">
+            <span><i class="fa-solid fa-briefcase"></i></span>
+            <div>
+                <strong>{{ stats.open_job_count }}</strong>
+                <p>Open opportunities</p>
+            </div>
+        </article>
+        <article class="portal-card">
+            <span><i class="fa-solid fa-user-group"></i></span>
+            <div>
+                <strong>{{ stats.seeker_count }}</strong>
+                <p>Registered job seekers</p>
+            </div>
+        </article>
+    </section>
+
+    <section class="about-mission portal-card">
+        <div class="about-section-label">
+            <i class="fa-solid fa-bullseye"></i>
+            Our Mission
+        </div>
+        <div>
+            <h2>Make every job search clearer and more confident</h2>
+            <p>
+                We bring company information, relevant vacancies, application
+                tracking, saved jobs, and profile tools into one organised
+                place. Job seekers can focus on choosing the right opportunity
+                while employers can connect with suitable candidates.
+            </p>
+        </div>
+    </section>
+
+    <section class="about-values">
+        <div class="portal-section-intro">
+            <p class="portal-eyebrow">What We Believe</p>
+            <h2>Designed around a better hiring experience</h2>
+        </div>
+
+        <div class="values-grid">
+            <article class="value-card portal-card">
+                <span><i class="fa-solid fa-magnifying-glass"></i></span>
+                <h3>Simple Discovery</h3>
+                <p>
+                    Clear filters and useful job details help candidates find
+                    relevant opportunities faster.
+                </p>
+            </article>
+            <article class="value-card portal-card">
+                <span><i class="fa-solid fa-shield-halved"></i></span>
+                <h3>Trust and Clarity</h3>
+                <p>
+                    Employer profiles and application statuses make the hiring
+                    journey easier to understand.
+                </p>
+            </article>
+            <article class="value-card portal-card">
+                <span><i class="fa-solid fa-chart-line"></i></span>
+                <h3>Career Growth</h3>
+                <p>
+                    Profiles, skills, certificates, and saved jobs support each
+                    job seeker's next career step.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-cta portal-card">
+        <div>
+            <p class="portal-eyebrow">Start Your Search</p>
+            <h2>Your next opportunity could be one search away</h2>
+            <p>Browse open vacancies and connect with employers today.</p>
+        </div>
+        <a class="portal-primary-button" href="{{ url_for('jobs.list_jobs') }}">
+            Find Jobs
+            <i class="fa-solid fa-arrow-right"></i>
+        </a>
+    </section>
+</div>
+{% endblock %}

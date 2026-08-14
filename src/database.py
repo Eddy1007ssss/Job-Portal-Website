@@ -137,9 +137,12 @@ def init_database(app) -> None:
                 seeker_id INTEGER NOT NULL,
                 qualification TEXT NOT NULL,
                 institution TEXT NOT NULL,
+                field_of_study TEXT,
                 start_year TEXT,
                 end_year TEXT,
                 status TEXT DEFAULT 'Completed',
+                certificate_filename TEXT,
+                certificate_original_filename TEXT,
 
                 FOREIGN KEY (seeker_id)
                     REFERENCES seekers(seeker_id)
@@ -251,6 +254,85 @@ def init_database(app) -> None:
                     ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS job_notifications (
+                notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                seeker_id INTEGER NOT NULL,
+                job_id INTEGER NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE(seeker_id, job_id),
+
+                FOREIGN KEY (seeker_id)
+                    REFERENCES seekers(seeker_id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (job_id)
+                    REFERENCES jobs(job_id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                reset_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_type TEXT NOT NULL,
+                account_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TIMESTAMP NOT NULL,
+                used_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                CHECK(account_type IN ('seeker', 'employer'))
+            );
+
+            CREATE TABLE IF NOT EXISTS interviews (
+                interview_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                application_id INTEGER NOT NULL UNIQUE,
+                employer_id INTEGER NOT NULL,
+                scheduled_at TIMESTAMP NOT NULL,
+                duration_minutes INTEGER NOT NULL DEFAULT 60,
+                interview_mode TEXT NOT NULL,
+                location_or_link TEXT NOT NULL,
+                notes TEXT,
+                status TEXT NOT NULL DEFAULT 'Pending',
+                seeker_response_at TIMESTAMP,
+                seeker_response_reason TEXT,
+                cancellation_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                CHECK(duration_minutes BETWEEN 15 AND 240),
+                CHECK(interview_mode IN ('Online', 'In-person', 'Phone')),
+                CHECK(status IN (
+                    'Pending',
+                    'Accepted',
+                    'Declined',
+                    'Cancelled',
+                    'Completed'
+                )),
+
+                FOREIGN KEY (application_id)
+                    REFERENCES applications(application_id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (employer_id)
+                    REFERENCES employers(employer_id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS seeker_settings (
+                settings_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                seeker_id INTEGER NOT NULL UNIQUE,
+                email_notifications INTEGER NOT NULL DEFAULT 1,
+                application_updates INTEGER NOT NULL DEFAULT 1,
+                job_recommendations INTEGER NOT NULL DEFAULT 1,
+                profile_visibility TEXT NOT NULL DEFAULT 'Employers',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (seeker_id)
+                    REFERENCES seekers(seeker_id)
+                    ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS applications (
                 application_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 seeker_id INTEGER NOT NULL,
@@ -269,6 +351,40 @@ def init_database(app) -> None:
 
                 FOREIGN KEY (job_id)
                     REFERENCES jobs(job_id)
+                    ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS employer_notifications (
+                notification_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employer_id INTEGER NOT NULL,
+                event_key TEXT NOT NULL,
+                notification_type TEXT NOT NULL,
+                application_id INTEGER,
+                interview_id INTEGER,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                UNIQUE(employer_id, event_key),
+
+                CHECK(notification_type IN (
+                    'new_application',
+                    'application_withdrawn',
+                    'interview_accepted',
+                    'interview_declined'
+                )),
+
+                FOREIGN KEY (employer_id)
+                    REFERENCES employers(employer_id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (application_id)
+                    REFERENCES applications(application_id)
+                    ON DELETE CASCADE,
+
+                FOREIGN KEY (interview_id)
+                    REFERENCES interviews(interview_id)
                     ON DELETE CASCADE
             );
 
@@ -296,6 +412,27 @@ def init_database(app) -> None:
             CREATE INDEX IF NOT EXISTS idx_saved_jobs_job_id
                 ON saved_jobs(job_id);
 
+            CREATE INDEX IF NOT EXISTS idx_job_notifications_seeker_id
+                ON job_notifications(seeker_id);
+
+            CREATE INDEX IF NOT EXISTS idx_job_notifications_unread
+                ON job_notifications(seeker_id, is_read);
+
+            CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash
+                ON password_reset_tokens(token_hash);
+
+            CREATE INDEX IF NOT EXISTS idx_password_reset_account
+                ON password_reset_tokens(account_type, account_id);
+
+            CREATE INDEX IF NOT EXISTS idx_interviews_employer_id
+                ON interviews(employer_id);
+
+            CREATE INDEX IF NOT EXISTS idx_interviews_status
+                ON interviews(status);
+
+            CREATE INDEX IF NOT EXISTS idx_interviews_scheduled_at
+                ON interviews(scheduled_at);
+
             CREATE INDEX IF NOT EXISTS idx_applications_seeker_id
                 ON applications(seeker_id);
 
@@ -304,6 +441,12 @@ def init_database(app) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_applications_status
                 ON applications(status);
+
+            CREATE INDEX IF NOT EXISTS idx_employer_notifications_employer
+                ON employer_notifications(employer_id);
+
+            CREATE INDEX IF NOT EXISTS idx_employer_notifications_unread
+                ON employer_notifications(employer_id, is_read);
             """)
 
         seeker_profile_columns = {
@@ -336,6 +479,20 @@ def init_database(app) -> None:
             add_column_if_missing(
                 db,
                 "seeker_certificates",
+                column_name,
+                column_definition,
+            )
+
+        education_columns = {
+            "field_of_study": "TEXT",
+            "certificate_filename": "TEXT",
+            "certificate_original_filename": "TEXT",
+        }
+
+        for column_name, column_definition in education_columns.items():
+            add_column_if_missing(
+                db,
+                "seeker_education",
                 column_name,
                 column_definition,
             )
@@ -413,6 +570,19 @@ def init_database(app) -> None:
             add_column_if_missing(
                 db,
                 "applications",
+                column_name,
+                column_definition,
+            )
+
+        interview_columns = {
+            "seeker_response_reason": "TEXT",
+            "cancellation_reason": "TEXT",
+        }
+
+        for column_name, column_definition in interview_columns.items():
+            add_column_if_missing(
+                db,
+                "interviews",
                 column_name,
                 column_definition,
             )

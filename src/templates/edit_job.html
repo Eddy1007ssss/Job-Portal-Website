@@ -45,7 +45,6 @@
     method="POST"
     action="{{ url_for('jobs.edit_job', job_id=job['job_id']) }}"
 >
-    >
 
         <!-- Basic Job Information -->
         <section class="form-section">
@@ -85,12 +84,14 @@
                     </label>
 
                     <input
-    type="text"
-    id="department"
-    name="department"
-    value="{{ form_data.get('department', '') if form_data else '' }}"
-    ...
->
+                        type="text"
+                        id="department"
+                        name="department"
+                        value="{{ form_data.get('department', job['department'] or job['category'] or '') if form_data else (job['department'] or job['category'] or '') }}"
+                        placeholder="Example: Information Technology"
+                        maxlength="100"
+                        required
+                    >
                 </div>
 
                 <div class="form-group">

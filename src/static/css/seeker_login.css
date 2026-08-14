@@ -107,6 +107,23 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.seeker-forgot-password-row {
+    margin: -6px 0 16px;
+    text-align: right;
+}
+
+.seeker-forgot-password-row a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seeker-forgot-password-row a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
 .seeker-login-submit {
     width: 100%;
     min-height: 48px;

@@ -257,6 +257,7 @@
                             class="icon-text-button"
                             type="button"
                             data-open-modal="educationModal"
+                            data-education-mode="add"
                         >
                             <i class="fa-solid fa-plus"></i>
                             Add Education
@@ -269,26 +270,74 @@
                                 <div class="item-heading-row">
                                     <h3>{{ item.qualification }}</h3>
 
-                                    <form
-                                        method="POST"
-                                        action="{{
-                                            url_for(
-                                                'seeker.delete_education',
-                                                item_id=item.education_id
-                                            )
-                                        }}"
-                                    >
+                                    <div class="item-actions">
+                                        {% if item.certificate_filename %}
+                                            <a
+                                                class="small-action-button"
+                                                href="{{
+                                                    url_for(
+                                                        'seeker.download_education_certificate',
+                                                        item_id=item.education_id
+                                                    )
+                                                }}"
+                                                title="Download certificate"
+                                            >
+                                                <i class="fa-solid fa-download"></i>
+                                            </a>
+                                        {% endif %}
+
                                         <button
-                                            class="small-action-button danger"
-                                            type="submit"
-                                            title="Delete education"
+                                            class="small-action-button education-edit-button"
+                                            type="button"
+                                            title="Edit education"
+                                            data-open-modal="educationModal"
+                                            data-update-url="{{
+                                                url_for(
+                                                    'seeker.update_education',
+                                                    item_id=item.education_id
+                                                )
+                                            }}"
+                                            data-qualification="{{ item.qualification | e }}"
+                                            data-institution="{{ item.institution | e }}"
+                                            data-field-of-study="{{
+                                                (item.field_of_study or '') | e
+                                            }}"
+                                            data-start-year="{{ item.start_year or '' }}"
+                                            data-end-year="{{ item.end_year or '' }}"
+                                            data-status="{{ item.status or 'Completed' }}"
+                                            data-certificate-name="{{
+                                                (item.certificate_original_filename or '') | e
+                                            }}"
                                         >
-                                            <i class="fa-solid fa-trash"></i>
+                                            <i class="fa-solid fa-pen"></i>
                                         </button>
-                                    </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{
+                                                url_for(
+                                                    'seeker.delete_education',
+                                                    item_id=item.education_id
+                                                )
+                                            }}"
+                                        >
+                                            <button
+                                                class="small-action-button danger"
+                                                type="submit"
+                                                title="Delete education"
+                                            >
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <p>{{ item.institution }}</p>
+                                {% if item.field_of_study %}
+                                    <p class="education-field-of-study">
+                                        {{ item.field_of_study }}
+                                    </p>
+                                {% endif %}
 
                                 <div class="education-footer">
                                     <span>
@@ -296,7 +345,11 @@
                                         –
                                         {{ item.end_year or "?" }}
                                     </span>
-                                    <span class="status-badge completed">
+                                    <span class="status-badge {{
+                                        'completed'
+                                        if item.status == 'Completed'
+                                        else 'in-progress'
+                                    }}">
                                         {{ item.status }}
                                     </span>
                                 </div>
@@ -843,36 +896,100 @@
     "Add an education record."
 ) }}
     <form
+        id="educationForm"
         method="POST"
         action="{{ url_for('seeker.add_education') }}"
+        data-add-url="{{ url_for('seeker.add_education') }}"
+        enctype="multipart/form-data"
     >
         <div class="form-grid">
             <div class="form-group">
-                <label>Qualification</label>
-                <input name="qualification" required>
+                <label for="educationQualification">Qualification</label>
+                <input
+                    id="educationQualification"
+                    name="qualification"
+                    required
+                >
             </div>
             <div class="form-group">
-                <label>Institution</label>
-                <input name="institution" required>
-            </div>
-            <div class="form-group">
-                <label>Start Year</label>
-                <input name="start_year">
-            </div>
-            <div class="form-group">
-                <label>End Year</label>
-                <input name="end_year">
+                <label for="educationInstitution">Institution</label>
+                <input
+                    id="educationInstitution"
+                    name="institution"
+                    required
+                >
             </div>
             <div class="form-group form-group-full">
-                <label>Status</label>
-                <select name="status">
-                    <option>Completed</option>
-                    <option>In Progress</option>
+                <label for="educationFieldOfStudy">Field of Study</label>
+                <input
+                    id="educationFieldOfStudy"
+                    name="field_of_study"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="educationStartYear">Start Year</label>
+                <input
+                    id="educationStartYear"
+                    name="start_year"
+                    type="number"
+                    min="1900"
+                    step="1"
+                    inputmode="numeric"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label id="educationEndYearLabel" for="educationEndYear">
+                    Graduation Year
+                </label>
+                <input
+                    id="educationEndYear"
+                    name="end_year"
+                    type="number"
+                    min="1900"
+                    step="1"
+                    inputmode="numeric"
+                    required
+                >
+            </div>
+            <div class="form-group form-group-full">
+                <label for="educationStatus">Status</label>
+                <select id="educationStatus" name="status" required>
+                    <option value="Completed">Completed</option>
+                    <option value="In Progress">In Progress</option>
                 </select>
+            </div>
+            <div
+                class="form-group form-group-full"
+                id="educationCertificateGroup"
+            >
+                <label for="educationCertificateFile">
+                    Certificate (Optional)
+                </label>
+                <input
+                    id="educationCertificateFile"
+                    name="certificate_file"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                >
+                <small class="form-help-text">
+                    Available for completed education only. PDF, PNG or JPG,
+                    maximum 5 MB.
+                </small>
+                <small
+                    class="education-current-certificate"
+                    id="educationCurrentCertificate"
+                    hidden
+                ></small>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="primary-button" type="submit">
+            <button
+                class="primary-button"
+                id="educationSubmitButton"
+                type="submit"
+            >
                 Add Education
             </button>
         </div>

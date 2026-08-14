@@ -56,17 +56,6 @@
             </a>
 
             <a
-                href="{{ url_for('career_tips') }}"
-                class="{{
-                    'active'
-                    if request.endpoint == 'career_tips'
-                    else ''
-                }}"
-            >
-                Career Tips
-            </a>
-
-            <a
                 href="{{ url_for('about') }}"
                 class="{{
                     'active'
@@ -92,17 +81,19 @@
                 </a>
 
 
-                <button
-                    type="button"
+                <a
+                    href="{{ url_for('job_alerts') }}"
                     class="header-notification-button"
-                    aria-label="Notifications"
+                    aria-label="Open job alerts"
                 >
                     <i class="fa-regular fa-bell"></i>
 
-                    <span class="notification-count">
-                        1
-                    </span>
-                </button>
+                    {% if notification_count %}
+                        <span class="notification-count">
+                            {{ notification_count }}
+                        </span>
+                    {% endif %}
+                </a>
 
 
                 <div class="header-profile-menu">

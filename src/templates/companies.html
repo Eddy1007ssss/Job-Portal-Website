@@ -1,161 +1,167 @@
 {% extends "base.html" %}
 
-{% block title %}
-    Companies | JobPortal
+{% block title %}Companies | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/portal_pages.css') }}"
+>
 {% endblock %}
 
-
 {% block content %}
+<div class="portal-page companies-page">
+    <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Companies</span>
+    </nav>
 
-<section class="companies-page">
-    <div class="page-container">
-
-        <div class="companies-heading">
-
-            <p class="eyebrow">
-                Discover employers
-            </p>
-
-            <h1>
-                Top Companies
-            </h1>
-
+    <header class="portal-hero">
+        <div class="portal-hero-copy">
+            <p class="portal-eyebrow">Discover Employers</p>
+            <h1>Find a company where you can grow</h1>
             <p>
-                Discover great places to work and grow your career.
+                Explore trusted employers, learn about their culture, and
+                discover their latest job opportunities.
             </p>
-
         </div>
 
+        <div class="portal-hero-summary">
+            <span class="portal-summary-icon">
+                <i class="fa-regular fa-building"></i>
+            </span>
+            <div>
+                <strong>{{ companies | length }}</strong>
+                <span>
+                    {{ "company" if companies | length == 1 else "companies" }}
+                    to explore
+                </span>
+            </div>
+        </div>
+    </header>
 
-        <div class="company-search-wrapper">
-
+    <section class="company-toolbar portal-card">
+        <div class="company-search-field">
+            <i class="fa-solid fa-magnifying-glass"></i>
             <input
-                type="search"
                 id="companySearch"
-                placeholder="Search companies by name or industry"
+                type="search"
+                placeholder="Search by company name, industry, or location"
+                aria-label="Search companies"
+                autocomplete="off"
             >
-
         </div>
 
+        <p id="companyResultText">
+            Showing {{ companies | length }}
+            {{ "company" if companies | length == 1 else "companies" }}
+        </p>
+    </section>
 
-        {% if companies %}
+    {% if companies %}
+        <section class="companies-grid" id="companiesGrid">
+            {% for company in companies %}
+                <article
+                    class="company-card portal-card"
+                    data-company-search="{{
+                        (
+                            company.company_name ~ ' ' ~
+                            company.industry ~ ' ' ~
+                            company.address
+                        ) | lower
+                    }}"
+                >
+                    <div class="company-card-top">
+                        <div class="company-logo" aria-hidden="true">
+                            {% if company.logo_url %}
+                                <img
+                                    src="{{ company.logo_url }}"
+                                    alt=""
+                                    onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+                                >
+                                <span hidden>
+                                    {{ company.company_name[:1] | upper }}
+                                </span>
+                            {% else %}
+                                <span>
+                                    {{ company.company_name[:1] | upper }}
+                                </span>
+                            {% endif %}
+                        </div>
 
-            <div
-                class="companies-grid"
-                id="companiesGrid"
-            >
-
-                {% for company in companies %}
-
-                    <a
-                        href="{{
-                            url_for(
-                                'employer.public_company_profile',
-                                employer_id=company['employer_id']
-                            )
-                        }}"
-                        class="company-list-card"
-                        data-company-name="{{
-                            company['company_name'] | lower
-                        }}"
-                        data-company-industry="{{
-                            company['industry'] | lower
-                        }}"
-                    >
-
-                        <div class="company-card-logo">
+                        <span class="company-job-badge">
+                            <i class="fa-solid fa-briefcase"></i>
+                            {{ company.active_job_count }} open
                             {{
-                                company["company_name"][0] | upper
+                                "job"
+                                if company.active_job_count == 1
+                                else "jobs"
                             }}
-                        </div>
+                        </span>
+                    </div>
 
-                        <div class="company-card-content">
+                    <div class="company-card-body">
+                        <p class="company-industry">
+                            {{ company.industry or "Industry not specified" }}
+                        </p>
+                        <h2>{{ company.company_name }}</h2>
 
-                            <h2>
-                                {{ company["company_name"] }}
-                            </h2>
+                        <p class="company-location">
+                            <i class="fa-solid fa-location-dot"></i>
+                            {{ company.address or "Location not specified" }}
+                        </p>
 
-                            <p>
-                                {{ company["industry"] }}
-                            </p>
+                        <p class="company-description">
+                            {{
+                                company.company_description
+                                or "View this employer's profile and available jobs."
+                            }}
+                        </p>
+                    </div>
 
-                            <span>
-                                {% if company["city"] %}
-                                    {{ company["city"] }}
-                                {% endif %}
-
-                                {% if company["city"] and company["state"] %}
-                                    ,
-                                {% endif %}
-
-                                {% if company["state"] %}
-                                    {{ company["state"] }}
-                                {% endif %}
-                            </span>
-
-                        </div>
-
-                        <span class="view-company-arrow">
-                            →
+                    <footer class="company-card-footer">
+                        <span>
+                            <i class="fa-solid fa-users"></i>
+                            {{ company.company_size or "Company size not listed" }}
                         </span>
 
-                    </a>
+                        <a href="{{
+                            url_for(
+                                'employer.public_company_profile',
+                                employer_id=company.employer_id
+                            )
+                        }}">
+                            View Company
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </footer>
+                </article>
+            {% endfor %}
+        </section>
 
-                {% endfor %}
-
-            </div>
-
-
-            <p
-                class="no-search-result"
-                id="noSearchResult"
-                hidden
-            >
-                No matching companies were found.
+        <section class="portal-empty-state" id="companyNoResults" hidden>
+            <span><i class="fa-solid fa-magnifying-glass"></i></span>
+            <h2>No matching companies</h2>
+            <p>Try a different company name, industry, or location.</p>
+            <button id="clearCompanySearch" type="button">Clear Search</button>
+        </section>
+    {% else %}
+        <section class="portal-empty-state">
+            <span><i class="fa-regular fa-building"></i></span>
+            <h2>No company profiles yet</h2>
+            <p>
+                Company profiles will appear after employers create and
+                publish them.
             </p>
+            <a href="{{ url_for('employer.register') }}">
+                Register as an Employer
+            </a>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
 
-        {% else %}
-
-            <div class="empty-state">
-
-                <div class="empty-state-icon">
-                    🏢
-                </div>
-
-                <h2>
-                    No company profiles yet
-                </h2>
-
-                <p>
-                    Company profiles will appear here after
-                    employers create them.
-                </p>
-
-                {% if session.get("employer_id") %}
-
-                    <a
-                        href="{{ url_for('employer.company_profile') }}"
-                        class="primary-button"
-                    >
-                        Create company profile
-                    </a>
-
-                {% else %}
-
-                    <a
-                        href="{{ url_for('employer.register') }}"
-                        class="primary-button"
-                    >
-                        Register as employer
-                    </a>
-
-                {% endif %}
-
-            </div>
-
-        {% endif %}
-
-    </div>
-</section>
-
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/portal_pages.js') }}"></script>
 {% endblock %}

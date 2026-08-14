@@ -2,6 +2,7 @@ import re
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
+from typing import TypeGuard
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -16,15 +17,33 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from src.database import get_db_connection
+from src.education import (
+    EducationCertificateError,
+    EducationDetails,
+    validate_education_certificate,
+    validate_education_details,
+)
+from src.profile_credentials import (
+    CertificateDetails,
+    add_certificate_record,
+    add_skill_record,
+    get_certificate_record,
+    update_certificate_record,
+    update_skill_record,
+    validate_certificate_details,
+    validate_skill_name,
+)
 
 seeker_bp = Blueprint("seeker", __name__)
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 RESUME_EXTENSIONS = {"pdf"}
 CERTIFICATE_EXTENSIONS = {"pdf", "doc", "docx", "png", "jpg", "jpeg"}
+CERTIFICATE_MAX_BYTES = 5 * 1024 * 1024
 EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 PHONE_PATTERN = re.compile(r"^[0-9+\-\s]{8,15}$")
 
@@ -74,6 +93,107 @@ def _is_pdf(file) -> bool:
     return signature == b"%PDF-"
 
 
+def _education_form_details() -> EducationDetails:
+    return EducationDetails(
+        qualification=request.form.get("qualification", "").strip(),
+        institution=request.form.get("institution", "").strip(),
+        field_of_study=request.form.get("field_of_study", "").strip(),
+        start_year=request.form.get("start_year", "").strip(),
+        end_year=request.form.get("end_year", "").strip(),
+        status=request.form.get("status", "").strip(),
+    )
+
+
+def _has_uploaded_file(file: FileStorage | None) -> TypeGuard[FileStorage]:
+    return bool(file and file.filename)
+
+
+def _save_education_certificate(
+    file: FileStorage,
+    seeker_id: int,
+) -> tuple[str, str]:
+    extension = validate_education_certificate(file)
+    original_filename = secure_filename(file.filename or "certificate")
+    stored_filename = f"education_{seeker_id}_{uuid4().hex}.{extension}"
+    file.save(_folder("education_certificates") / stored_filename)
+    return stored_filename, original_filename
+
+
+def _remove_education_certificate(filename: str | None) -> None:
+    if not filename:
+        return
+
+    certificate_path = _folder("education_certificates") / filename
+
+    if certificate_path.exists():
+        certificate_path.unlink()
+
+
+def _certificate_form_details() -> CertificateDetails:
+    return CertificateDetails(
+        name=request.form.get("certificate_name", "").strip(),
+        issuer=request.form.get("issuer", "").strip(),
+        issue_date=request.form.get("issue_date", "").strip(),
+    )
+
+
+def _validate_issue_month(issue_date: str) -> str | None:
+    """Reject certificate issue dates that are in the future."""
+
+    if not issue_date:
+        return None
+
+    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).strftime("%Y-%m")
+
+    if issue_date > current_month:
+        return "Certificate issue date cannot be in the future."
+
+    return None
+
+
+def _validate_profile_certificate_file(
+    file: FileStorage | None,
+) -> str | None:
+    if not _has_uploaded_file(file):
+        return None
+
+    safe_filename = secure_filename(file.filename or "")
+
+    if not _allowed(safe_filename, CERTIFICATE_EXTENSIONS):
+        return "Certificate file must be PDF, PNG, JPG, DOC or DOCX."
+
+    original_position = file.stream.tell()
+    file.stream.seek(0, 2)
+    file_size = file.stream.tell()
+    file.stream.seek(original_position)
+
+    if file_size > CERTIFICATE_MAX_BYTES:
+        return "Certificate file must not exceed 5 MB."
+
+    return None
+
+
+def _save_profile_certificate(
+    file: FileStorage,
+    seeker_id: int,
+) -> tuple[str, str]:
+    original_filename = secure_filename(file.filename or "certificate")
+    extension = original_filename.rsplit(".", 1)[1].lower()
+    stored_filename = f"certificate_{seeker_id}_{uuid4().hex}.{extension}"
+    file.save(_folder("certificates") / stored_filename)
+    return stored_filename, original_filename
+
+
+def _remove_profile_certificate(filename: str | None) -> None:
+    if not filename:
+        return
+
+    certificate_path = _folder("certificates") / filename
+
+    if certificate_path.exists():
+        certificate_path.unlink()
+
+
 def _folder(name: str) -> Path:
     static_folder = current_app.static_folder
     if static_folder is None:
@@ -95,20 +215,6 @@ def _validate_month_range(
 
     if end_value and end_value != "Present" and end_value < start_value:
         return "End date cannot be earlier than the start date."
-
-    return None
-
-
-def _validate_issue_month(issue_date: str) -> str | None:
-    """Reject certificate issue dates that are in the future."""
-
-    if not issue_date:
-        return None
-
-    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).strftime("%Y-%m")
-
-    if issue_date > current_month:
-        return "Certificate issue date cannot be in the future."
 
     return None
 
@@ -223,14 +329,16 @@ def ensure_demo_seeker() -> int:
     db.execute(
         """
         INSERT INTO seeker_education (
-            seeker_id, qualification, institution, start_year, end_year, status
+            seeker_id, qualification, institution, field_of_study,
+            start_year, end_year, status
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             seeker_id,
             "Bachelor of Multimedia Design",
             "TAR UMT",
+            "Multimedia Design",
             "2016",
             "2020",
             "Completed",
@@ -742,129 +850,402 @@ def delete_experience(item_id: int):
 
 @seeker_bp.post("/seeker-profile/education")
 def add_education():
-    qualification = request.form.get("qualification", "").strip()
-    institution = request.form.get("institution", "").strip()
-    if not qualification or not institution:
-        flash("Qualification and institution are required.", "error")
-    else:
-        _insert(
-            "seeker_education",
-            [
-                "seeker_id",
-                "qualification",
-                "institution",
-                "start_year",
-                "end_year",
-                "status",
-            ],
-            [
-                current_seeker_id(),
+    seeker_id = current_seeker_id()
+    details = _education_form_details()
+    current_year = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).year
+    validation_error = validate_education_details(details, current_year)
+
+    if validation_error:
+        flash(validation_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    certificate_file = request.files.get("certificate_file")
+
+    if details.status != "Completed" and _has_uploaded_file(certificate_file):
+        flash(
+            "A certificate can only be uploaded for completed education.",
+            "error",
+        )
+        return redirect(url_for("seeker.profile"))
+
+    stored_filename = None
+    original_filename = None
+
+    if _has_uploaded_file(certificate_file):
+        try:
+            stored_filename, original_filename = _save_education_certificate(
+                certificate_file,
+                seeker_id,
+            )
+        except EducationCertificateError as error:
+            flash(str(error), "error")
+            return redirect(url_for("seeker.profile"))
+
+    db = get_db_connection()
+
+    try:
+        db.execute(
+            """
+            INSERT INTO seeker_education (
+                seeker_id,
                 qualification,
                 institution,
-                request.form.get("start_year", "").strip(),
-                request.form.get("end_year", "").strip(),
-                request.form.get("status", "Completed").strip(),
-            ],
+                field_of_study,
+                start_year,
+                end_year,
+                status,
+                certificate_filename,
+                certificate_original_filename
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                seeker_id,
+                details.qualification,
+                details.institution,
+                details.field_of_study,
+                details.start_year,
+                details.end_year,
+                details.status,
+                stored_filename,
+                original_filename,
+            ),
         )
-        flash("Education added.", "success")
+        db.commit()
+    except sqlite3.Error:
+        db.rollback()
+        _remove_education_certificate(stored_filename)
+        raise
+    finally:
+        db.close()
+
+    flash("Education added successfully.", "success")
     return redirect(url_for("seeker.profile"))
+
+
+@seeker_bp.post("/seeker-profile/education/<int:item_id>/update")
+def update_education(item_id: int):
+    seeker_id = current_seeker_id()
+    db = get_db_connection()
+    existing = db.execute(
+        """
+        SELECT *
+        FROM seeker_education
+        WHERE education_id = ? AND seeker_id = ?
+        """,
+        (item_id, seeker_id),
+    ).fetchone()
+
+    if existing is None:
+        db.close()
+        flash("Education record was not found.", "error")
+        return redirect(url_for("seeker.profile"))
+
+    db.close()
+
+    details = _education_form_details()
+    current_year = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).year
+    validation_error = validate_education_details(details, current_year)
+
+    if validation_error:
+        flash(validation_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    certificate_file = request.files.get("certificate_file")
+
+    if details.status != "Completed" and _has_uploaded_file(certificate_file):
+        flash(
+            "A certificate can only be uploaded for completed education.",
+            "error",
+        )
+        return redirect(url_for("seeker.profile"))
+
+    certificate_filename = existing["certificate_filename"]
+    certificate_original_filename = existing["certificate_original_filename"]
+    new_certificate_filename = None
+    old_certificate_to_remove = None
+
+    if details.status != "Completed":
+        old_certificate_to_remove = certificate_filename
+        certificate_filename = None
+        certificate_original_filename = None
+    elif _has_uploaded_file(certificate_file):
+        try:
+            (
+                new_certificate_filename,
+                certificate_original_filename,
+            ) = _save_education_certificate(certificate_file, seeker_id)
+        except EducationCertificateError as error:
+            flash(str(error), "error")
+            return redirect(url_for("seeker.profile"))
+
+        old_certificate_to_remove = certificate_filename
+        certificate_filename = new_certificate_filename
+
+    db = get_db_connection()
+
+    try:
+        db.execute(
+            """
+            UPDATE seeker_education
+            SET qualification = ?,
+                institution = ?,
+                field_of_study = ?,
+                start_year = ?,
+                end_year = ?,
+                status = ?,
+                certificate_filename = ?,
+                certificate_original_filename = ?
+            WHERE education_id = ? AND seeker_id = ?
+            """,
+            (
+                details.qualification,
+                details.institution,
+                details.field_of_study,
+                details.start_year,
+                details.end_year,
+                details.status,
+                certificate_filename,
+                certificate_original_filename,
+                item_id,
+                seeker_id,
+            ),
+        )
+        db.commit()
+    except sqlite3.Error:
+        db.rollback()
+        _remove_education_certificate(new_certificate_filename)
+        raise
+    finally:
+        db.close()
+
+    if old_certificate_to_remove != certificate_filename:
+        _remove_education_certificate(old_certificate_to_remove)
+
+    flash("Education updated successfully.", "success")
+    return redirect(url_for("seeker.profile"))
+
+
+@seeker_bp.get("/seeker-profile/education/<int:item_id>/certificate")
+def download_education_certificate(item_id: int):
+    db = get_db_connection()
+    education = db.execute(
+        """
+        SELECT certificate_filename, certificate_original_filename
+        FROM seeker_education
+        WHERE education_id = ? AND seeker_id = ?
+        """,
+        (item_id, current_seeker_id()),
+    ).fetchone()
+    db.close()
+
+    if education is None or not education["certificate_filename"]:
+        flash("No certificate is available for this education record.", "error")
+        return redirect(url_for("seeker.profile"))
+
+    return send_from_directory(
+        _folder("education_certificates"),
+        education["certificate_filename"],
+        as_attachment=True,
+        download_name=(
+            education["certificate_original_filename"]
+            or education["certificate_filename"]
+        ),
+    )
 
 
 @seeker_bp.post("/seeker-profile/education/<int:item_id>/delete")
 def delete_education(item_id: int):
-    _delete("seeker_education", "education_id", item_id)
-    flash("Education deleted.", "success")
+    db = get_db_connection()
+    education = db.execute(
+        """
+        SELECT certificate_filename
+        FROM seeker_education
+        WHERE education_id = ? AND seeker_id = ?
+        """,
+        (item_id, current_seeker_id()),
+    ).fetchone()
+
+    if education is None:
+        db.close()
+        flash("Education record was not found.", "error")
+        return redirect(url_for("seeker.profile"))
+
+    db.execute(
+        """
+        DELETE FROM seeker_education
+        WHERE education_id = ? AND seeker_id = ?
+        """,
+        (item_id, current_seeker_id()),
+    )
+    db.commit()
+    db.close()
+
+    _remove_education_certificate(education["certificate_filename"])
+    flash("Education deleted successfully.", "success")
     return redirect(url_for("seeker.profile"))
 
 
 @seeker_bp.post("/seeker-profile/skill")
 def add_skill():
     name = request.form.get("skill_name", "").strip()
-    if not name:
-        flash("Skill name is required.", "error")
+    validation_error = validate_skill_name(name)
+
+    if validation_error:
+        flash(validation_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    db = get_db_connection()
+    result = add_skill_record(db, current_seeker_id(), name)
+    db.close()
+
+    if result.outcome == "duplicate":
+        flash("That skill already exists.", "error")
     else:
-        try:
-            _insert(
-                "seeker_skills",
-                ["seeker_id", "skill_name"],
-                [current_seeker_id(), name],
-            )
-            flash("Skill added.", "success")
-        except sqlite3.IntegrityError:
-            flash("That skill already exists.", "error")
+        flash("Skill added successfully.", "success")
+
+    return redirect(url_for("seeker.profile"))
+
+
+@seeker_bp.post("/seeker-profile/skill/<int:item_id>/update")
+def update_skill(item_id: int):
+    name = request.form.get("skill_name", "").strip()
+    validation_error = validate_skill_name(name)
+
+    if validation_error:
+        flash(validation_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    db = get_db_connection()
+    result = update_skill_record(
+        db,
+        current_seeker_id(),
+        item_id,
+        name,
+    )
+    db.close()
+
+    if result.outcome == "not_found":
+        flash("Skill was not found.", "error")
+    elif result.outcome == "duplicate":
+        flash("That skill already exists.", "error")
+    else:
+        flash("Skill updated successfully.", "success")
+
     return redirect(url_for("seeker.profile"))
 
 
 @seeker_bp.post("/seeker-profile/skill/<int:item_id>/delete")
 def delete_skill(item_id: int):
     _delete("seeker_skills", "skill_id", item_id)
+    flash("Skill deleted.", "success")
     return redirect(url_for("seeker.profile"))
 
 
 @seeker_bp.post("/seeker-profile/certificate")
 def add_certificate():
-    certificate_name = request.form.get(
-        "certificate_name",
-        "",
-    ).strip()
-    issuer = request.form.get("issuer", "").strip()
-    issue_date = request.form.get("issue_date", "").strip()
+    details = _certificate_form_details()
     certificate_file = request.files.get("certificate_file")
+    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).strftime("%Y-%m")
+    validation_error = validate_certificate_details(details, current_month)
 
-    if not certificate_name:
-        flash("Certificate name is required.", "error")
+    if validation_error:
+        flash(validation_error, "error")
         return redirect(url_for("seeker.profile"))
 
-    date_error = _validate_issue_month(issue_date)
+    file_error = _validate_profile_certificate_file(certificate_file)
 
-    if date_error:
-        flash(date_error, "error")
+    if file_error:
+        flash(file_error, "error")
         return redirect(url_for("seeker.profile"))
 
     stored_filename = None
     original_filename = None
 
-    if certificate_file and certificate_file.filename:
-        if not _allowed(
-            certificate_file.filename,
-            CERTIFICATE_EXTENSIONS,
-        ):
-            flash(
-                "Certificate file must be PDF, PNG, JPG, DOC or DOCX.",
-                "error",
-            )
-            return redirect(url_for("seeker.profile"))
+    seeker_id = current_seeker_id()
 
-        safe_name = secure_filename(certificate_file.filename)
-        extension = safe_name.rsplit(".", 1)[1].lower()
-        stored_filename = (
-            f"certificate_{current_seeker_id()}_" f"{uuid4().hex}.{extension}"
+    if _has_uploaded_file(certificate_file):
+        stored_filename, original_filename = _save_profile_certificate(
+            certificate_file,
+            seeker_id,
         )
-        original_filename = safe_name
 
-        certificate_file.save(_folder("certificates") / stored_filename)
-
-    _insert(
-        "seeker_certificates",
-        [
-            "seeker_id",
-            "certificate_name",
-            "issuer",
-            "issue_date",
-            "certificate_filename",
-            "original_filename",
-        ],
-        [
-            current_seeker_id(),
-            certificate_name,
-            issuer,
-            issue_date,
-            stored_filename,
-            original_filename,
-        ],
+    db = get_db_connection()
+    add_certificate_record(
+        db,
+        seeker_id,
+        details,
+        stored_filename,
+        original_filename,
     )
+    db.close()
 
     flash("Certificate added successfully.", "success")
+    return redirect(url_for("seeker.profile"))
+
+
+@seeker_bp.post("/seeker-profile/certificate/<int:item_id>/update")
+def update_certificate(item_id: int):
+    details = _certificate_form_details()
+    certificate_file = request.files.get("certificate_file")
+    current_month = datetime.now(ZoneInfo("Asia/Kuala_Lumpur")).strftime("%Y-%m")
+    validation_error = validate_certificate_details(details, current_month)
+
+    if validation_error:
+        flash(validation_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    file_error = _validate_profile_certificate_file(certificate_file)
+
+    if file_error:
+        flash(file_error, "error")
+        return redirect(url_for("seeker.profile"))
+
+    seeker_id = current_seeker_id()
+    db = get_db_connection()
+    existing = get_certificate_record(db, seeker_id, item_id)
+
+    if existing is None:
+        db.close()
+        flash("Certificate was not found.", "error")
+        return redirect(url_for("seeker.profile"))
+
+    old_stored_filename = existing["certificate_filename"]
+    stored_filename = old_stored_filename
+    original_filename = existing["original_filename"]
+    remove_file = request.form.get("remove_certificate_file") == "on"
+
+    if remove_file:
+        stored_filename = None
+        original_filename = None
+
+    if _has_uploaded_file(certificate_file):
+        stored_filename, original_filename = _save_profile_certificate(
+            certificate_file,
+            seeker_id,
+        )
+
+    result = update_certificate_record(
+        db,
+        seeker_id,
+        item_id,
+        details,
+        stored_filename,
+        original_filename,
+    )
+    db.close()
+
+    if not result.succeeded:
+        if stored_filename != old_stored_filename:
+            _remove_profile_certificate(stored_filename)
+
+        flash("Certificate was not found.", "error")
+        return redirect(url_for("seeker.profile"))
+
+    if old_stored_filename != stored_filename:
+        _remove_profile_certificate(old_stored_filename)
+
+    flash("Certificate updated successfully.", "success")
     return redirect(url_for("seeker.profile"))
 
 

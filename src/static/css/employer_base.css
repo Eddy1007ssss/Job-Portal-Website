@@ -141,6 +141,11 @@ img {
     flex-shrink: 0;
 }
 
+.employer-header-brand-copy {
+    display: flex;
+    align-items: center;
+}
+
 .employer-header-logo-icon {
     width: 39px;
     height: 39px;
@@ -162,6 +167,10 @@ img {
     letter-spacing: -0.4px;
 }
 
+.employer-header-logo-text span {
+    color: var(--employer-primary);
+}
+
 .employer-header-portal-label {
     margin-left: 4px;
     padding-left: 15px;
@@ -177,10 +186,60 @@ img {
     gap: 16px;
 }
 
+.employer-header-notification {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #475467;
+    background: #ffffff;
+    border: 1px solid var(--employer-border);
+    border-radius: 10px;
+    font-size: 16px;
+    transition:
+        color var(--employer-transition),
+        background var(--employer-transition),
+        border-color var(--employer-transition);
+}
+
+.employer-header-notification:hover,
+.employer-header-notification.active {
+    color: var(--employer-primary);
+    background: var(--employer-primary-light);
+    border-color: #c9dbff;
+}
+
+.employer-header-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: #ef4444;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 800;
+}
+
 .employer-header-company {
     display: flex;
     align-items: center;
     gap: 11px;
+    padding: 4px 7px 4px 4px;
+    border-radius: 10px;
+    transition: background var(--employer-transition);
+}
+
+.employer-header-company:hover {
+    background: var(--employer-surface-soft);
 }
 
 .employer-company-avatar {
@@ -397,6 +456,20 @@ img {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.employer-sidebar-notification-badge {
+    min-width: 21px;
+    height: 21px;
+    margin-left: auto;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: var(--employer-primary);
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
 }
 
 .employer-sidebar-footer {
