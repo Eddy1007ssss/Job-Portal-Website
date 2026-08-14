@@ -73,6 +73,14 @@
                 >
             </div>
 
+            <div class="seeker-forgot-password-row">
+                <a
+                    href="{{ url_for('password_reset.request_password_reset', account_type='seeker') }}"
+                >
+                    Forgot password?
+                </a>
+            </div>
+
             <button type="submit" class="seeker-login-submit">
                 Login
             </button>

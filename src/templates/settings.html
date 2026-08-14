@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/portal_pages.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+{% include "components/portal_flash.html" %}
+
+<div class="portal-page settings-page">
+    <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Settings</span>
+    </nav>
+
+    <header class="portal-hero settings-hero">
+        <div class="portal-hero-copy">
+            <p class="portal-eyebrow">Account Preferences</p>
+            <h1>Settings</h1>
+            <p>
+                Control your notifications, profile visibility, and account
+                security.
+            </p>
+        </div>
+
+        <div class="portal-hero-summary">
+            <span class="portal-summary-icon">
+                <i class="fa-solid fa-gear"></i>
+            </span>
+            <div>
+                <strong>3</strong>
+                <span>preference areas</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="account-summary portal-card">
+        <span class="account-avatar">
+            {{ settings.full_name[:1] | upper }}
+        </span>
+        <div>
+            <h2>{{ settings.full_name }}</h2>
+            <p>{{ settings.email }}</p>
+        </div>
+        <a href="{{ url_for('seeker.profile') }}">
+            <i class="fa-regular fa-user"></i>
+            Edit Profile
+        </a>
+    </section>
+
+    <div class="settings-grid">
+        <form
+            class="settings-card portal-card settings-preferences"
+            method="POST"
+            action="{{ url_for('update_settings_preferences') }}"
+        >
+            <div class="portal-section-heading">
+                <span><i class="fa-regular fa-bell"></i></span>
+                <div>
+                    <h2>Notifications</h2>
+                    <p>Choose the updates you want to receive.</p>
+                </div>
+            </div>
+
+            <div class="settings-option-list">
+                <label class="settings-option">
+                    <span>
+                        <strong>Email Notifications</strong>
+                        <small>Receive important JobPortal updates by email.</small>
+                    </span>
+                    <input
+                        name="email_notifications"
+                        type="checkbox"
+                        {% if settings.email_notifications %}checked{% endif %}
+                    >
+                    <span class="settings-switch" aria-hidden="true"></span>
+                </label>
+
+                <label class="settings-option">
+                    <span>
+                        <strong>Application Updates</strong>
+                        <small>Get notified when an application status changes.</small>
+                    </span>
+                    <input
+                        name="application_updates"
+                        type="checkbox"
+                        {% if settings.application_updates %}checked{% endif %}
+                    >
+                    <span class="settings-switch" aria-hidden="true"></span>
+                </label>
+
+                <label class="settings-option">
+                    <span>
+                        <strong>Job Recommendations</strong>
+                        <small>Receive jobs based on your profile and skills.</small>
+                    </span>
+                    <input
+                        name="job_recommendations"
+                        type="checkbox"
+                        {% if settings.job_recommendations %}checked{% endif %}
+                    >
+                    <span class="settings-switch" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <div class="settings-privacy">
+                <div class="portal-section-heading compact-heading">
+                    <span><i class="fa-solid fa-eye"></i></span>
+                    <div>
+                        <h2>Profile Visibility</h2>
+                        <p>Control who can discover your job-seeker profile.</p>
+                    </div>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="profileVisibility">Visible To</label>
+                    <select id="profileVisibility" name="profile_visibility">
+                        {% for option in visibility_options %}
+                            <option
+                                value="{{ option }}"
+                                {% if settings.profile_visibility == option %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{
+                                    "Registered employers"
+                                    if option == "Employers"
+                                    else "Only me"
+                                }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <footer class="settings-card-footer">
+                <button class="portal-primary-button" type="submit">
+                    Save Preferences
+                </button>
+            </footer>
+        </form>
+
+        <div class="settings-side-column">
+            <section class="settings-card portal-card">
+                <div class="portal-section-heading">
+                    <span><i class="fa-regular fa-address-card"></i></span>
+                    <div>
+                        <h2>Account Information</h2>
+                        <p>Your registered contact details.</p>
+                    </div>
+                </div>
+
+                <dl class="account-details">
+                    <div>
+                        <dt>Email Address</dt>
+                        <dd>{{ settings.email }}</dd>
+                    </div>
+                    <div>
+                        <dt>Contact Number</dt>
+                        <dd>{{ settings.contact_number or "Not added" }}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <form
+                class="settings-card portal-card"
+                method="POST"
+                action="{{ url_for('update_settings_password') }}"
+            >
+                <div class="portal-section-heading">
+                    <span><i class="fa-solid fa-lock"></i></span>
+                    <div>
+                        <h2>Change Password</h2>
+                        <p>Use at least 8 characters for your new password.</p>
+                    </div>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <div class="password-field">
+                        <input
+                            id="currentPassword"
+                            name="current_password"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="button" data-password-toggle="currentPassword">
+                            <i class="fa-regular fa-eye"></i>
+                            <span class="sr-only">Show password</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="newPassword">New Password</label>
+                    <div class="password-field">
+                        <input
+                            id="newPassword"
+                            name="new_password"
+                            type="password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required
+                        >
+                        <button type="button" data-password-toggle="newPassword">
+                            <i class="fa-regular fa-eye"></i>
+                            <span class="sr-only">Show password</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <div class="password-field">
+                        <input
+                            id="confirmPassword"
+                            name="confirm_password"
+                            type="password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required
+                        >
+                        <button type="button" data-password-toggle="confirmPassword">
+                            <i class="fa-regular fa-eye"></i>
+                            <span class="sr-only">Show password</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="portal-secondary-button full-width" type="submit">
+                    Update Password
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/portal_pages.js') }}"></script>
+{% endblock %}

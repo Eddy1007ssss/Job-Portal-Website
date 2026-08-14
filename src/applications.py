@@ -8,7 +8,21 @@ from flask import (
     url_for,
 )
 
+from src.application_history import (
+    SORT_OPTIONS,
+    STATUS_OPTIONS,
+    get_application_history,
+    parse_application_history_options,
+)
+from src.application_submission import (
+    can_submit_application,
+    submit_application,
+)
+from src.application_withdrawal import withdraw_application
 from src.database import get_db_connection
+from src.employer_notifications import (
+    sync_employer_activity_for_application,
+)
 
 applications_bp = Blueprint(
     "applications",
@@ -24,44 +38,75 @@ COVER_LETTER_MAX_LENGTH = 2000
 def list_applications():
     seeker_id = session.get("seeker_id")
 
-    if not seeker_id:
+    if not seeker_id or session.get("seeker_authenticated") is not True:
         flash(
-            "A job seeker profile is required to view applications.",
-            "warning",
+            "Please log in as a job seeker to view your application history.",
+            "error",
         )
-        return redirect(url_for("seeker.profile"))
+        return redirect(url_for("seeker.login"))
+
+    options = parse_application_history_options(
+        request.args.get("status"),
+        request.args.get("sort"),
+    )
 
     connection = get_db_connection()
-
-    applications = connection.execute(
-        """
-        SELECT
-            applications.application_id,
-            applications.status AS application_status,
-            applications.resume_filename,
-            applications.applied_at,
-            jobs.job_id,
-            jobs.title,
-            jobs.location,
-            jobs.employment_type,
-            employers.company_name
-        FROM applications
-        JOIN jobs
-            ON jobs.job_id = applications.job_id
-        JOIN employers
-            ON employers.employer_id = jobs.employer_id
-        WHERE applications.seeker_id = ?
-        ORDER BY applications.application_id DESC
-        """,
-        (seeker_id,),
-    ).fetchall()
-
+    applications, total_application_count = get_application_history(
+        connection,
+        int(seeker_id),
+        options,
+    )
     connection.close()
 
     return render_template(
         "my_applications.html",
         applications=applications,
+        total_application_count=total_application_count,
+        selected_status=options.status_key,
+        selected_sort=options.sort_key,
+        filters_active=options.filters_active,
+        status_options=STATUS_OPTIONS,
+        sort_options=SORT_OPTIONS,
     )
+
+
+@applications_bp.post("/<int:application_id>/withdraw")
+def withdraw_job_application(application_id: int):
+    seeker_id = session.get("seeker_id")
+
+    if not seeker_id or session.get("seeker_authenticated") is not True:
+        flash(
+            "Please log in as a job seeker to withdraw an application.",
+            "error",
+        )
+        return redirect(url_for("seeker.login"))
+
+    connection = get_db_connection()
+    result = withdraw_application(
+        connection,
+        application_id,
+        int(seeker_id),
+    )
+
+    if result.succeeded:
+        sync_employer_activity_for_application(
+            connection,
+            application_id,
+        )
+
+    connection.close()
+
+    if result.succeeded:
+        flash("Application withdrawn successfully.", "success")
+    elif result.outcome == "not_found":
+        flash("Application was not found.", "error")
+    else:
+        flash(
+            "Only applications that are still Pending can be withdrawn.",
+            "error",
+        )
+
+    return redirect(url_for("applications.list_applications"))
 
 
 @applications_bp.route(
@@ -121,7 +166,7 @@ def apply_job(job_id: int):
 
     existing_application = connection.execute(
         """
-        SELECT application_id
+        SELECT status
         FROM applications
         WHERE seeker_id = ?
           AND job_id = ?
@@ -132,13 +177,22 @@ def apply_job(job_id: int):
         ),
     ).fetchone()
 
-    if existing_application:
+    existing_status = (
+        existing_application["status"] if existing_application is not None else None
+    )
+
+    if not can_submit_application(existing_status):
         connection.close()
 
-        flash(
-            "You have already applied for this job.",
-            "warning",
-        )
+        if existing_status == "Rejected":
+            message = (
+                "Your previous application for this job was rejected. "
+                "You cannot apply again to the same job posting."
+            )
+        else:
+            message = "You have already applied for this job."
+
+        flash(message, "warning")
         return redirect(
             url_for(
                 "jobs.job_details",
@@ -201,32 +255,37 @@ def apply_job(job_id: int):
 
     resume_filename = seeker_profile["resume_filename"] if seeker_profile else None
 
-    connection.execute(
-        """
-        INSERT INTO applications (
-            seeker_id,
-            job_id,
-            cover_letter,
-            resume_filename,
-            status
-        )
-        VALUES (?, ?, ?, ?, 'Pending')
-        """,
-        (
-            seeker_id,
-            job_id,
-            cover_letter,
-            resume_filename,
-        ),
+    result = submit_application(
+        connection,
+        int(seeker_id),
+        job_id,
+        cover_letter,
+        resume_filename,
     )
 
-    connection.commit()
+    if result.succeeded and result.application_id is not None:
+        sync_employer_activity_for_application(
+            connection,
+            result.application_id,
+        )
+
     connection.close()
 
-    flash(
-        "Your job application was submitted successfully.",
-        "success",
-    )
+    if result.outcome == "reapplied":
+        flash(
+            "Your application was submitted again successfully.",
+            "success",
+        )
+    elif result.outcome == "submitted":
+        flash(
+            "Your job application was submitted successfully.",
+            "success",
+        )
+    else:
+        flash(
+            "This application can no longer be submitted again.",
+            "warning",
+        )
 
     return redirect(
         url_for(

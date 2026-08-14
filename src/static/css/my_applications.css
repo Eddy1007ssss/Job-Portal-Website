@@ -59,6 +59,81 @@
     line-height: 1.6;
 }
 
+.application-filters {
+    margin-bottom: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 12px;
+}
+
+.filter-field {
+    width: min(220px, 100%);
+    display: grid;
+    gap: 6px;
+}
+
+.filter-field label {
+    color: var(--text-normal, #374151);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.filter-field select {
+    min-height: 42px;
+    padding: 0 34px 0 12px;
+    color: var(--text-dark, #111827);
+    background-color: #ffffff;
+    border: 1px solid #dbe1e8;
+    border-radius: 8px;
+    outline: none;
+    font: inherit;
+    font-size: 13px;
+}
+
+.filter-field select:focus {
+    border-color: var(--primary-color, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.apply-filter-button {
+    min-height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #ffffff;
+    background-color: var(--primary-color, #2563eb);
+    border: 1px solid var(--primary-color, #2563eb);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.apply-filter-button:hover {
+    background-color: var(--primary-dark, #1d4ed8);
+    border-color: var(--primary-dark, #1d4ed8);
+}
+
+.clear-filter-link {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--primary-color, #2563eb);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.clear-filter-link:hover {
+    text-decoration: underline;
+}
+
 .find-jobs-button {
     min-height: 44px;
     padding: 0 18px;
@@ -90,7 +165,9 @@
 }
 
 .find-jobs-button:focus-visible,
-.application-title:focus-visible {
+.application-title:focus-visible,
+.apply-filter-button:focus-visible,
+.clear-filter-link:focus-visible {
     outline: 3px solid rgba(37, 99, 235, 0.25);
     outline-offset: 3px;
 }
@@ -287,6 +364,47 @@
     border-color: #fecaca;
 }
 
+.status-withdrawn {
+    color: #475569;
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.withdraw-application-form {
+    margin-top: 12px;
+}
+
+.withdraw-application-button {
+    min-height: 36px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #b91c1c;
+    background-color: #ffffff;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.withdraw-application-button:hover {
+    color: #991b1b;
+    background-color: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.withdraw-application-button:focus-visible {
+    outline: 3px solid rgba(220, 38, 38, 0.2);
+    outline-offset: 3px;
+}
+
 .empty-applications {
     min-height: 390px;
     padding: 64px 28px;
@@ -332,6 +450,10 @@
     line-height: 1.65;
 }
 
+.filtered-empty-state {
+    min-height: 310px;
+}
+
 @media (max-width: 850px) {
     .application-card {
         align-items: flex-start;
@@ -373,6 +495,25 @@
         flex-direction: column;
     }
 
+    .withdraw-application-button {
+        width: 100%;
+    }
+
+    .application-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filter-field {
+        width: 100%;
+    }
+
+    .apply-filter-button,
+    .clear-filter-link {
+        width: 100%;
+        justify-content: center;
+    }
+
     .application-card {
         padding: 18px;
     }
@@ -403,7 +544,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .find-jobs-button,
-    .application-card {
+    .application-card,
+    .apply-filter-button,
+    .withdraw-application-button {
         transition: none;
     }
 }

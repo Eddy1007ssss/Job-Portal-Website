@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Schedule | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/interviews.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+{% include "components/portal_flash.html" %}
+
+<div class="seeker-interviews-page">
+    <nav class="interview-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Interview Schedule</span>
+    </nav>
+
+    <header class="seeker-interview-hero">
+        <div>
+            <span class="interview-eyebrow">YOUR INTERVIEWS</span>
+            <h1>Interview Schedule</h1>
+            <p>
+                Review invitations, respond to employers and keep track of
+                your upcoming interviews.
+            </p>
+        </div>
+        <div class="next-interview-summary">
+            <span><i class="fa-regular fa-calendar-check"></i></span>
+            <div>
+                <strong>{{ summary.upcoming }}</strong>
+                <small>upcoming</small>
+            </div>
+        </div>
+    </header>
+
+    <section class="seeker-interview-statistics">
+        <article>
+            <span class="stat-icon total">
+                <i class="fa-solid fa-calendar-days"></i>
+            </span>
+            <div><strong>{{ summary.total }}</strong><span>All Interviews</span></div>
+        </article>
+        <article>
+            <span class="stat-icon pending">
+                <i class="fa-regular fa-clock"></i>
+            </span>
+            <div><strong>{{ summary.pending }}</strong><span>Response Needed</span></div>
+        </article>
+        <article>
+            <span class="stat-icon accepted">
+                <i class="fa-solid fa-circle-check"></i>
+            </span>
+            <div><strong>{{ summary.accepted }}</strong><span>Accepted</span></div>
+        </article>
+    </section>
+
+    {% if interviews %}
+        <section class="seeker-interview-list" aria-label="Your interviews">
+            {% for interview in interviews %}
+                <article class="seeker-interview-card {{
+                    'requires-response' if interview.can_respond else ''
+                }}">
+                    <div class="interview-date-tile">
+                        <span>{{ interview.display_date.split(',')[0] }}</span>
+                        <strong>{{ interview.display_date.split(' ')[1] }}</strong>
+                        <small>{{ interview.display_date.split(' ')[2:] | join(' ') }}</small>
+                    </div>
+
+                    <div class="seeker-interview-content">
+                        <div class="interview-card-heading">
+                            <div>
+                                <div class="interview-heading-labels">
+                                    <span class="interview-company">
+                                        {{ interview.company_name }}
+                                    </span>
+                                    {% if interview.can_respond %}
+                                        <span class="response-required-badge">Response Required</span>
+                                    {% endif %}
+                                </div>
+                                <h2>{{ interview.job_title }}</h2>
+                            </div>
+                            <span class="interview-status status-{{ interview.status | lower }}">
+                                {{ interview.status }}
+                            </span>
+                        </div>
+
+                        <div class="interview-details-grid">
+                            <div>
+                                <i class="fa-regular fa-clock"></i>
+                                <span><small>Time</small><strong>{{ interview.display_time }}</strong></span>
+                            </div>
+                            <div>
+                                <i class="fa-solid fa-hourglass-half"></i>
+                                <span><small>Duration</small><strong>{{ interview.duration_minutes }} minutes</strong></span>
+                            </div>
+                            <div>
+                                <i class="fa-solid {{
+                                    'fa-video' if interview.interview_mode == 'Online'
+                                    else 'fa-phone' if interview.interview_mode == 'Phone'
+                                    else 'fa-location-dot'
+                                }}"></i>
+                                <span><small>Mode</small><strong>{{ interview.interview_mode }}</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="interview-location-panel">
+                            <i class="fa-solid {{
+                                'fa-link' if interview.interview_mode == 'Online'
+                                else 'fa-location-dot'
+                            }}"></i>
+                            <div>
+                                <small>{{
+                                    'Meeting Link'
+                                    if interview.interview_mode == 'Online'
+                                    else 'Location / Instructions'
+                                }}</small>
+                                {% if interview.join_url and interview.status == 'Accepted' %}
+                                    <a href="{{ interview.join_url }}" target="_blank" rel="noopener noreferrer">
+                                        Open Online Meeting
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
+                                {% else %}
+                                    <strong>{{ interview.location_or_link }}</strong>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if interview.notes %}
+                            <p class="interview-notes">
+                                <i class="fa-regular fa-note-sticky"></i>
+                                {{ interview.notes }}
+                            </p>
+                        {% endif %}
+
+                        {% if interview.status == 'Cancelled' and interview.cancellation_reason %}
+                            <div class="interview-decision-reason cancelled-reason">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <div>
+                                    <small>Employer cancellation reason</small>
+                                    <p>{{ interview.cancellation_reason }}</p>
+                                </div>
+                            </div>
+                        {% elif interview.status == 'Declined' and interview.seeker_response_reason %}
+                            <div class="interview-decision-reason declined-reason">
+                                <i class="fa-regular fa-message"></i>
+                                <div>
+                                    <small>Your decline reason</small>
+                                    <p>{{ interview.seeker_response_reason }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if interview.can_respond %}
+                            <footer class="interview-response-actions">
+                                <p>Please confirm whether you can attend this interview.</p>
+                                <div>
+                                    <button
+                                        type="button"
+                                        class="decline-interview-button"
+                                        data-open-dialog="declineInterview{{ interview.interview_id }}"
+                                        aria-haspopup="dialog"
+                                    >
+                                        <i class="fa-solid fa-xmark"></i> Decline
+                                    </button>
+                                    <form method="POST" action="{{ url_for('interviews.respond', interview_id=interview.interview_id) }}">
+                                        <input type="hidden" name="response" value="Accepted">
+                                        <button type="submit" class="accept-interview-button">
+                                            <i class="fa-solid fa-check"></i> Accept Interview
+                                        </button>
+                                    </form>
+
+                                    <dialog
+                                        id="declineInterview{{ interview.interview_id }}"
+                                        class="interview-reason-dialog"
+                                    >
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for('interviews.respond', interview_id=interview.interview_id) }}"
+                                        >
+                                            <input type="hidden" name="response" value="Declined">
+                                            <header>
+                                                <span class="reason-dialog-icon decline">
+                                                    <i class="fa-solid fa-calendar-xmark"></i>
+                                                </span>
+                                                <div>
+                                                    <h3>Decline Interview?</h3>
+                                                    <p>Tell the employer why you cannot attend.</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class="reason-dialog-close"
+                                                    data-close-dialog
+                                                    aria-label="Close"
+                                                >
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </button>
+                                            </header>
+                                            <label for="declineReason{{ interview.interview_id }}">
+                                                Reason for declining
+                                            </label>
+                                            <textarea
+                                                id="declineReason{{ interview.interview_id }}"
+                                                name="reason"
+                                                rows="5"
+                                                minlength="5"
+                                                maxlength="500"
+                                                placeholder="For example: I have a scheduling conflict at this time."
+                                                required
+                                            ></textarea>
+                                            <small>Required · 5–500 characters</small>
+                                            <footer>
+                                                <button type="button" data-close-dialog>
+                                                    Go Back
+                                                </button>
+                                                <button type="submit" class="confirm-decline-button">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                    Decline Interview
+                                                </button>
+                                            </footer>
+                                        </form>
+                                    </dialog>
+                                </div>
+                            </footer>
+                        {% elif not interview.is_upcoming and interview.status in ['Pending', 'Accepted'] %}
+                            <p class="interview-past-notice">
+                                <i class="fa-regular fa-clock"></i>
+                                This interview time has passed.
+                            </p>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <section class="interview-empty-state">
+            <span><i class="fa-regular fa-calendar"></i></span>
+            <h2>No interviews scheduled</h2>
+            <p>
+                When an employer invites you to an interview, the invitation
+                and its details will appear here.
+            </p>
+            <a href="{{ url_for('jobs.list_jobs') }}">Find Jobs</a>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/interviews.js') }}"></script>
+{% endblock %}

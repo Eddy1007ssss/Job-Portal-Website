@@ -345,6 +345,47 @@
 
         <aside class="application-detail-side">
 
+            <!-- Interview Management -->
+            <article class="detail-card interview-action-card">
+                <span class="interview-action-icon">
+                    <i class="fa-regular fa-calendar-check"></i>
+                </span>
+
+                <h2>Interview</h2>
+
+                {% if application['status'] == 'Shortlisted' %}
+                    <p>
+                        Schedule an interview or manage the existing
+                        invitation for this applicant.
+                    </p>
+                    <a
+                        href="{{ url_for(
+                            'interviews.manage_interview',
+                            application_id=application['application_id']
+                        ) }}"
+                        class="schedule-interview-button"
+                    >
+                        <i class="fa-regular fa-calendar-plus"></i>
+                        Schedule / Manage Interview
+                    </a>
+                {% else %}
+                    <p>
+                        Change the application status to
+                        <strong>Shortlisted</strong> before scheduling an
+                        interview.
+                    </p>
+                    <a
+                        href="{{ url_for(
+                            'employer_applications.application_list',
+                            job_id=application['job_id']
+                        ) }}"
+                        class="interview-status-link"
+                    >
+                        Update Application Status
+                    </a>
+                {% endif %}
+            </article>
+
             <!-- Contact Information -->
             <article class="detail-card">
                 <h2>Contact Information</h2>

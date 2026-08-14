@@ -107,6 +107,11 @@ Applications for {{ job['title'] }} | JobPortal
             <strong>{{ status_counts['rejected'] }}</strong>
         </div>
 
+        <div class="application-stat-card">
+            <span>Withdrawn</span>
+            <strong>{{ status_counts['withdrawn'] }}</strong>
+        </div>
+
     </div>
 
     <div class="application-list-card">
@@ -294,66 +299,73 @@ Applications for {{ job['title'] }} | JobPortal
                                             {{ application_status | title }}
                                         </span>
 
-                                        <form
-                                            method="post"
-                                            action="{{ url_for(
-                                                'employer_applications.update_application_status',
-                                                application_id=application[
-                                                    'application_id'
-                                                ]
-                                            ) }}"
-                                            class="status-update-form"
-                                        >
-                                            <label
-                                                for="application-status-{{
-                                                    application[
+                                        {% if application_status ==
+                                            'Withdrawn' %}
+                                            <span class="withdrawn-notice">
+                                                Withdrawn by job seeker
+                                            </span>
+                                        {% else %}
+                                            <form
+                                                method="post"
+                                                action="{{ url_for(
+                                                    'employer_applications.update_application_status',
+                                                    application_id=application[
                                                         'application_id'
                                                     ]
-                                                }}"
-                                                class="visually-hidden"
+                                                ) }}"
+                                                class="status-update-form"
                                             >
-                                                Update application status
-                                            </label>
+                                                <label
+                                                    for="application-status-{{
+                                                        application[
+                                                            'application_id'
+                                                        ]
+                                                    }}"
+                                                    class="visually-hidden"
+                                                >
+                                                    Update application status
+                                                </label>
 
-                                            <select
-                                                id="application-status-{{
-                                                    application[
-                                                        'application_id'
-                                                    ]
-                                                }}"
-                                                name="status"
-                                                class="status-select"
-                                                aria-label="Application status for {{
-                                                    application[
-                                                        'applicant_name'
-                                                    ]
-                                                }}"
-                                            >
-                                                {% for status_option in
-                                                    application_statuses %}
-                                                    <option
-                                                        value="{{ status_option }}"
-                                                        {% if status_option ==
-                                                            application_status %}
-                                                            selected
-                                                        {% endif %}
-                                                    >
-                                                        {{ status_option }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
+                                                <select
+                                                    id="application-status-{{
+                                                        application[
+                                                            'application_id'
+                                                        ]
+                                                    }}"
+                                                    name="status"
+                                                    class="status-select"
+                                                    aria-label="Application status for {{
+                                                        application[
+                                                            'applicant_name'
+                                                        ]
+                                                    }}"
+                                                >
+                                                    {% for status_option in
+                                                        application_statuses %}
+                                                        <option
+                                                            value="{{ status_option }}"
+                                                            {% if status_option ==
+                                                                application_status %}
+                                                                selected
+                                                            {% endif %}
+                                                        >
+                                                            {{ status_option }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
 
-                                            <button
-                                                type="submit"
-                                                class="status-update-button"
-                                            >
-                                                <i
-                                                    class="fa-solid fa-check"
-                                                    aria-hidden="true"
-                                                ></i>
-                                                Update Status
-                                            </button>
-                                        </form>
+                                                <button
+                                                    type="submit"
+                                                    class="status-update-button"
+                                                >
+                                                    <i
+                                                        class="fa-solid fa-check"
+                                                        aria-hidden="true"
+                                                    ></i>
+                                                    Update Status
+                                                </button>
+                                            </form>
+                                        {% endif %}
                                     </div>
                                 </td>
 

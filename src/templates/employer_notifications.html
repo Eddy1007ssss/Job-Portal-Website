@@ -1,0 +1,185 @@
+{% extends "employer_base.html" %}
+
+{% block title %}Notifications | Employer Portal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/employer_notifications.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+<section class="employer-notifications-page">
+    <header class="employer-notifications-heading">
+        <div>
+            <span class="notifications-eyebrow">EMPLOYER ACTIVITY</span>
+            <h1>Notifications</h1>
+            <p>
+                Stay updated when candidates apply, withdraw or respond to
+                interview invitations.
+            </p>
+        </div>
+
+        {% if summary.unread %}
+            <form
+                method="POST"
+                action="{{ url_for('employer_notifications.read_all_notifications') }}"
+            >
+                <button type="submit" class="mark-all-notifications-button">
+                    <i class="fa-solid fa-check-double"></i>
+                    Mark all as read
+                </button>
+            </form>
+        {% endif %}
+    </header>
+
+    <section class="employer-notification-stats">
+        <article>
+            <span class="notification-stat-icon all">
+                <i class="fa-regular fa-bell"></i>
+            </span>
+            <div>
+                <strong>{{ summary.total }}</strong>
+                <small>All Notifications</small>
+            </div>
+        </article>
+        <article>
+            <span class="notification-stat-icon unread">
+                <i class="fa-solid fa-circle"></i>
+            </span>
+            <div>
+                <strong>{{ summary.unread }}</strong>
+                <small>Unread</small>
+            </div>
+        </article>
+        <article>
+            <span class="notification-stat-icon applications">
+                <i class="fa-regular fa-file-lines"></i>
+            </span>
+            <div>
+                <strong>{{ summary.applications }}</strong>
+                <small>Application Updates</small>
+            </div>
+        </article>
+        <article>
+            <span class="notification-stat-icon interviews">
+                <i class="fa-regular fa-calendar-check"></i>
+            </span>
+            <div>
+                <strong>{{ summary.interviews }}</strong>
+                <small>Interview Responses</small>
+            </div>
+        </article>
+    </section>
+
+    <section class="employer-notification-panel">
+        <nav
+            class="employer-notification-filters"
+            aria-label="Notification filters"
+        >
+            {% for filter_key, label in [
+                ('all', 'All'),
+                ('unread', 'Unread'),
+                ('applications', 'Applications'),
+                ('interviews', 'Interviews')
+            ] %}
+                <a
+                    href="{{ url_for('employer_notifications.notification_list', filter=filter_key) }}"
+                    class="{{ 'active' if selected_filter == filter_key else '' }}"
+                >
+                    {{ label }}
+                    {% if filter_key == 'unread' and summary.unread %}
+                        <span>{{ summary.unread }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </nav>
+
+        {% if notifications %}
+            <div class="employer-notification-list">
+                {% for notification in notifications %}
+                    <article class="employer-notification-item {{
+                        'unread' if not notification.is_read else ''
+                    }}">
+                        <span class="notification-type-icon type-{{ notification.notification_type }}">
+                            <i class="fa-solid {{
+                                'fa-file-circle-plus'
+                                if notification.notification_type == 'new_application'
+                                else 'fa-user-minus'
+                                if notification.notification_type == 'application_withdrawn'
+                                else 'fa-calendar-check'
+                                if notification.notification_type == 'interview_accepted'
+                                else 'fa-calendar-xmark'
+                            }}"></i>
+                        </span>
+
+                        <div class="employer-notification-content">
+                            <div class="notification-title-row">
+                                <div>
+                                    <h2>{{ notification.title }}</h2>
+                                    {% if not notification.is_read %}
+                                        <span class="new-notification-label">
+                                            New
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <time title="{{ notification.display_time }}">
+                                    {{ notification.relative_time }}
+                                </time>
+                            </div>
+                            <p>{{ notification.message }}</p>
+                            {% if notification.job_title %}
+                                <span class="notification-job-reference">
+                                    <i class="fa-solid fa-briefcase"></i>
+                                    {{ notification.job_title }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="employer-notification-actions">
+                            {% if not notification.is_read %}
+                                <form
+                                    method="POST"
+                                    action="{{ url_for('employer_notifications.read_notification', notification_id=notification.notification_id) }}"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="notification-read-button"
+                                        title="Mark as read"
+                                    >
+                                        <i class="fa-regular fa-circle-check"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <form
+                                method="POST"
+                                action="{{ url_for('employer_notifications.open_notification', notification_id=notification.notification_id) }}"
+                            >
+                                <button
+                                    type="submit"
+                                    class="notification-open-button"
+                                >
+                                    View details
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="employer-notification-empty">
+                <span><i class="fa-regular fa-bell-slash"></i></span>
+                <h2>No notifications found</h2>
+                <p>
+                    New applications and interview responses will appear here.
+                </p>
+                <a href="{{ url_for('jobs.employer_jobs') }}">
+                    View Job Listings
+                </a>
+            </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

@@ -195,6 +195,7 @@ textarea {
     border-radius: 50%;
     cursor: pointer;
     font-size: 17px;
+    text-decoration: none;
     transition:
         color 0.2s ease,
         background-color 0.2s ease;
@@ -477,6 +478,21 @@ textarea {
 .seeker-sidebar-navigation a:hover .sidebar-link-icon,
 .seeker-sidebar-navigation a.active .sidebar-link-icon {
     color: var(--primary-color);
+}
+
+.sidebar-notification-badge {
+    min-width: 20px;
+    height: 20px;
+    margin-left: auto;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    background: #ef4444;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
 }
 
 

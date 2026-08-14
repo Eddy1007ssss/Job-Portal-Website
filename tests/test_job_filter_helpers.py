@@ -60,7 +60,7 @@ def make_filters(**overrides):
         (
             {"keyword": "Python"},
             "jobs.title LIKE ?",
-            ["%Python%", "%Python%", "%Python%", "%Python%"],
+            ["%Python%", "%Python%", "%Python%", "%Python%", "%Python%"],
         ),
         ({"location": "Kuala Lumpur"}, "jobs.location LIKE ?", ["%Kuala Lumpur%"]),
         ({"category": "Development"}, "jobs.category = ?", ["Development"]),
@@ -101,8 +101,9 @@ def test_build_job_filter_query_combines_all_parameters_in_order():
 
     where_clause, parameters = build_job_filter_query(filters)
 
-    assert where_clause.count("?") == 11
+    assert where_clause.count("?") == 12
     assert parameters == [
+        "%Engineer%",
         "%Engineer%",
         "%Engineer%",
         "%Engineer%",

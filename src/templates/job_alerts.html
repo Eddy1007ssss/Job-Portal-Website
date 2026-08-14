@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Job Alerts | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/portal_pages.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+{% include "components/portal_flash.html" %}
+
+<div class="portal-page job-alerts-page">
+    <nav class="portal-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Job Alerts</span>
+    </nav>
+
+    <header class="portal-hero">
+        <div class="portal-hero-copy">
+            <p class="portal-eyebrow">New Job Notifications</p>
+            <h1>Job Alerts</h1>
+            <p>
+                When an employer publishes a new vacancy, the notification
+                will appear here automatically.
+            </p>
+        </div>
+
+        <div class="portal-hero-summary">
+            <span class="portal-summary-icon">
+                <i class="fa-regular fa-bell"></i>
+            </span>
+            <div>
+                <strong>{{ unread_count }}</strong>
+                <span>
+                    unread
+                    {{ "message" if unread_count == 1 else "messages" }}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <section class="notification-toolbar portal-card">
+        <div>
+            <h2>Notifications</h2>
+            <p>
+                {{ notifications | length }}
+                {{
+                    "new-job message"
+                    if notifications | length == 1
+                    else "new-job messages"
+                }}
+            </p>
+        </div>
+
+        {% if notifications %}
+            <form
+                method="POST"
+                action="{{ url_for('read_all_job_notifications') }}"
+            >
+                <button type="submit" {% if unread_count == 0 %}disabled{% endif %}>
+                    <i class="fa-solid fa-check-double"></i>
+                    Mark All as Read
+                </button>
+            </form>
+        {% endif %}
+    </section>
+
+    {% if notifications %}
+        <section class="notification-list" aria-label="New job notifications">
+            {% for notification in notifications %}
+                <article class="notification-card portal-card
+                    {% if not notification.is_read %}unread{% endif %}">
+                    <div class="notification-company-logo" aria-hidden="true">
+                        {{ notification.company_name[:1] | upper }}
+                    </div>
+
+                    <div class="notification-content">
+                        <div class="notification-title-row">
+                            <div>
+                                <div class="notification-label-row">
+                                    <span class="notification-type">
+                                        <i class="fa-solid fa-briefcase"></i>
+                                        New Job Posted
+                                    </span>
+
+                                    {% if not notification.is_read %}
+                                        <span class="notification-new-badge">
+                                            New
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <h2>{{ notification.message }}</h2>
+                                <p>
+                                    This vacancy is now available on JobPortal.
+                                    Open it to review the requirements and apply.
+                                </p>
+                            </div>
+
+                            <time datetime="{{
+                                notification.notification_created_at
+                            }}">
+                                {{ notification.display_date }}
+                            </time>
+                        </div>
+
+                        <div class="notification-meta">
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i>
+                                {{ notification.location or "Location not specified" }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-clock"></i>
+                                {{ notification.employment_type or "Job type not specified" }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-building"></i>
+                                {{ notification.work_mode or "On-site" }}
+                            </span>
+                        </div>
+
+                        <footer class="notification-footer">
+                            <span class="notification-availability {{
+                                'closed'
+                                if notification.status != 'Open'
+                                else ''
+                            }}">
+                                <i class="fa-solid fa-circle"></i>
+                                {{
+                                    "Accepting applications"
+                                    if notification.status == "Open"
+                                    else "No longer accepting applications"
+                                }}
+                            </span>
+
+                            <form
+                                method="POST"
+                                action="{{
+                                    url_for(
+                                        'open_job_notification',
+                                        notification_id=notification.notification_id
+                                    )
+                                }}"
+                            >
+                                <button class="notification-view-button" type="submit">
+                                    View Job
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </form>
+                        </footer>
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <section class="portal-empty-state notification-empty-state">
+            <span><i class="fa-regular fa-bell"></i></span>
+            <h2>No new job notifications</h2>
+            <p>
+                When an employer publishes a vacancy, its notification will
+                appear here automatically.
+            </p>
+            <a href="{{ url_for('jobs.list_jobs') }}">
+                Browse Current Jobs
+            </a>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/portal_pages.js') }}"></script>
+{% endblock %}

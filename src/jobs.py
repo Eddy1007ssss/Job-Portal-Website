@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import math
 import sqlite3
-from dataclasses import dataclass
-from typing import Any
 
 from flask import (
     Blueprint,
@@ -15,7 +13,16 @@ from flask import (
     url_for,
 )
 
+from src.application_submission import can_submit_application
 from src.database import get_db_connection
+from src.job_search import (
+    SORT_OPTIONS,
+    JobFilters,
+    build_job_filter_query,
+    parse_optional_integer,
+)
+from src.portal_pages import create_job_notifications_for_job
+from src.saved_jobs import get_saved_jobs, toggle_saved_job
 
 jobs_bp = Blueprint(
     "jobs",
@@ -24,33 +31,6 @@ jobs_bp = Blueprint(
 
 
 JOBS_PER_PAGE = 6
-
-
-SORT_OPTIONS = {
-    "newest": "jobs.created_at DESC",
-    "oldest": "jobs.created_at ASC",
-    "salary_high": """
-        COALESCE(jobs.salary_max, jobs.salary_min, 0) DESC
-    """,
-    "salary_low": """
-        COALESCE(jobs.salary_min, jobs.salary_max, 0) ASC
-    """,
-    "title_az": "jobs.title COLLATE NOCASE ASC",
-}
-
-
-@dataclass
-class JobFilters:
-    keyword: str
-    location: str
-    category: str
-    employment_type: str
-    experience_level: str
-    work_mode: str
-    minimum_salary: int | None
-    maximum_salary: int | None
-    sort: str
-    page: int
 
 
 def get_existing_columns(
@@ -130,6 +110,7 @@ def initialise_job_tables() -> None:
         """)
 
     additional_columns = {
+        "department": "TEXT",
         "category": "TEXT",
         "experience_level": "TEXT",
         "work_mode": "TEXT",
@@ -150,6 +131,16 @@ def initialise_job_tables() -> None:
             column_name,
             column_definition,
         )
+
+    # Older job records were created before Department was stored. Use the
+    # closest existing value so their edit forms are not left blank.
+    connection.execute("""
+        UPDATE jobs
+        SET department = category
+        WHERE (department IS NULL OR TRIM(department) = '')
+          AND category IS NOT NULL
+          AND TRIM(category) != ''
+        """)
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS saved_jobs (
@@ -522,6 +513,7 @@ def seed_demo_jobs() -> None:
             INSERT INTO jobs (
                 employer_id,
                 title,
+                department,
                 description,
                 location,
                 employment_type,
@@ -539,13 +531,14 @@ def seed_demo_jobs() -> None:
                 is_featured
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, ?, 'Open',
+                ?, ?, ?, ?, ?, ?, ?, ?, 'Open',
                 ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
             """,
             (
                 job["employer_id"],
                 job["title"],
+                job["category"],
                 job["description"],
                 job["location"],
                 job["employment_type"],
@@ -565,27 +558,6 @@ def seed_demo_jobs() -> None:
 
     connection.commit()
     connection.close()
-
-
-def parse_optional_integer(
-    value: str | None,
-) -> int | None:
-    """
-    Convert an optional query parameter to an integer.
-    """
-
-    if value is None:
-        return None
-
-    cleaned_value = value.strip()
-
-    if not cleaned_value:
-        return None
-
-    try:
-        return int(cleaned_value)
-    except ValueError:
-        return None
 
 
 def read_job_filters() -> JobFilters:
@@ -635,92 +607,6 @@ def read_job_filters() -> JobFilters:
         sort=sort,
         page=max(page, 1),
     )
-
-
-def build_job_filter_query(
-    filters: JobFilters,
-) -> tuple[str, list[Any]]:
-    """
-    Build a safe SQL WHERE condition and its parameters.
-    """
-
-    conditions = [
-        "jobs.status = 'Open'",
-    ]
-
-    parameters: list[Any] = []
-
-    if filters.keyword:
-        keyword = f"%{filters.keyword}%"
-
-        conditions.append("""
-            (
-                jobs.title LIKE ?
-                OR employers.company_name LIKE ?
-                OR jobs.description LIKE ?
-                OR jobs.category LIKE ?
-            )
-            """)
-
-        parameters.extend(
-            [
-                keyword,
-                keyword,
-                keyword,
-                keyword,
-            ]
-        )
-
-    if filters.location:
-        conditions.append("jobs.location LIKE ?")
-
-        parameters.append(f"%{filters.location}%")
-
-    if filters.category:
-        conditions.append("jobs.category = ?")
-
-        parameters.append(filters.category)
-
-    if filters.employment_type:
-        conditions.append("jobs.employment_type = ?")
-
-        parameters.append(filters.employment_type)
-
-    if filters.experience_level:
-        conditions.append("jobs.experience_level = ?")
-
-        parameters.append(filters.experience_level)
-
-    if filters.work_mode:
-        conditions.append("jobs.work_mode = ?")
-
-        parameters.append(filters.work_mode)
-
-    if filters.minimum_salary is not None:
-        conditions.append("""
-            COALESCE(
-                jobs.salary_max,
-                jobs.salary_min,
-                0
-            ) >= ?
-            """)
-
-        parameters.append(filters.minimum_salary)
-
-    if filters.maximum_salary is not None:
-        conditions.append("""
-            COALESCE(
-                jobs.salary_min,
-                jobs.salary_max,
-                0
-            ) <= ?
-            """)
-
-        parameters.append(filters.maximum_salary)
-
-    where_clause = " AND ".join(conditions)
-
-    return where_clause, parameters
 
 
 def get_current_seeker_id() -> int | None:
@@ -878,6 +764,35 @@ def list_jobs():
     )
 
 
+@jobs_bp.route("/saved-jobs")
+def list_saved_jobs():
+    """Display the logged-in seeker's saved jobs."""
+
+    seeker_id = get_current_seeker_id()
+
+    if seeker_id is None:
+        flash(
+            "Please log in as a job seeker to view your saved jobs.",
+            "error",
+        )
+        return redirect(url_for("seeker.login"))
+
+    initialise_job_tables()
+    connection = get_db_connection()
+    saved_jobs = get_saved_jobs(connection, seeker_id)
+    connection.close()
+
+    available_job_count = sum(
+        1 for saved_job in saved_jobs if saved_job["is_available"]
+    )
+
+    return render_template(
+        "saved_jobs.html",
+        saved_jobs=saved_jobs,
+        available_job_count=available_job_count,
+    )
+
+
 @jobs_bp.route(
     "/employer/jobs/post",
     methods=["GET", "POST"],
@@ -908,6 +823,11 @@ def post_job():
 
     title = request.form.get(
         "job_title",
+        "",
+    ).strip()
+
+    department = request.form.get(
+        "department",
         "",
     ).strip()
 
@@ -987,6 +907,7 @@ def post_job():
 
     required_fields = {
         "Job title": title,
+        "Department": department,
         "Job category": category,
         "Employment type": employment_type,
         "Workplace type": work_mode,
@@ -1124,11 +1045,12 @@ def post_job():
     connection = get_db_connection()
 
     try:
-        connection.execute(
+        cursor = connection.execute(
             """
             INSERT INTO jobs (
                 employer_id,
                 title,
+                department,
                 description,
                 location,
                 employment_type,
@@ -1145,7 +1067,7 @@ def post_job():
                 application_deadline
             )
             VALUES (
-                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?
@@ -1154,6 +1076,7 @@ def post_job():
             (
                 employer_id,
                 title,
+                department,
                 description,
                 location,
                 employment_type,
@@ -1170,6 +1093,12 @@ def post_job():
                 application_deadline or None,
             ),
         )
+
+        if status == "Open":
+            create_job_notifications_for_job(
+                connection,
+                int(cursor.lastrowid),
+            )
 
         connection.commit()
 
@@ -1312,6 +1241,9 @@ def update_job_status(job_id: int):
         ),
     )
 
+    if cursor.rowcount and target_status == "Open":
+        create_job_notifications_for_job(connection, job_id)
+
     connection.commit()
     connection.close()
 
@@ -1451,6 +1383,11 @@ def edit_job(job_id: int):
         "",
     ).strip()
 
+    department = request.form.get(
+        "department",
+        "",
+    ).strip()
+
     category = request.form.get(
         "job_category",
         "",
@@ -1522,6 +1459,7 @@ def edit_job(job_id: int):
 
     required_fields = {
         "Job title": title,
+        "Department": department,
         "Job category": category,
         "Employment type": employment_type,
         "Workplace type": work_mode,
@@ -1679,6 +1617,7 @@ def edit_job(job_id: int):
         UPDATE jobs
         SET
             title = ?,
+            department = ?,
             category = ?,
             employment_type = ?,
             work_mode = ?,
@@ -1698,6 +1637,7 @@ def edit_job(job_id: int):
         """,
         (
             title,
+            department,
             category,
             employment_type,
             work_mode,
@@ -1784,12 +1724,14 @@ def job_details(job_id: int):
         return redirect(url_for("jobs.list_jobs"))
 
     has_applied = False
+    application_status = None
+    can_apply = True
     is_saved = False
 
     if seeker_id:
         existing_application = connection.execute(
             """
-            SELECT application_id
+            SELECT application_id, status
             FROM applications
             WHERE seeker_id = ?
               AND job_id = ?
@@ -1801,6 +1743,10 @@ def job_details(job_id: int):
         ).fetchone()
 
         has_applied = existing_application is not None
+        application_status = (
+            existing_application["status"] if existing_application is not None else None
+        )
+        can_apply = can_submit_application(application_status)
 
         saved_job = connection.execute(
             """
@@ -1826,6 +1772,8 @@ def job_details(job_id: int):
         "job_details.html",
         job=job_data,
         has_applied=has_applied,
+        application_status=application_status,
+        can_apply=can_apply,
     )
 
 
@@ -1850,79 +1798,17 @@ def toggle_save_job(
     initialise_job_tables()
 
     connection = get_db_connection()
-
-    job = connection.execute(
-        """
-        SELECT job_id
-        FROM jobs
-        WHERE job_id = ?
-          AND status = 'Open'
-        """,
-        (job_id,),
-    ).fetchone()
-
-    if job is None:
-        connection.close()
-
-        flash(
-            "The selected job is no longer available.",
-            "error",
-        )
-
-        return redirect(url_for("jobs.list_jobs"))
-
-    saved_job = connection.execute(
-        """
-        SELECT saved_job_id
-        FROM saved_jobs
-        WHERE seeker_id = ?
-          AND job_id = ?
-        """,
-        (
-            seeker_id,
-            job_id,
-        ),
-    ).fetchone()
-
-    if saved_job:
-        connection.execute(
-            """
-            DELETE FROM saved_jobs
-            WHERE seeker_id = ?
-              AND job_id = ?
-            """,
-            (
-                seeker_id,
-                job_id,
-            ),
-        )
-
-        message = "Job removed from your saved jobs."
-
-    else:
-        connection.execute(
-            """
-            INSERT INTO saved_jobs (
-                seeker_id,
-                job_id
-            )
-            VALUES (?, ?)
-            """,
-            (
-                seeker_id,
-                job_id,
-            ),
-        )
-
-        message = "Job saved successfully."
-
-    connection.commit()
+    result = toggle_saved_job(connection, seeker_id, job_id)
     connection.close()
 
-    flash(
-        message,
-        "success",
-    )
+    if result.outcome == "saved":
+        flash("Job saved successfully.", "success")
+    elif result.outcome == "removed":
+        flash("Job removed from your saved jobs.", "success")
+    elif result.outcome == "already_saved":
+        flash("This job is already in your saved jobs.", "warning")
+    else:
+        flash("The selected job is no longer available.", "error")
 
     return_url = request.form.get(
         "next",

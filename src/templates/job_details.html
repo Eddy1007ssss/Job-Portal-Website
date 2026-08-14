@@ -108,22 +108,37 @@
 
         <div class="job-header-actions">
 
-            {% if has_applied %}
-
-                <span class="already-applied-button">
-                    <i class="fa-solid fa-circle-check"></i>
-                    Applied
-                </span>
-
-            {% else %}
+            {% if can_apply and job.status == "Open" %}
 
                 <a
                     href="#application-form"
                     class="apply-job-button"
                 >
                     <i class="fa-solid fa-paper-plane"></i>
-                    Apply This Job
+                    {% if application_status == "Withdrawn" %}
+                        Apply Again
+                    {% else %}
+                        Apply This Job
+                    {% endif %}
                 </a>
+
+            {% elif has_applied %}
+
+                <span class="already-applied-button">
+                    <i class="fa-solid fa-circle-check"></i>
+                    {% if application_status == "Rejected" %}
+                        Application Rejected
+                    {% else %}
+                        Applied
+                    {% endif %}
+                </span>
+
+            {% else %}
+
+                <span class="already-applied-button">
+                    <i class="fa-solid fa-lock"></i>
+                    Job Closed
+                </span>
 
             {% endif %}
 
@@ -169,7 +184,7 @@
     </section>
 
 
-    {% if not has_applied and job.status == "Open" %}
+    {% if can_apply and job.status == "Open" %}
 
         <section
             id="application-form"
@@ -181,10 +196,21 @@
                 </span>
 
                 <div>
-                    <h2>Apply for This Job</h2>
+                    <h2>
+                        {% if application_status == "Withdrawn" %}
+                            Apply Again for This Job
+                        {% else %}
+                            Apply for This Job
+                        {% endif %}
+                    </h2>
                     <p>
-                        Introduce yourself and explain why you are
-                        suitable for this role.
+                        {% if application_status == "Withdrawn" %}
+                            Submit a new cover letter to reactivate your
+                            withdrawn application.
+                        {% else %}
+                            Introduce yourself and explain why you are
+                            suitable for this role.
+                        {% endif %}
                     </p>
                 </div>
             </div>
@@ -220,7 +246,11 @@
                     class="submit-application-button"
                 >
                     <i class="fa-solid fa-paper-plane"></i>
-                    Submit Application
+                    {% if application_status == "Withdrawn" %}
+                        Submit Application Again
+                    {% else %}
+                        Submit Application
+                    {% endif %}
                 </button>
             </form>
         </section>

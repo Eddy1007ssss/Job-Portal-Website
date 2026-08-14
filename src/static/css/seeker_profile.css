@@ -765,6 +765,11 @@ a {
     font-size: 11px;
 }
 
+.education-field-of-study {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
 .status-badge {
     padding: 4px 8px;
     border-radius: 20px;
@@ -777,6 +782,30 @@ a {
     background: var(--success-background);
 }
 
+.status-badge.in-progress {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.form-help-text,
+.education-current-certificate {
+    display: block;
+    margin-top: 7px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.education-current-certificate {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.education-current-certificate[hidden],
+#educationCertificateGroup[hidden] {
+    display: none;
+}
+
 /* Skills */
 
 .skill-list {
@@ -785,13 +814,48 @@ a {
     gap: 9px;
 }
 
-.skill-tag {
-    padding: 7px 11px;
-    color: #505865;
+.skill-entry {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
     background: #f3f5f8;
     border: 1px solid #e2e6ec;
     border-radius: 20px;
+}
+
+.skill-tag {
+    padding: 7px 8px 7px 11px;
+    color: #505865;
+    background: transparent;
+    border: 0;
     font-size: 11px;
+}
+
+.skill-tag:hover {
+    color: var(--primary);
+}
+
+.skill-edit-button i {
+    color: #9299a6;
+    font-size: 9px;
+}
+
+.skill-remove-button {
+    width: 25px;
+    height: 25px;
+    display: inline-grid;
+    place-items: center;
+    margin-right: 3px;
+    color: #9299a6;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    font-size: 9px;
+}
+
+.skill-remove-button:hover {
+    color: var(--danger);
+    background: #fff1f1;
 }
 
 /* Certificates */
@@ -1397,6 +1461,26 @@ a {
     margin-top: 7px;
     color: var(--primary);
     font-size: 11px;
+}
+
+.certificate-current-file {
+    display: block;
+    margin-top: 8px;
+    overflow: hidden;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.certificate-current-file[hidden],
+.certificate-remove-file[hidden] {
+    display: none;
+}
+
+.certificate-remove-file {
+    margin-top: 9px;
 }
 
 .flash-message {

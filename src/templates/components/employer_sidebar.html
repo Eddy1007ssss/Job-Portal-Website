@@ -90,30 +90,17 @@
     </span>
 </a>
 
-
-            <!-- Applications -->
-            <a
-                href="#"
-                class="employer-sidebar-link disabled"
-                aria-disabled="true"
-                title="This module will be available in a later sprint."
-            >
-                <span class="employer-sidebar-icon">
-                    <i class="fa-regular fa-file-lines"></i>
-                </span>
-
-                <span class="employer-sidebar-link-text">
-                    Applications
-                </span>
-            </a>
-
-
             <!-- Interviews -->
             <a
-                href="#"
-                class="employer-sidebar-link disabled"
-                aria-disabled="true"
-                title="This module will be available in a later sprint."
+                href="{{ url_for('interviews.employer_interviews') }}"
+                class="employer-sidebar-link {{
+                    'active'
+                    if request.endpoint in [
+                        'interviews.employer_interviews',
+                        'interviews.manage_interview'
+                    ]
+                    else ''
+                }}"
             >
                 <span class="employer-sidebar-icon">
                     <i class="fa-regular fa-calendar"></i>
@@ -127,10 +114,13 @@
 
             <!-- Notifications -->
             <a
-                href="#"
-                class="employer-sidebar-link disabled"
-                aria-disabled="true"
-                title="This module will be available in a later sprint."
+                href="{{ url_for('employer_notifications.notification_list') }}"
+                class="employer-sidebar-link {{
+                    'active'
+                    if request.endpoint and
+                       request.endpoint.startswith('employer_notifications.')
+                    else ''
+                }}"
             >
                 <span class="employer-sidebar-icon">
                     <i class="fa-regular fa-bell"></i>
@@ -139,6 +129,12 @@
                 <span class="employer-sidebar-link-text">
                     Notifications
                 </span>
+
+                {% if employer_notification_count %}
+                    <span class="employer-sidebar-notification-badge">
+                        {{ employer_notification_count if employer_notification_count < 100 else '99+' }}
+                    </span>
+                {% endif %}
             </a>
 
         </nav>

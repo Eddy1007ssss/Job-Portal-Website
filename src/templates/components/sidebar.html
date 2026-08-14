@@ -6,22 +6,6 @@
     >
 
         <a
-            href="{{ url_for('dashboard') }}"
-            class="{{
-                'active'
-                if request.endpoint == 'dashboard'
-                else ''
-            }}"
-        >
-            <span class="sidebar-link-icon">
-                <i class="fa-solid fa-table-columns"></i>
-            </span>
-
-            <span>Dashboard</span>
-        </a>
-
-
-        <a
             href="{{ url_for('seeker.profile') }}"
             class="{{
                 'active'
@@ -49,15 +33,40 @@
         <i class="fa-regular fa-file-lines"></i>
     </span>
 
-    <span>My Applications</span>
+    <span>Application History</span>
 </a>
 
 
         <a
-            href="{{ url_for('saved_jobs') }}"
+            href="{{ url_for('interviews.seeker_interviews') }}"
             class="{{
                 'active'
-                if request.endpoint == 'saved_jobs'
+                if request.endpoint in [
+                    'interviews.seeker_interviews',
+                    'interviews.respond'
+                ]
+                else ''
+            }}"
+        >
+            <span class="sidebar-link-icon">
+                <i class="fa-regular fa-calendar-check"></i>
+            </span>
+
+            <span>Interview Schedule</span>
+
+            {% if interview_invitation_count %}
+                <span class="sidebar-notification-badge">
+                    {{ interview_invitation_count }}
+                </span>
+            {% endif %}
+        </a>
+
+
+        <a
+            href="{{ url_for('jobs.list_saved_jobs') }}"
+            class="{{
+                'active'
+                if request.endpoint == 'jobs.list_saved_jobs'
                 else ''
             }}"
         >
@@ -82,22 +91,6 @@
             </span>
 
             <span>Job Alerts</span>
-        </a>
-
-
-        <a
-            href="{{ url_for('resume') }}"
-            class="{{
-                'active'
-                if request.endpoint == 'resume'
-                else ''
-            }}"
-        >
-            <span class="sidebar-link-icon">
-                <i class="fa-regular fa-file-pdf"></i>
-            </span>
-
-            <span>Resume</span>
         </a>
 
 

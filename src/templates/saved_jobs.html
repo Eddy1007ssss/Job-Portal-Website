@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Jobs | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/saved_jobs.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="saved-jobs-flashes" aria-live="polite">
+            {% for category, message in messages %}
+                <div class="saved-jobs-flash flash-{{ category }}">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="saved-jobs-page">
+    <nav class="saved-jobs-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}">Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Saved Jobs</span>
+    </nav>
+
+    <header class="saved-jobs-heading">
+        <div>
+            <p class="saved-jobs-eyebrow">Your Shortlist</p>
+            <h1>Saved Jobs</h1>
+            <p>
+                Keep interesting opportunities here and return when you are
+                ready to apply.
+            </p>
+        </div>
+
+        <div class="saved-jobs-summary">
+            <span class="summary-icon">
+                <i class="fa-solid fa-bookmark"></i>
+            </span>
+            <div>
+                <strong>{{ saved_jobs | length }}</strong>
+                <span>
+                    saved {{ "job" if saved_jobs | length == 1 else "jobs" }}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    {% if saved_jobs %}
+        <section class="saved-jobs-toolbar">
+            <div>
+                <h2>Your saved opportunities</h2>
+                <p>
+                    {{ available_job_count }} currently available
+                    {% if available_job_count != saved_jobs | length %}
+                        · {{ (saved_jobs | length) - available_job_count }} closed
+                    {% endif %}
+                </p>
+            </div>
+
+            <a href="{{ url_for('jobs.list_jobs') }}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Find More Jobs
+            </a>
+        </section>
+
+        <div class="saved-job-list">
+            {% for job in saved_jobs %}
+                <article class="saved-job-card">
+                    <div class="saved-job-logo" aria-hidden="true">
+                        {{ job.company_name[:1] | upper }}
+                    </div>
+
+                    <div class="saved-job-content">
+                        <div class="saved-job-title-row">
+                            <div>
+                                <a
+                                    class="saved-job-title"
+                                    href="{{ url_for(
+                                        'jobs.job_details',
+                                        job_id=job.job_id
+                                    ) }}"
+                                >
+                                    {{ job.title }}
+                                </a>
+                                <p>{{ job.company_name }}</p>
+                            </div>
+
+                            <span class="availability-badge
+                                {% if not job.is_available %}closed{% endif %}">
+                                <i class="fa-solid fa-circle"></i>
+                                {{ "Open" if job.is_available else "Closed" }}
+                            </span>
+                        </div>
+
+                        <div class="saved-job-meta">
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i>
+                                {{ job.location or "Not specified" }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-briefcase"></i>
+                                {{ job.employment_type or "Not specified" }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-signal"></i>
+                                {{ job.experience_level or "Not specified" }}
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-building"></i>
+                                {{ job.work_mode or "On-site" }}
+                            </span>
+                        </div>
+
+                        <p class="saved-job-description">
+                            {{ job.description }}
+                        </p>
+
+                        <footer class="saved-job-footer">
+                            <div>
+                                <div class="saved-job-salary">
+                                    {% if job.salary_min and job.salary_max %}
+                                        RM {{ "{:,.0f}".format(job.salary_min) }}
+                                        – RM {{ "{:,.0f}".format(job.salary_max) }}
+                                    {% elif job.salary_min %}
+                                        From RM {{ "{:,.0f}".format(job.salary_min) }}
+                                    {% elif job.salary_max %}
+                                        Up to RM {{ "{:,.0f}".format(job.salary_max) }}
+                                    {% else %}
+                                        Salary not specified
+                                    {% endif %}
+                                </div>
+                                <span class="saved-date">
+                                    <i class="fa-regular fa-clock"></i>
+                                    Saved {{ job.saved_date }}
+                                </span>
+                            </div>
+
+                            <div class="saved-job-actions">
+                                <form
+                                    method="POST"
+                                    action="{{ url_for(
+                                        'jobs.toggle_save_job',
+                                        job_id=job.job_id
+                                    ) }}"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="next"
+                                        value="{{ url_for('jobs.list_saved_jobs') }}"
+                                    >
+                                    <button type="submit" class="remove-job-button">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                        Remove
+                                    </button>
+                                </form>
+
+                                <a
+                                    class="view-saved-job-button"
+                                    href="{{ url_for(
+                                        'jobs.job_details',
+                                        job_id=job.job_id
+                                    ) }}"
+                                >
+                                    View Job
+                                </a>
+                            </div>
+                        </footer>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="saved-jobs-empty">
+            <span class="empty-icon">
+                <i class="fa-regular fa-bookmark"></i>
+            </span>
+            <h2>No saved jobs yet</h2>
+            <p>
+                Select the bookmark icon on a job listing to keep it here
+                for later.
+            </p>
+            <a href="{{ url_for('jobs.list_jobs') }}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Browse Open Jobs
+            </a>
+        </section>
+    {% endif %}
+</div>
+
+{% endblock %}
