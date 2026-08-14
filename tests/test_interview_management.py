@@ -1,6 +1,6 @@
 import sqlite3
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.interview_management import (
     InterviewDetails,
@@ -15,7 +15,7 @@ from src.interview_management import (
     validate_interview_details,
 )
 
-NOW = datetime(2026, 8, 14, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 14, 0, 0, tzinfo=UTC)
 
 
 def interview_details(**overrides: str) -> InterviewDetails:

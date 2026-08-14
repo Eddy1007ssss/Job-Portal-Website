@@ -1,6 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
@@ -656,22 +656,22 @@ def _parse_form_datetime(date_value: str, time_value: str) -> datetime | None:
     except AttributeError, ValueError:
         return None
 
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def _normalise_time(value: datetime | None) -> datetime:
     if value is None:
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
 
-    return value.astimezone(timezone.utc)
+    return value.astimezone(UTC)
 
 
 def _database_time(value: datetime) -> str:
     return (
-        value.astimezone(timezone.utc)
+        value.astimezone(UTC)
         .replace(tzinfo=None)
         .isoformat(
             sep=" ",

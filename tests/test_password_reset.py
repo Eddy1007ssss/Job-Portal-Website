@@ -1,6 +1,6 @@
 import sqlite3
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from src.password_reset_logic import (
     create_password_reset_token,
@@ -10,7 +10,7 @@ from src.password_reset_logic import (
     validate_new_password,
 )
 
-NOW = datetime(2026, 8, 14, 6, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 14, 6, 0, tzinfo=UTC)
 
 
 def generate_test_hash(password: str) -> str:

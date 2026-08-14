@@ -4,7 +4,7 @@ import secrets
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 PASSWORD_RESET_LIFETIME_MINUTES = 30
@@ -292,17 +292,17 @@ def _hash_token(token: str) -> str:
 
 def _normalise_time(value: datetime | None) -> datetime:
     if value is None:
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
 
-    return value.astimezone(timezone.utc)
+    return value.astimezone(UTC)
 
 
 def _database_time(value: datetime) -> str:
     return (
-        value.astimezone(timezone.utc)
+        value.astimezone(UTC)
         .replace(tzinfo=None)
         .isoformat(
             sep=" ",
