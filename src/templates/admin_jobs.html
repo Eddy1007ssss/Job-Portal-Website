@@ -1,0 +1,263 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Job Moderation | JobPortal Admin{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="admin-eyebrow">CONTENT MODERATION</span>
+        <h1>Job Moderation</h1>
+        <p>Review all vacancies and remove inappropriate or fake job postings.</p>
+    </div>
+
+    <span class="admin-last-updated">
+        <i class="fa-solid fa-shield-halved"></i>
+        Administrator access
+    </span>
+</section>
+
+<section class="admin-stats" aria-label="Job moderation summary">
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon blue"><i class="fa-solid fa-briefcase"></i></span>
+        <div><span>Total Jobs</span><strong>{{ totals["total"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+        <div><span>Open Jobs</span><strong>{{ totals["open"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon purple"><i class="fa-solid fa-eye"></i></span>
+        <div><span>Visible Records</span><strong>{{ totals["visible"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon red"><i class="fa-solid fa-ban"></i></span>
+        <div><span>Removed Jobs</span><strong>{{ totals["removed"] }}</strong></div>
+    </article>
+</section>
+
+<section class="admin-user-panel">
+    <div class="admin-panel-header">
+        <div>
+            <h2>All Job Postings</h2>
+            <p>Removed jobs are retained for audit and can be restored.</p>
+        </div>
+        <span class="admin-result-count">
+            {{ job_page.total_jobs }}
+            {{ "result" if job_page.total_jobs == 1 else "results" }}
+        </span>
+    </div>
+
+    <form class="admin-user-filters" method="GET" action="{{ url_for('admin.moderate_jobs') }}">
+        <div class="admin-search-field">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Search job, company, category or location..."
+                aria-label="Search job postings"
+            >
+        </div>
+
+        <select name="status" aria-label="Filter by job status">
+            <option value="all" {% if selected_status == "all" %}selected{% endif %}>All statuses</option>
+            <option value="open" {% if selected_status == "open" %}selected{% endif %}>Open</option>
+            <option value="closed" {% if selected_status == "closed" %}selected{% endif %}>Closed</option>
+            <option value="draft" {% if selected_status == "draft" %}selected{% endif %}>Draft</option>
+            <option value="removed" {% if selected_status == "removed" %}selected{% endif %}>Removed</option>
+        </select>
+
+        <button class="admin-filter-button" type="submit">Apply Filters</button>
+
+        {% if search or selected_status != "all" %}
+            <a class="admin-clear-button" href="{{ url_for('admin.moderate_jobs') }}">
+                Clear
+            </a>
+        {% endif %}
+    </form>
+
+    {% if jobs %}
+        <div class="admin-table-wrapper">
+            <table class="admin-user-table admin-job-table">
+                <thead>
+                    <tr>
+                        <th>Job Posting</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Applications</th>
+                        <th>Posted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                        <tr>
+                            <td>
+                                <div class="admin-job-title-cell">
+                                    <span class="admin-job-icon"><i class="fa-solid fa-briefcase"></i></span>
+                                    <div>
+                                        <strong>{{ job["title"] }}</strong>
+                                        <span>
+                                            {{ job["location"] }}
+                                            &middot; {{ job["employment_type"] }}
+                                        </span>
+                                        <details class="admin-job-details">
+                                            <summary>View details</summary>
+                                            <div>
+                                                <p>{{ job["description"] }}</p>
+                                                <dl>
+                                                    <div><dt>Category</dt><dd>{{ job["category"] or "Not specified" }}</dd></div>
+                                                    <div><dt>Experience</dt><dd>{{ job["experience_level"] or "Not specified" }}</dd></div>
+                                                    <div><dt>Work mode</dt><dd>{{ job["work_mode"] or "Not specified" }}</dd></div>
+                                                    <div><dt>Deadline</dt><dd>{{ job["application_deadline"][:10] if job["application_deadline"] else "Not specified" }}</dd></div>
+                                                </dl>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="admin-company-cell">
+                                    <strong>{{ job["company_name"] }}</strong>
+                                    <span>{{ job["company_email"] }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% set status_class = job["status"] | lower %}
+                                <span class="admin-job-status {{ status_class }}">
+                                    <span></span>{{ job["status"] }}
+                                </span>
+                            </td>
+                            <td>{{ job["application_count"] }}</td>
+                            <td>{{ job["created_at"][:10] if job["created_at"] else "Unknown" }}</td>
+                            <td>
+                                <button
+                                    type="button"
+                                    class="admin-account-action {{ 'activate' if job['status'] == 'Removed' else 'deactivate' }}"
+                                    data-job-moderation-action="{{ 'restore' if job['status'] == 'Removed' else 'remove' }}"
+                                    data-job-title="{{ job['title'] }}"
+                                    data-form-action="{{ url_for('admin.update_job_moderation', job_id=job['job_id']) }}"
+                                >
+                                    {% if job["status"] == "Removed" %}
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        Restore
+                                    {% else %}
+                                        <i class="fa-solid fa-ban"></i>
+                                        Remove
+                                    {% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="admin-empty-state">
+            <span><i class="fa-solid fa-briefcase"></i></span>
+            <h3>No job postings found</h3>
+            <p>Try changing the search or status filter.</p>
+            <a href="{{ url_for('admin.moderate_jobs') }}">Clear all filters</a>
+        </div>
+    {% endif %}
+
+    {% if job_page.total_pages > 1 %}
+        <nav class="admin-pagination" aria-label="Job moderation pagination">
+            <p>Page {{ job_page.page }} of {{ job_page.total_pages }}</p>
+            <div>
+                {% if job_page.has_previous %}
+                    <a href="{{ url_for('admin.moderate_jobs', page=job_page.page - 1, status=selected_status, search=search) }}">
+                        <i class="fa-solid fa-chevron-left"></i>Previous
+                    </a>
+                {% else %}
+                    <span class="disabled"><i class="fa-solid fa-chevron-left"></i>Previous</span>
+                {% endif %}
+
+                <span class="current" aria-current="page">{{ job_page.page }}</span>
+
+                {% if job_page.has_next %}
+                    <a href="{{ url_for('admin.moderate_jobs', page=job_page.page + 1, status=selected_status, search=search) }}">
+                        Next<i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <span class="disabled">Next<i class="fa-solid fa-chevron-right"></i></span>
+                {% endif %}
+            </div>
+        </nav>
+    {% endif %}
+</section>
+
+<dialog
+    class="admin-confirm-dialog"
+    id="jobModerationDialog"
+    aria-labelledby="jobModerationDialogTitle"
+>
+    <form method="POST" id="jobModerationForm">
+        <input type="hidden" name="action" id="jobModerationAction">
+        <input type="hidden" name="return_status" value="{{ selected_status }}">
+        <input type="hidden" name="return_search" value="{{ search }}">
+        <input type="hidden" name="return_page" value="{{ job_page.page }}">
+
+        <span class="admin-dialog-icon" id="jobModerationDialogIcon">
+            <i class="fa-solid fa-ban"></i>
+        </span>
+
+        <h2 id="jobModerationDialogTitle">Remove job posting?</h2>
+        <p id="jobModerationDialogMessage"></p>
+
+        <div class="admin-dialog-actions">
+            <button type="button" class="admin-dialog-cancel" id="closeJobModerationDialog">
+                Keep Job
+            </button>
+            <button type="submit" class="admin-dialog-confirm" id="confirmJobModerationButton">
+                Remove Job
+            </button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dialog = document.getElementById("jobModerationDialog");
+        const form = document.getElementById("jobModerationForm");
+        const actionInput = document.getElementById("jobModerationAction");
+        const title = document.getElementById("jobModerationDialogTitle");
+        const message = document.getElementById("jobModerationDialogMessage");
+        const icon = document.getElementById("jobModerationDialogIcon");
+        const confirmButton = document.getElementById("confirmJobModerationButton");
+        const closeButton = document.getElementById("closeJobModerationDialog");
+
+        document.querySelectorAll("[data-job-moderation-action]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const action = button.dataset.jobModerationAction;
+                const jobTitle = button.dataset.jobTitle;
+                const isRemoval = action === "remove";
+
+                form.action = button.dataset.formAction;
+                actionInput.value = action;
+                title.textContent = isRemoval ? "Remove job posting?" : "Restore job posting?";
+                message.textContent = isRemoval
+                    ? jobTitle + " will immediately disappear from the job seeker site."
+                    : jobTitle + " will become open and visible to job seekers again.";
+                icon.classList.toggle("activate", !isRemoval);
+                icon.innerHTML = isRemoval
+                    ? '<i class="fa-solid fa-ban"></i>'
+                    : '<i class="fa-solid fa-rotate-left"></i>';
+                confirmButton.textContent = isRemoval ? "Remove Job" : "Restore Job";
+                confirmButton.classList.toggle("activate", !isRemoval);
+                closeButton.textContent = isRemoval ? "Keep Job" : "Cancel";
+                dialog.showModal();
+            });
+        });
+
+        closeButton.addEventListener("click", function () {
+            dialog.close();
+        });
+    });
+</script>
+{% endblock %}

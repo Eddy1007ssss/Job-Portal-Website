@@ -424,6 +424,7 @@ def update_application_status(
                     updated_at = CURRENT_TIMESTAMP
                 WHERE job_id = ?
                   AND employer_id = ?
+                  AND status != 'Removed'
                 """,
                 (
                     job_id,

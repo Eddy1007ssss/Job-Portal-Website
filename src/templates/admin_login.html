@@ -1,0 +1,80 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Admin Login | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="admin-auth-page">
+    <section class="admin-auth-intro">
+        <div class="admin-auth-intro-content">
+            <span class="admin-auth-badge">ADMIN PORTAL</span>
+            <h1>Manage your platform with confidence.</h1>
+            <p>
+                Review registered job seekers and employers from one secure place.
+            </p>
+
+            <div class="admin-auth-feature">
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                <div>
+                    <strong>Protected administrator access</strong>
+                    <span>Only authenticated administrators can view account data.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-auth-form-section">
+        <div class="admin-auth-card">
+            <a class="admin-back-link" href="{{ url_for('home') }}">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to JobPortal
+            </a>
+
+            <span class="admin-form-label">FOR ADMINISTRATORS</span>
+            <h2>Welcome back</h2>
+            <p class="admin-form-description">
+                Enter your administrator credentials to continue.
+            </p>
+
+            <form method="POST" action="{{ url_for('admin.login') }}">
+                <div class="admin-form-group">
+                    <label for="email">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ email | default('') }}"
+                        autocomplete="email"
+                        placeholder="admin@example.com"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+
+                <button class="admin-primary-button" type="submit">
+                    Log In
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,285 @@
+{% extends "admin_base.html" %}
+
+{% block title %}User Accounts | JobPortal Admin{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="admin-eyebrow">ADMIN DASHBOARD</span>
+        <h1>User Accounts</h1>
+        <p>Monitor registered job seekers and employers on the platform.</p>
+    </div>
+
+    <span class="admin-last-updated">
+        <i class="fa-solid fa-shield-halved"></i>
+        Administrator access
+    </span>
+</section>
+
+<section class="admin-stats" aria-label="Account summary">
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon blue"><i class="fa-solid fa-users"></i></span>
+        <div><span>Total Accounts</span><strong>{{ totals["all"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon purple"><i class="fa-solid fa-user"></i></span>
+        <div><span>Job Seekers</span><strong>{{ totals["seekers"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon orange"><i class="fa-solid fa-building"></i></span>
+        <div><span>Employers</span><strong>{{ totals["employers"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+        <div><span>Active Accounts</span><strong>{{ totals["active"] }}</strong></div>
+    </article>
+</section>
+
+<section class="admin-user-panel">
+    <div class="admin-panel-header">
+        <div>
+            <h2>Registered Users</h2>
+            <p>Search and filter all platform accounts.</p>
+        </div>
+        <span class="admin-result-count">
+            {{ user_page.total_users }}
+            {{ "result" if user_page.total_users == 1 else "results" }}
+        </span>
+    </div>
+
+    <form class="admin-user-filters" method="GET" action="{{ url_for('admin.users') }}">
+        <div class="admin-search-field">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Search name, email or phone..."
+                aria-label="Search user accounts"
+            >
+        </div>
+
+        <select name="type" aria-label="Filter by account type">
+            <option value="all" {% if selected_type == "all" %}selected{% endif %}>
+                All account types
+            </option>
+            <option value="seeker" {% if selected_type == "seeker" %}selected{% endif %}>
+                Job Seekers
+            </option>
+            <option value="employer" {% if selected_type == "employer" %}selected{% endif %}>
+                Employers
+            </option>
+        </select>
+
+        <button class="admin-filter-button" type="submit">Apply Filters</button>
+
+        {% if search or selected_type != "all" %}
+            <a class="admin-clear-button" href="{{ url_for('admin.users') }}">
+                Clear
+            </a>
+        {% endif %}
+    </form>
+
+    {% if users %}
+        <div class="admin-table-wrapper">
+            <table class="admin-user-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Account Type</th>
+                        <th>Contact Number</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="admin-user-identity">
+                                    <span class="admin-user-avatar {{ user['account_type_key'] }}">
+                                        {{ user["display_name"][:1] | upper }}
+                                    </span>
+                                    <div>
+                                        <strong>{{ user["display_name"] }}</strong>
+                                        <span>{{ user["email"] }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="admin-type-badge {{ user['account_type_key'] }}">
+                                    {% if user["account_type_key"] == "employer" %}
+                                        <i class="fa-solid fa-building"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-user"></i>
+                                    {% endif %}
+                                    {{ user["account_type"] }}
+                                </span>
+                            </td>
+                            <td>{{ user["contact_number"] or "Not provided" }}</td>
+                            <td>{{ user["created_at"][:10] if user["created_at"] else "Unknown" }}</td>
+                            <td>
+                                {% if user["is_active"] %}
+                                    <span class="admin-status active">
+                                        <span></span>Active
+                                    </span>
+                                {% else %}
+                                    <span class="admin-status inactive">
+                                        <span></span>Deactivated
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button
+                                    type="button"
+                                    class="admin-account-action {{ 'deactivate' if user['is_active'] else 'activate' }}"
+                                    data-status-action="{{ 'deactivate' if user['is_active'] else 'activate' }}"
+                                    data-account-name="{{ user['display_name'] }}"
+                                    data-form-action="{{ url_for('admin.update_user_status', account_type=user['account_type_key'], account_id=user['account_id']) }}"
+                                >
+                                    {% if user["is_active"] %}
+                                        <i class="fa-solid fa-user-slash"></i>
+                                        Deactivate
+                                    {% else %}
+                                        <i class="fa-solid fa-user-check"></i>
+                                        Reactivate
+                                    {% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="admin-empty-state">
+            <span><i class="fa-solid fa-users-slash"></i></span>
+            <h3>No accounts found</h3>
+            <p>Try changing your search or account-type filter.</p>
+            <a href="{{ url_for('admin.users') }}">Clear all filters</a>
+        </div>
+    {% endif %}
+
+    {% if user_page.total_pages > 1 %}
+        <nav class="admin-pagination" aria-label="User list pagination">
+            <p>
+                Page {{ user_page.page }} of {{ user_page.total_pages }}
+            </p>
+
+            <div>
+                {% if user_page.has_previous %}
+                    <a href="{{ url_for('admin.users', page=user_page.page - 1, type=selected_type, search=search) }}">
+                        <i class="fa-solid fa-chevron-left"></i>
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="disabled"><i class="fa-solid fa-chevron-left"></i> Previous</span>
+                {% endif %}
+
+                {% for page_number in range(1, user_page.total_pages + 1) %}
+                    {% if page_number == user_page.page %}
+                        <span class="current" aria-current="page">{{ page_number }}</span>
+                    {% elif page_number == 1 or page_number == user_page.total_pages or (page_number - user_page.page) | abs <= 1 %}
+                        <a
+                            class="page-number"
+                            href="{{ url_for('admin.users', page=page_number, type=selected_type, search=search) }}"
+                        >{{ page_number }}</a>
+                    {% elif page_number == 2 or page_number == user_page.total_pages - 1 %}
+                        <span class="ellipsis">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if user_page.has_next %}
+                    <a href="{{ url_for('admin.users', page=user_page.page + 1, type=selected_type, search=search) }}">
+                        Next
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <span class="disabled">Next <i class="fa-solid fa-chevron-right"></i></span>
+                {% endif %}
+            </div>
+        </nav>
+    {% endif %}
+</section>
+
+<dialog
+    class="admin-confirm-dialog"
+    id="accountStatusDialog"
+    aria-labelledby="accountStatusDialogTitle"
+>
+    <form method="POST" id="accountStatusForm">
+        <input type="hidden" name="action" id="accountStatusAction">
+        <input type="hidden" name="return_type" value="{{ selected_type }}">
+        <input type="hidden" name="return_search" value="{{ search }}">
+        <input type="hidden" name="return_page" value="{{ user_page.page }}">
+
+        <span class="admin-dialog-icon" id="accountStatusDialogIcon">
+            <i class="fa-solid fa-user-slash"></i>
+        </span>
+
+        <h2 id="accountStatusDialogTitle">Deactivate account?</h2>
+        <p id="accountStatusDialogMessage"></p>
+
+        <div class="admin-dialog-actions">
+            <button type="button" class="admin-dialog-cancel" id="closeStatusDialog">
+                Keep Account
+            </button>
+            <button type="submit" class="admin-dialog-confirm" id="confirmStatusButton">
+                Deactivate
+            </button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dialog = document.getElementById("accountStatusDialog");
+        const form = document.getElementById("accountStatusForm");
+        const actionInput = document.getElementById("accountStatusAction");
+        const title = document.getElementById("accountStatusDialogTitle");
+        const message = document.getElementById("accountStatusDialogMessage");
+        const icon = document.getElementById("accountStatusDialogIcon");
+        const confirmButton = document.getElementById("confirmStatusButton");
+        const closeButton = document.getElementById("closeStatusDialog");
+
+        document.querySelectorAll("[data-status-action]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const action = button.dataset.statusAction;
+                const accountName = button.dataset.accountName;
+                const isDeactivation = action === "deactivate";
+
+                form.action = button.dataset.formAction;
+                actionInput.value = action;
+                title.textContent = isDeactivation
+                    ? "Deactivate account?"
+                    : "Reactivate account?";
+                message.textContent = isDeactivation
+                    ? accountName + " will be signed out and unable to log in."
+                    : accountName + " will be allowed to log in again.";
+                icon.classList.toggle("activate", !isDeactivation);
+                icon.innerHTML = isDeactivation
+                    ? '<i class="fa-solid fa-user-slash"></i>'
+                    : '<i class="fa-solid fa-user-check"></i>';
+                confirmButton.textContent = isDeactivation
+                    ? "Deactivate"
+                    : "Reactivate";
+                confirmButton.classList.toggle("activate", !isDeactivation);
+                closeButton.textContent = isDeactivation
+                    ? "Keep Account"
+                    : "Cancel";
+                dialog.showModal();
+            });
+        });
+
+        closeButton.addEventListener("click", function () {
+            dialog.close();
+        });
+    });
+</script>
+{% endblock %}

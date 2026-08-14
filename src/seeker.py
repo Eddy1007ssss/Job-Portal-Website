@@ -563,7 +563,8 @@ def login():
             seeker_id,
             full_name,
             email,
-            password_hash
+            password_hash,
+            is_active
         FROM seekers
         WHERE email = ?
         """,
@@ -576,6 +577,16 @@ def login():
         password,
     ):
         flash("Incorrect email or password.", "error")
+        return render_template(
+            "seeker_login.html",
+            email=email,
+        )
+
+    if not bool(seeker["is_active"]):
+        flash(
+            "Your account has been deactivated. Please contact an administrator.",
+            "error",
+        )
         return render_template(
             "seeker_login.html",
             email=email,

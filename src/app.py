@@ -11,6 +11,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from src.admin import admin_bp
 from src.applications import applications_bp
 from src.database import get_db_connection, init_database
 from src.employer import employer_bp
@@ -62,6 +63,7 @@ def create_app() -> Flask:
     )
 
     app.register_blueprint(seeker_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(employer_bp)
     app.register_blueprint(jobs_bp)
     app.register_blueprint(applications_bp)
