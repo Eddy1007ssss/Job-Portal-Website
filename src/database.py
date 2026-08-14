@@ -87,6 +87,7 @@ def init_database(app) -> None:
                 email TEXT NOT NULL UNIQUE,
                 contact_number TEXT,
                 password_hash TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -96,6 +97,17 @@ def init_database(app) -> None:
                 company_email TEXT NOT NULL UNIQUE,
                 contact_number TEXT,
                 password_hash TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS admins (
+                admin_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'admin',
+                is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -394,6 +406,9 @@ def init_database(app) -> None:
             CREATE INDEX IF NOT EXISTS idx_employers_email
                 ON employers(company_email);
 
+            CREATE INDEX IF NOT EXISTS idx_admins_email
+                ON admins(email);
+
             CREATE INDEX IF NOT EXISTS idx_jobs_employer_id
                 ON jobs(employer_id);
 
@@ -502,6 +517,7 @@ def init_database(app) -> None:
             "company_email": "TEXT",
             "contact_number": "TEXT",
             "password_hash": "TEXT",
+            "is_active": "INTEGER NOT NULL DEFAULT 1",
             "created_at": "TIMESTAMP",
         }
 
@@ -512,6 +528,42 @@ def init_database(app) -> None:
                 column_name,
                 column_definition,
             )
+
+        seeker_columns = {
+            "is_active": "INTEGER NOT NULL DEFAULT 1",
+        }
+
+        for column_name, column_definition in seeker_columns.items():
+            add_column_if_missing(
+                db,
+                "seekers",
+                column_name,
+                column_definition,
+            )
+
+        admin_columns = {
+            "role": "TEXT NOT NULL DEFAULT 'admin'",
+            "is_active": "INTEGER NOT NULL DEFAULT 1",
+        }
+
+        for column_name, column_definition in admin_columns.items():
+            add_column_if_missing(
+                db,
+                "admins",
+                column_name,
+                column_definition,
+            )
+
+        db.execute("""
+            UPDATE admins
+            SET role = 'super_admin'
+            WHERE admin_id = (SELECT MIN(admin_id) FROM admins)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM admins
+                  WHERE role = 'super_admin'
+              )
+            """)
 
         company_profile_columns = {
             "company_name": "TEXT",

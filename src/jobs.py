@@ -1233,6 +1233,7 @@ def update_job_status(job_id: int):
             updated_at = CURRENT_TIMESTAMP
         WHERE job_id = ?
           AND employer_id = ?
+          AND status != 'Removed'
         """,
         (
             target_status,
@@ -1287,6 +1288,7 @@ def delete_job(job_id: int):
         DELETE FROM jobs
         WHERE job_id = ?
           AND employer_id = ?
+          AND status != 'Removed'
         """,
         (
             job_id,
@@ -1669,6 +1671,7 @@ def edit_job(job_id: int):
                 updated_at = CURRENT_TIMESTAMP
             WHERE job_id = ?
               AND employer_id = ?
+              AND status != 'Removed'
             """,
             (
                 job_id,
@@ -1709,6 +1712,7 @@ def job_details(job_id: int):
         JOIN employers
             ON employers.employer_id = jobs.employer_id
         WHERE jobs.job_id = ?
+          AND jobs.status != 'Removed'
         """,
         (job_id,),
     ).fetchone()

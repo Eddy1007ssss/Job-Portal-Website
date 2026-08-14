@@ -400,6 +400,19 @@ def login():
                 company_email=company_email,
             )
 
+        if not bool(employer["is_active"]):
+            connection.close()
+
+            flash(
+                "Your account has been deactivated. Please contact an administrator.",
+                "error",
+            )
+
+            return render_template(
+                "employer_login.html",
+                company_email=company_email,
+            )
+
         company_profile = connection.execute(
             """
             SELECT profile_id

@@ -1,0 +1,107 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Create Admin | JobPortal{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="admin-auth-page">
+    <section class="admin-auth-intro">
+        <div class="admin-auth-intro-content">
+            <span class="admin-auth-badge">ONE-TIME SETUP</span>
+            <h1>Create the first administrator.</h1>
+            <p>
+                This setup page closes automatically after the first admin account
+                is created.
+            </p>
+
+            <div class="admin-auth-feature">
+                <i class="fa-solid fa-users-gear" aria-hidden="true"></i>
+                <div>
+                    <strong>Monitor registered accounts</strong>
+                    <span>View job seekers and employers with filters and pagination.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-auth-form-section">
+        <div class="admin-auth-card admin-setup-card">
+            <a class="admin-back-link" href="{{ url_for('home') }}">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to JobPortal
+            </a>
+
+            <span class="admin-form-label">ADMINISTRATOR SETUP</span>
+            <h2>Create admin account</h2>
+            <p class="admin-form-description">
+                Use at least 8 characters for your password.
+            </p>
+
+            <form method="POST" action="{{ url_for('admin.setup') }}">
+                <div class="admin-form-group">
+                    <label for="full_name">Full name</label>
+                    <input
+                        type="text"
+                        id="full_name"
+                        name="full_name"
+                        value="{{ full_name | default('') }}"
+                        autocomplete="name"
+                        minlength="2"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="email">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ email | default('') }}"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-row">
+                    <div class="admin-form-group">
+                        <label for="password">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="confirm_password">Confirm password</label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button class="admin-primary-button" type="submit">
+                    Create Admin
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

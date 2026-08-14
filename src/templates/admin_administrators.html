@@ -1,0 +1,272 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Manage Administrators | JobPortal Admin{% endblock %}
+
+{% block content %}
+<section class="admin-page-heading">
+    <div>
+        <span class="admin-eyebrow">SUPER ADMINISTRATION</span>
+        <h1>Manage Administrators</h1>
+        <p>Create and control administrator access to the JobPortal platform.</p>
+    </div>
+
+    <span class="admin-last-updated">
+        <i class="fa-solid fa-shield-halved"></i>
+        Super Admin only
+    </span>
+</section>
+
+<section class="admin-stats admin-admin-stats" aria-label="Administrator summary">
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon blue"><i class="fa-solid fa-user-shield"></i></span>
+        <div><span>Total Administrators</span><strong>{{ totals["total"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon green"><i class="fa-solid fa-circle-check"></i></span>
+        <div><span>Active Administrators</span><strong>{{ totals["active"] }}</strong></div>
+    </article>
+
+    <article class="admin-stat-card">
+        <span class="admin-stat-icon purple"><i class="fa-solid fa-crown"></i></span>
+        <div><span>Super Admins</span><strong>{{ totals["super_admins"] }}</strong></div>
+    </article>
+</section>
+
+<div class="admin-management-grid">
+    <section class="admin-add-card">
+        <div class="admin-add-card-heading">
+            <span><i class="fa-solid fa-user-plus"></i></span>
+            <div>
+                <h2>Add Administrator</h2>
+                <p>Create a secure administrator account.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.add_administrator') }}">
+            <div class="admin-form-group">
+                <label for="admin_full_name">Full name</label>
+                <input
+                    type="text"
+                    id="admin_full_name"
+                    name="full_name"
+                    minlength="2"
+                    placeholder="Administrator name"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-group">
+                <label for="admin_email">Email address</label>
+                <input
+                    type="email"
+                    id="admin_email"
+                    name="email"
+                    placeholder="admin@example.com"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-group">
+                <label for="admin_role">Administrator role</label>
+                <select id="admin_role" name="role" required>
+                    <option value="admin">Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+                <small>
+                    Super Admins can create and manage other administrator accounts.
+                </small>
+            </div>
+
+            <div class="admin-form-group">
+                <label for="admin_password">Temporary password</label>
+                <input
+                    type="password"
+                    id="admin_password"
+                    name="password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <div class="admin-form-group">
+                <label for="admin_confirm_password">Confirm password</label>
+                <input
+                    type="password"
+                    id="admin_confirm_password"
+                    name="confirm_password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <button class="admin-primary-button" type="submit">
+                <i class="fa-solid fa-plus"></i>
+                Create Administrator
+            </button>
+        </form>
+    </section>
+
+    <section class="admin-user-panel admin-list-panel">
+        <div class="admin-panel-header">
+            <div>
+                <h2>Administrator Accounts</h2>
+                <p>Only active accounts can access the administrator portal.</p>
+            </div>
+            <span class="admin-result-count">
+                {{ totals["total"] }} {{ "account" if totals["total"] == 1 else "accounts" }}
+            </span>
+        </div>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-user-table admin-account-table">
+                <thead>
+                    <tr>
+                        <th>Administrator</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for administrator in administrators %}
+                        <tr>
+                            <td>
+                                <div class="admin-user-identity">
+                                    <span class="admin-user-avatar admin-role-avatar">
+                                        {{ administrator["full_name"][:1] | upper }}
+                                    </span>
+                                    <div>
+                                        <strong>
+                                            {{ administrator["full_name"] }}
+                                            {% if administrator["admin_id"] == session.get("admin_id") %}
+                                                <span class="admin-you-label">You</span>
+                                            {% endif %}
+                                        </strong>
+                                        <span>{{ administrator["email"] }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="admin-role-badge {{ administrator['role'] }}">
+                                    <i class="fa-solid {{ 'fa-crown' if administrator['role'] == 'super_admin' else 'fa-user-shield' }}"></i>
+                                    {{ "Super Admin" if administrator["role"] == "super_admin" else "Admin" }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ administrator["created_at"][:10] if administrator["created_at"] else "Unknown" }}
+                            </td>
+                            <td>
+                                {% if administrator["is_active"] %}
+                                    <span class="admin-status active"><span></span>Active</span>
+                                {% else %}
+                                    <span class="admin-status inactive"><span></span>Deactivated</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if administrator["admin_id"] == session.get("admin_id") %}
+                                    <span class="admin-self-protected">
+                                        <i class="fa-solid fa-lock"></i>
+                                        Current account
+                                    </span>
+                                {% else %}
+                                    <button
+                                        type="button"
+                                        class="admin-account-action {{ 'deactivate' if administrator['is_active'] else 'activate' }}"
+                                        data-admin-status-action="{{ 'deactivate' if administrator['is_active'] else 'activate' }}"
+                                        data-admin-name="{{ administrator['full_name'] }}"
+                                        data-form-action="{{ url_for('admin.update_administrator_status', admin_id=administrator['admin_id']) }}"
+                                    >
+                                        {% if administrator["is_active"] %}
+                                            <i class="fa-solid fa-user-slash"></i>
+                                            Deactivate
+                                        {% else %}
+                                            <i class="fa-solid fa-user-check"></i>
+                                            Reactivate
+                                        {% endif %}
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<dialog
+    class="admin-confirm-dialog"
+    id="adminStatusDialog"
+    aria-labelledby="adminStatusDialogTitle"
+>
+    <form method="POST" id="adminStatusForm">
+        <input type="hidden" name="action" id="adminStatusAction">
+
+        <span class="admin-dialog-icon" id="adminStatusDialogIcon">
+            <i class="fa-solid fa-user-slash"></i>
+        </span>
+
+        <h2 id="adminStatusDialogTitle">Deactivate administrator?</h2>
+        <p id="adminStatusDialogMessage"></p>
+
+        <div class="admin-dialog-actions">
+            <button type="button" class="admin-dialog-cancel" id="closeAdminStatusDialog">
+                Keep Account
+            </button>
+            <button type="submit" class="admin-dialog-confirm" id="confirmAdminStatusButton">
+                Deactivate
+            </button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dialog = document.getElementById("adminStatusDialog");
+        const form = document.getElementById("adminStatusForm");
+        const actionInput = document.getElementById("adminStatusAction");
+        const title = document.getElementById("adminStatusDialogTitle");
+        const message = document.getElementById("adminStatusDialogMessage");
+        const icon = document.getElementById("adminStatusDialogIcon");
+        const confirmButton = document.getElementById("confirmAdminStatusButton");
+        const closeButton = document.getElementById("closeAdminStatusDialog");
+
+        document.querySelectorAll("[data-admin-status-action]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const action = button.dataset.adminStatusAction;
+                const adminName = button.dataset.adminName;
+                const isDeactivation = action === "deactivate";
+
+                form.action = button.dataset.formAction;
+                actionInput.value = action;
+                title.textContent = isDeactivation
+                    ? "Deactivate administrator?"
+                    : "Reactivate administrator?";
+                message.textContent = isDeactivation
+                    ? adminName + " will be signed out and unable to access the admin portal."
+                    : adminName + " will be allowed to access the admin portal again.";
+                icon.classList.toggle("activate", !isDeactivation);
+                icon.innerHTML = isDeactivation
+                    ? '<i class="fa-solid fa-user-slash"></i>'
+                    : '<i class="fa-solid fa-user-check"></i>';
+                confirmButton.textContent = isDeactivation
+                    ? "Deactivate"
+                    : "Reactivate";
+                confirmButton.classList.toggle("activate", !isDeactivation);
+                closeButton.textContent = isDeactivation ? "Keep Account" : "Cancel";
+                dialog.showModal();
+            });
+        });
+
+        closeButton.addEventListener("click", function () {
+            dialog.close();
+        });
+    });
+</script>
+{% endblock %}

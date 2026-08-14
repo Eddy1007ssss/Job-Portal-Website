@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="JobPortal administrator portal">
+
+    <title>{% block title %}Admin Portal | JobPortal{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin.css') }}"
+    >
+</head>
+
+<body>
+    <header class="admin-header">
+        <a class="admin-brand" href="{{ url_for('admin.users') }}">
+            <span class="admin-brand-icon" aria-hidden="true">
+                <i class="fa-solid fa-briefcase"></i>
+            </span>
+            <span class="admin-brand-name">Job<span>Portal</span></span>
+            <span class="admin-brand-label">Admin</span>
+        </a>
+
+        <div class="admin-header-account">
+            <span class="admin-avatar" aria-hidden="true">
+                {{ session.get('admin_name', 'A')[:1] | upper }}
+            </span>
+            <div class="admin-account-copy">
+                <strong>{{ session.get('admin_name', 'Administrator') }}</strong>
+                <span>
+                    {{ "Super Admin" if session.get('admin_role') == "super_admin" else "Admin" }}
+                    &middot; {{ session.get('admin_email', '') }}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="admin-flash-container" aria-live="polite">
+                {% for category, message in messages %}
+                    <div class="admin-flash admin-flash-{{ category }}" role="alert">
+                        <span>{{ message }}</span>
+                        <button type="button" aria-label="Close message">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <button
+        type="button"
+        class="admin-menu-button"
+        id="adminMenuButton"
+        aria-label="Open admin menu"
+        aria-controls="adminSidebar"
+        aria-expanded="false"
+    >
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <p class="admin-menu-label">ADMIN MENU</p>
+
+            <nav aria-label="Administrator navigation">
+                <a
+                    class="admin-nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}"
+                    href="{{ url_for('admin.users') }}"
+                    {% if request.endpoint == "admin.users" %}aria-current="page"{% endif %}
+                >
+                    <i class="fa-solid fa-users"></i>
+                    User Accounts
+                </a>
+
+                <a
+                    class="admin-nav-link {% if request.endpoint == 'admin.moderate_jobs' %}active{% endif %}"
+                    href="{{ url_for('admin.moderate_jobs') }}"
+                    {% if request.endpoint == "admin.moderate_jobs" %}aria-current="page"{% endif %}
+                >
+                    <i class="fa-solid fa-briefcase"></i>
+                    Job Moderation
+                </a>
+
+                {% if session.get("admin_role") == "super_admin" %}
+                    <a
+                        class="admin-nav-link {% if request.endpoint == 'admin.administrators' %}active{% endif %}"
+                        href="{{ url_for('admin.administrators') }}"
+                        {% if request.endpoint == "admin.administrators" %}aria-current="page"{% endif %}
+                    >
+                        <i class="fa-solid fa-user-shield"></i>
+                        Manage Admins
+                    </a>
+                {% endif %}
+            </nav>
+
+            <form method="POST" action="{{ url_for('admin.logout') }}">
+                <button class="admin-logout" type="submit">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout
+                </button>
+            </form>
+        </aside>
+
+        <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+
+        <main class="admin-main">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const menuButton = document.getElementById("adminMenuButton");
+            const sidebar = document.getElementById("adminSidebar");
+            const overlay = document.getElementById("adminSidebarOverlay");
+
+            function closeMenu() {
+                sidebar.classList.remove("open");
+                overlay.classList.remove("show");
+                menuButton.setAttribute("aria-expanded", "false");
+            }
+
+            menuButton.addEventListener("click", function () {
+                const opening = !sidebar.classList.contains("open");
+                sidebar.classList.toggle("open", opening);
+                overlay.classList.toggle("show", opening);
+                menuButton.setAttribute("aria-expanded", String(opening));
+            });
+
+            overlay.addEventListener("click", closeMenu);
+
+            document.querySelectorAll(".admin-flash button").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    button.closest(".admin-flash").remove();
+                });
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
