@@ -3,9 +3,8 @@ import re
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
-from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from flask import (
     Blueprint,
@@ -69,16 +68,13 @@ class JobModerationPage:
 def admin_login_required[T: Callable[..., Any]](view: T) -> T:
     @wraps(view)
     def wrapped_view(*args: Any, **kwargs: Any) -> Any:
-        if (
-            session.get("admin_authenticated") is not True
-            or session.get("admin_id") is None
-        ):
-            flash("Please log in as an administrator first.", "error")
+        if "admin_id" not in session:
+            flash("Please log in as an admin.", "warning")
             return redirect(url_for("admin.login"))
 
         return view(*args, **kwargs)
 
-    return cast(ViewFunction, wrapped_view)
+    return cast(T, wrapped_view)
 
 
 def super_admin_required[T: Callable[..., Any]](view: T) -> T:
@@ -89,7 +85,7 @@ def super_admin_required[T: Callable[..., Any]](view: T) -> T:
 
         return view(*args, **kwargs)
 
-    return cast(ViewFunction, wrapped_view)
+    return cast(T, wrapped_view)
 
 
 @admin_bp.before_app_request
