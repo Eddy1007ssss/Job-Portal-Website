@@ -3,8 +3,9 @@ import re
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, TypeVar, cast
+from typing import Any
 
 from flask import (
     Blueprint,
@@ -30,7 +31,7 @@ USERS_PER_PAGE = 10
 JOBS_PER_PAGE = 10
 JOB_STATUS_FILTERS = {"all", "open", "closed", "draft", "removed"}
 
-ViewFunction = TypeVar("ViewFunction", bound=Callable[..., Any])
+
 
 
 @dataclass(frozen=True)
@@ -67,7 +68,7 @@ class JobModerationPage:
         return self.page < self.total_pages
 
 
-def admin_login_required(view: ViewFunction) -> ViewFunction:
+def admin_login_required[T: Callable[..., Any]](view: T) -> T:
     @wraps(view)
     def wrapped_view(*args: Any, **kwargs: Any) -> Any:
         if (
@@ -82,7 +83,7 @@ def admin_login_required(view: ViewFunction) -> ViewFunction:
     return cast(ViewFunction, wrapped_view)
 
 
-def super_admin_required(view: ViewFunction) -> ViewFunction:
+def super_admin_required[T: Callable[..., Any]](view: T) -> T:
     @wraps(view)
     def wrapped_view(*args: Any, **kwargs: Any) -> Any:
         if session.get("admin_role") != "super_admin":
