@@ -32,8 +32,6 @@ JOBS_PER_PAGE = 10
 JOB_STATUS_FILTERS = {"all", "open", "closed", "draft", "removed"}
 
 
-
-
 @dataclass(frozen=True)
 class UserListPage:
     users: list[sqlite3.Row]
