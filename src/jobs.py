@@ -623,7 +623,7 @@ def get_current_seeker_id() -> int | None:
 
     try:
         return int(seeker_id)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return None
 
 

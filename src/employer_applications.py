@@ -310,7 +310,7 @@ def update_application_status(
 
     try:
         vacancies = int(application["vacancies"])
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         vacancies = 1
 
     vacancies = max(vacancies, 1)

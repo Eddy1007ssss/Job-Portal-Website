@@ -69,7 +69,7 @@ def validate_interview_details(
 
     try:
         duration_minutes = int(details.duration_minutes)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return "Select a valid interview duration."
 
     if duration_minutes < 15 or duration_minutes > 240:
@@ -653,7 +653,7 @@ def _parse_form_datetime(date_value: str, time_value: str) -> datetime | None:
             f"{date_value.strip()} {time_value.strip()}",
             "%Y-%m-%d %H:%M",
         ).replace(tzinfo=MALAYSIA_TIMEZONE)
-    except AttributeError, ValueError:
+    except (AttributeError, ValueError):
         return None
 
     return parsed.astimezone(UTC)

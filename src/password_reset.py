@@ -165,7 +165,7 @@ def send_password_reset_email(email: str, reset_url: str) -> bool:
                 )
 
             smtp.send_message(message)
-    except OSError, smtplib.SMTPException:
+    except (OSError, smtplib.SMTPException):
         current_app.logger.exception("Unable to send password reset email.")
         return False
 
