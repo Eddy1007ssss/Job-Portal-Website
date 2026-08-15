@@ -228,7 +228,7 @@ def _parse_month(value: str) -> date | None:
     try:
         year_text, month_text = value.split("-", 1)
         return date(int(year_text), int(month_text), 1)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
